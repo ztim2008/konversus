@@ -1,6 +1,21 @@
 # CHANGELOG
 
 ## 2026-03-31
+- Начата первая реальная санация avitoeditor и зафиксирован его интеграционный контракт с core-платформой:
+  - avitoeditor/.gitignore
+  - avitoeditor/api/config.php
+  - avitoeditor/api/auth.php
+  - avitoeditor/api/create-payment.php
+  - avitoeditor/api/payment-config.php
+  - avitoeditor/api/payment-test.php
+  - avitoeditor/api/payment-webhook.php
+  - avitoeditor/assets/js/admin.js
+  - avitoeditor/assets/js/editor.js
+  - avitoeditor/assets/js/editor-test.js
+  - avitoeditor/config/payment-config.example.json
+  - docs/tech/AVITOEDITOR-INTEGRATION-CONTRACT.md
+  - docs/LEGACY-SANITIZATION.md
+  - README.md
 - Добавлена карта сервисов и подпроектов вокруг core-платформы, чтобы legacy-папки учитывать как отдельные сервисы, а не как мусор:
   - docs/SERVICE-MAP.md
   - README.md

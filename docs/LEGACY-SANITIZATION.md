@@ -29,9 +29,25 @@ Legacy-папки нельзя просто «залить как есть» в 
 - avitoeditor/assets/js/editor.js содержит хардкоженный admin-пароль;
 - avitoeditor/assets/js/editor-test.js содержит хардкоженный admin-пароль;
 - avitoeditor/assets/js/editor-test-backup.js содержит хардкоженный admin-пароль.
+- avitoeditor/api/config.php содержал хардкоженные DB credentials;
+- avitoeditor/api/payment-config.php и payment-эндпоинты содержали live payment secret в дефолтах;
+- avitoeditor/api/payment-config.json и config/payment-config.json содержат локальные платежные секреты и не должны попадать в публичный git.
+- avitoeditor/MIGRATION-SERVER-INSTRUCTIONS.md содержит старые примеры с реальными DB credentials и требует отдельной очистки перед публикацией.
 
 Вывод:
 - в публичный mirror нельзя добавлять без отдельного security-рефакторинга.
+
+Что уже сделано:
+- avitoeditor/.env.example санитизирован;
+- активные auth/payment-эндпоинты переведены на локальный конфиг и env вместо хардкодов;
+- editor и editor-test переведены с client-side admin-пароля на session-based admin flow;
+- добавлен payment-config.example.json;
+- добавлен integration contract для связки avitoeditor с core.
+
+Что остается:
+- отдельно разобрать backup-файлы и test-backup артефакты;
+- решить, какие директории и данные будут versioned, а какие останутся runtime-only;
+- только после этого добавлять avitoeditor второй волной в публичный git.
 
 ### avitologi
 

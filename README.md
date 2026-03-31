@@ -29,6 +29,7 @@ Production-ready foundation для SaaS-инструмента роста кон
 - `docs/STAGING-PLAN.md` - план перехода к отдельному staging-контуру.
 - `docs/LEGACY-SANITIZATION.md` - карта блокеров по legacy-папкам перед их публикацией в GitHub.
 - `docs/SERVICE-MAP.md` - карта отдельных сервисов и подпроектов вокруг core-платформы.
+- `docs/tech/AVITOEDITOR-INTEGRATION-CONTRACT.md` - минимальный контракт интеграции avitoeditor с core-платформой.
 - `ROADMAP.md` - этапы развития.
 - `docs/PROJECT-DEVELOPMENT-PLAN.md` - план развития со статусами (🔴/🔵/🟢).
 - `docs/PROJECT-IDEOLOGY.md` - идеология продукта и целевая модель ценности.
