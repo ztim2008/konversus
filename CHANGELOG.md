@@ -1,6 +1,10 @@
 # CHANGELOG
 
 ## 2026-03-31
+- Добавлена карта сервисов и подпроектов вокруг core-платформы, чтобы legacy-папки учитывать как отдельные сервисы, а не как мусор:
+  - docs/SERVICE-MAP.md
+  - README.md
+  - AGENTS.md
 - Зафиксированы взрослый git-процесс, staging-план и карта санации legacy-папок перед второй волной публикации в GitHub:
   - docs/GIT-WORKFLOW.md
   - docs/STAGING-PLAN.md
