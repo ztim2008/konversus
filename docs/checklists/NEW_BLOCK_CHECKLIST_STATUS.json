@@ -1,0 +1,11 @@
+{
+  "lastUpdated": "2026-03-31",
+  "scope": "homepage",
+  "items": {
+    "freeFirstHero": true,
+    "responsiveLandingRedesign": true,
+    "projectsBannersRestyled": true,
+    "footerPolicyButtonAdded": true,
+    "privacyPolicyPageCreated": true
+  }
+}

@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>АВИТО КОНСТРУКТОР — бесплатный старт для аудита и улучшения объявлений</title>
+  <meta name="description" content="АВИТО КОНСТРУКТОР — бесплатный старт для аудита, улучшения и развития объявлений Авито. Один кабинет, понятные рекомендации, красивые карточки и быстрый путь к росту результата.">
+  <style>
+    :root {
+      --bg: #08111f;
+      --bg-2: #0e1c30;
+      --panel: rgba(9, 18, 33, 0.72);
+      --text: #eef4ff;
+      --muted: #a8b8d3;
+      --border: rgba(162, 189, 233, 0.16);
+      --primary: #29b6d1;
+      --primary-strong: #0ea5c6;
+      --accent: #ffb703;
+      --success: #43c59e;
+      --shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+      --radius: 24px;
+      --radius-sm: 16px;
+      --font: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 420px at 0% 0%, rgba(41, 182, 209, 0.18), transparent 70%),
+        radial-gradient(700px 320px at 100% 0%, rgba(255, 183, 3, 0.12), transparent 72%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      line-height: 1.5;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 88%);
+      pointer-events: none;
+      opacity: 0.28;
+    }
+
+    a { color: inherit; }
+
+    .wrap {
+      position: relative;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(7, 16, 29, 0.72);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      text-decoration: none;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(41, 182, 209, 0.28);
+      background: linear-gradient(160deg, rgba(41, 182, 209, 0.24), rgba(14, 165, 198, 0.08));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .brand__title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .brand__subtitle {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav a {
+      padding: 9px 12px;
+      border-radius: 999px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      transition: 0.25s ease;
+    }
+
+    .nav a:hover {
+      color: var(--text);
+      border-color: var(--border);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .topbar__actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(162, 189, 233, 0.28);
+    }
+
+    .btn--primary {
+      color: #082131;
+      background: linear-gradient(135deg, var(--accent) 0%, #ffd166 100%);
+      border-color: rgba(255, 209, 102, 0.7);
+      box-shadow: 0 14px 30px rgba(255, 183, 3, 0.22);
+    }
+
+    .btn--primary:hover {
+      background: linear-gradient(135deg, #ffc21d 0%, #ffe08a 100%);
+    }
+
+    .btn--ghost {
+      background: rgba(41, 182, 209, 0.08);
+      border-color: rgba(41, 182, 209, 0.22);
+      color: #a8ecff;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255, 183, 3, 0.12);
+      border: 1px solid rgba(255, 209, 102, 0.3);
+      color: #ffe6a6;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .burger {
+      display: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .burger__lines {
+      width: 18px;
+      height: 12px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .burger__lines::before,
+    .burger__lines::after,
+    .burger__lines span {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: currentColor;
+      border-radius: 2px;
+    }
+
+    .burger__lines::before { top: 0; }
+    .burger__lines span { top: 5px; }
+    .burger__lines::after { bottom: 0; }
+
+    .mobile {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: rgba(7, 16, 29, 0.84);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .mobile.is-open { display: grid; gap: 8px; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+      gap: 26px;
+      align-items: stretch;
+      margin-top: 24px;
+    }
+
+    .hero__main,
+    .hero__panel,
+    .section,
+    .projects-showcase {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero__main {
+      padding: 34px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero__main::before {
+      content: "";
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      right: -90px;
+      top: -120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(41, 182, 209, 0.18) 0%, rgba(41, 182, 209, 0) 72%);
+      pointer-events: none;
+    }
+
+    .hero__title {
+      margin: 18px 0 0;
+      max-width: 760px;
+      font-size: clamp(34px, 5.4vw, 70px);
+      line-height: 0.98;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .hero__title span {
+      display: block;
+      color: #8cecff;
+    }
+
+    .hero__text {
+      margin: 18px 0 0;
+      max-width: 640px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .hero__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .hero__stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .hero-stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-stat__value {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .hero-stat__label {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hero__panel {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      background: linear-gradient(180deg, rgba(12, 24, 43, 0.96) 0%, rgba(8, 17, 31, 0.94) 100%);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #d3f5ff;
+    }
+
+    .panel-status {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      background: rgba(67, 197, 158, 0.12);
+      border: 1px solid rgba(67, 197, 158, 0.26);
+      color: #baf2dd;
+    }
+
+    .audit-card {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(162, 189, 233, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .audit-card__title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #eaf4ff;
+    }
+
+    .audit-score {
+      margin-top: 12px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .audit-score__value {
+      font-size: 44px;
+      font-weight: 900;
+      color: #8cecff;
+      line-height: 1;
+    }
+
+    .audit-score__label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .audit-list,
+    .feature-list,
+    .flow-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .audit-item,
+    .feature-item,
+    .flow-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .audit-item__dot,
+    .feature-item__dot,
+    .flow-item__dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      margin-top: 5px;
+      background: linear-gradient(135deg, var(--primary), #9be7ff);
+      box-shadow: 0 0 0 5px rgba(41, 182, 209, 0.12);
+    }
+
+    .audit-item strong,
+    .feature-item strong,
+    .flow-item strong {
+      display: block;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .audit-item span,
+    .feature-item span,
+    .flow-item span {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sections {
+      display: grid;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .section,
+    .projects-showcase {
+      padding: 28px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 900;
+      color: #9be7ff;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .section-title {
+      margin: 8px 0 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.05;
+      font-weight: 900;
+    }
+
+    .section-sub {
+      margin: 10px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .free-grid,
+    .features-grid,
+    .projects {
+      display: grid;
+      gap: 14px;
+    }
+
+    .free-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .free-card,
+    .feature-card,
+    .project {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .free-card,
+    .feature-card {
+      padding: 20px;
+    }
+
+    .free-card::before,
+    .feature-card::before,
+    .project::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 56%);
+      pointer-events: none;
+    }
+
+    .free-card__label,
+    .feature-card__label {
+      font-size: 12px;
+      font-weight: 900;
+      color: #ffe5a0;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .free-card__title,
+    .feature-card__title {
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .free-card__text,
+    .feature-card__text {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .feature-card__title { color: #def8ff; }
+
+    .features-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .projects-showcase {
+      background: radial-gradient(700px 260px at 0% 0%, rgba(41, 182, 209, 0.16), transparent 70%), linear-gradient(180deg, rgba(11, 22, 40, 0.96), rgba(7, 16, 29, 0.94));
+    }
+
+    .projects {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 22px;
+    }
+
+    .project {
+      display: flex;
+      flex-direction: column;
+      min-height: 300px;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 20px 36px rgba(0, 0, 0, 0.16);
+    }
+
+    .project__top {
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(160deg, rgba(41, 182, 209, 0.18), rgba(255, 255, 255, 0.02));
+    }
+
+    .project:nth-child(2) .project__top {
+      background: linear-gradient(160deg, rgba(255, 183, 3, 0.18), rgba(255, 255, 255, 0.02));
+    }
+
+    .project:nth-child(3) .project__top {
+      background: linear-gradient(160deg, rgba(67, 197, 158, 0.18), rgba(255, 255, 255, 0.02));
+    }
+
+    .project__tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(255, 255, 255, 0.12);
+      color: #eff9ff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .project__title {
+      margin: 16px 0 0;
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .project__subtitle {
+      margin-top: 10px;
+      color: #d0def6;
+      font-size: 14px;
+      min-height: 62px;
+    }
+
+    .project__body {
+      display: grid;
+      gap: 12px;
+      padding: 20px;
+      flex: 1 1 auto;
+    }
+
+    .project__items {
+      display: grid;
+      gap: 10px;
+    }
+
+    .project__item {
+      display: flex;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .project__item::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      margin-top: 6px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      background: linear-gradient(135deg, var(--accent), #ffd166);
+    }
+
+    .project__meta {
+      margin-top: auto;
+      padding-top: 4px;
+      color: #8bbad1;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .project__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .flow-list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .flow-item {
+      min-height: 164px;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .flow-item__num {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: inline-grid;
+      place-items: center;
+      background: rgba(255, 183, 3, 0.12);
+      border: 1px solid rgba(255, 209, 102, 0.24);
+      color: #ffe8a9;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      padding: 22px 8px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer__links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      font: inherit;
+      cursor: pointer;
+      transition: 0.25s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--text);
+      border-color: rgba(162, 189, 233, 0.22);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    @media (max-width: 1120px) {
+      .hero,
+      .features-grid,
+      .projects,
+      .flow-list,
+      .free-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .topbar {
+        top: 10px;
+        border-radius: 24px;
+      }
+
+      .nav,
+      .topbar__actions { display: none; }
+
+      .burger {
+        display: inline-grid;
+        place-items: center;
+      }
+
+      .hero__main,
+      .hero__panel,
+      .section,
+      .projects-showcase {
+        border-radius: 24px;
+      }
+
+      .hero__main,
+      .section,
+      .projects-showcase { padding: 24px; }
+
+      .hero__actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero__stats,
+      .free-grid,
+      .features-grid,
+      .projects,
+      .flow-list {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="АВИТО КОНСТРУКТОР">
+        <span class="logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 20L12 4L20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.1 14H15.9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span>
+          <div class="brand__title">АВИТО КОНСТРУКТОР</div>
+          <div class="brand__subtitle">бесплатный старт для роста и аудита</div>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="Главное меню">
+        <a href="#free">Бесплатно</a>
+        <a href="#product">Суть проекта</a>
+        <a href="#projects">Проекты</a>
+        <a href="#flow">Как работает</a>
+        <a href="/cabinet/">Кабинет</a>
+      </nav>
+
+      <div class="topbar__actions">
+        <a class="btn btn--ghost" href="/cabinet/">Открыть кабинет</a>
+        <button class="btn btn--primary" type="button" id="loginBtnTop">Войти бесплатно</button>
+      </div>
+
+      <button class="burger" type="button" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileMenu">
+        <div class="burger__lines"><span></span></div>
+      </button>
+    </header>
+
+    <div class="mobile" id="mobileMenu" hidden>
+      <a class="btn" href="#free">Бесплатно</a>
+      <a class="btn" href="#product">Суть проекта</a>
+      <a class="btn" href="#projects">Проекты</a>
+      <a class="btn" href="#flow">Как работает</a>
+      <a class="btn" href="/cabinet/">Кабинет</a>
+      <button class="btn btn--primary" type="button" id="loginBtnMobile">Войти бесплатно</button>
+    </div>
+
+    <section class="hero" id="top">
+      <div class="hero__main">
+        <div class="pill">Сейчас бесплатно • старт без оплаты и подписки</div>
+        <h1 class="hero__title">Сделайте объявление <span>сильнее, заметнее и понятнее рынку</span></h1>
+        <p class="hero__text">АВИТО КОНСТРУКТОР собирает в одном месте аудит объявления, работу с текстом, идеи для инфографики и путь к сравнению с рынком. Пока главный акцент — на бесплатном старте и быстрой пользе без лишней рутины.</p>
+
+        <div class="hero__actions">
+          <button class="btn btn--primary" type="button" id="loginBtnHero">Войти бесплатно</button>
+          <a class="btn btn--ghost" href="/cabinet/">Перейти в кабинет</a>
+          <a class="btn" href="#projects">Посмотреть проекты</a>
+        </div>
+
+        <div class="hero__stats">
+          <div class="hero-stat">
+            <div class="hero-stat__value">0 ₽</div>
+            <div class="hero-stat__label">старт сейчас без оплаты</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat__value">1 экран</div>
+            <div class="hero-stat__label">для аудита, визуала и рыночного gap</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat__value">3 проекта</div>
+            <div class="hero-stat__label">уже доступны внутри сайта</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="hero__panel" aria-label="Смысл продукта">
+        <div class="panel-head">
+          <div class="panel-title">Что уже внутри</div>
+          <div class="panel-status">бесплатно сейчас</div>
+        </div>
+
+        <div class="audit-card">
+          <div class="audit-card__title">Продукт собирается вокруг одного понятного цикла</div>
+          <div class="audit-score">
+            <div class="audit-score__value">Audit</div>
+            <div class="audit-score__label">вход в продукт через реальную боль</div>
+          </div>
+
+          <div class="audit-list">
+            <div class="audit-item">
+              <div class="audit-item__dot"></div>
+              <div>
+                <strong>Проверка объявления</strong>
+                <span>Текст, фото, инфографика и рыночный разрыв собираются в одном экране.</span>
+              </div>
+            </div>
+            <div class="audit-item">
+              <div class="audit-item__dot"></div>
+              <div>
+                <strong>Понятные правки</strong>
+                <span>Не абстрактные советы, а конкретные действия: что усиливать в первую очередь.</span>
+              </div>
+            </div>
+            <div class="audit-item">
+              <div class="audit-item__dot"></div>
+              <div>
+                <strong>Путь к результату</strong>
+                <span>От аудита к улучшенной версии и дальше к сравнению с рынком и конкурентами.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="sections">
+      <section class="section" id="free">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Бесплатный старт</div>
+            <h2 class="section-title">Сейчас проект подается просто: заходите и начинаете без оплаты</h2>
+            <p class="section-sub">Пока мы делаем акцент на бесплатности, чтобы быстро показать суть сервиса: аудит, красивое оформление и будущий рост результата без лишнего технического порога.</p>
+          </div>
+        </div>
+
+        <div class="free-grid">
+          <article class="free-card">
+            <div class="free-card__label">Бесплатно сейчас</div>
+            <div class="free-card__title">Личный кабинет и первый контур продукта</div>
+            <div class="free-card__text">Вход, объявления, экран аудита, логика роста и первые продуктовые сценарии уже собраны внутри сайта.</div>
+          </article>
+
+          <article class="free-card">
+            <div class="free-card__label">Бесплатно сейчас</div>
+            <div class="free-card__title">Проверка смысла объявления</div>
+            <div class="free-card__text">Мы делаем продукт не про “редактор ради редактора”, а про понятное усиление текста, фото и инфографики.</div>
+          </article>
+
+          <article class="free-card">
+            <div class="free-card__label">Бесплатно сейчас</div>
+            <div class="free-card__title">Быстрый путь к рыночному сравнению</div>
+            <div class="free-card__text">Benchmark и конкурентный слой уже заложены в архитектуру, а значит сервис растет в нужную сторону, а не в хаос.</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="product">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Суть проекта</div>
+            <h2 class="section-title">Не просто генератор объявлений, а рабочая система роста для Авито</h2>
+            <p class="section-sub">Продукт строится вокруг реальных задач авитолога: увидеть просадку, понять причину, усилить текст и визуал, сравнить с рынком и показать результат клиенту без ручной сборки.</p>
+          </div>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-card__label">Аудит</div>
+            <div class="feature-card__title">Один экран для текста, фото и инфографики</div>
+            <div class="feature-card__text">Экран аудита уже проектируется как главная ценность продукта: сначала вывод, потом причины, потом действия.</div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-card__label">Benchmark</div>
+            <div class="feature-card__title">Рыночный gap прямо внутри проверки</div>
+            <div class="feature-card__text">Сравнение с рынком не прячется отдельно, а становится частью понятного audit flow и помогает быстрее находить точку роста.</div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-card__label">Визуал</div>
+            <div class="feature-card__title">Акцент на карточках и первом кадре</div>
+            <div class="feature-card__text">Так как вы сами работаете с оформлением карточек, продукт получает сильный модуль оценки фото и инфографики, а не только текста.</div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-card__label">API-first</div>
+            <div class="feature-card__title">Основа под Avito API уже заложена</div>
+            <div class="feature-card__text">Сейчас мы ждем подтверждение от Avito, но backend, Data Hub и benchmark-слой уже спроектированы под взрослую интеграцию.</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="projects-showcase" id="projects">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Проекты</div>
+            <h2 class="section-title">Внутри сайта уже есть отдельные рабочие направления</h2>
+            <p class="section-sub">Оформил блок так, чтобы проекты воспринимались не как список папок, а как самостоятельные продуктовые ветки внутри экосистемы.</p>
+          </div>
+        </div>
+
+        <div class="projects" role="list">
+          <article class="project" role="listitem">
+            <div class="project__top">
+              <div class="project__tag">Внутренний проект</div>
+              <h3 class="project__title">avitologi</h3>
+              <div class="project__subtitle">Контур для работы с экспертной логикой, смыслами и продуктовым направлением для авитологов.</div>
+            </div>
+            <div class="project__body">
+              <div class="project__items">
+                <div class="project__item">Подходит для развития смыслов, контента и продуктовой упаковки проекта.</div>
+                <div class="project__item">Отдельная ветка внутри сайта, доступная уже сейчас.</div>
+              </div>
+              <div class="project__meta">Путь: /avitologi/</div>
+              <div class="project__actions">
+                <a class="btn btn--primary" href="/avitologi/">Открыть проект</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="project" role="listitem">
+            <div class="project__top">
+              <div class="project__tag">Редактор и шаблоны</div>
+              <h3 class="project__title">avitoeditor</h3>
+              <div class="project__subtitle">Референс по стилю, редактор карточек и база для визуального направления, которое уже усиливает общий продукт.</div>
+            </div>
+            <div class="project__body">
+              <div class="project__items">
+                <div class="project__item">Подтягивает тему дизайна, шаблонов и оформления карточек Авито.</div>
+                <div class="project__item">Именно отсюда взят визуальный тон для новой витрины.</div>
+              </div>
+              <div class="project__meta">Путь: /avitoeditor/</div>
+              <div class="project__actions">
+                <a class="btn btn--primary" href="/avitoeditor/">Открыть редактор</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="project" role="listitem">
+            <div class="project__top">
+              <div class="project__tag">Портфолио</div>
+              <h3 class="project__title">portfolio</h3>
+              <div class="project__subtitle">Отдельная ветка для презентации ваших работ, кейсов и визуального опыта, который напрямую усиливает доверие к сервису.</div>
+            </div>
+            <div class="project__body">
+              <div class="project__items">
+                <div class="project__item">Полезен как витрина кейсов и результата для будущих клиентов и партнеров.</div>
+                <div class="project__item">Логично связывается с модулем оценки фото и инфографики.</div>
+              </div>
+              <div class="project__meta">Путь: /portfolio/</div>
+              <div class="project__actions">
+                <a class="btn btn--primary" href="/portfolio/">Открыть портфолио</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="flow">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Как это будет работать</div>
+            <h2 class="section-title">Пользовательский путь короткий, понятный и заточен под результат</h2>
+            <p class="section-sub">Даже пока продукт в активной сборке, главная уже должна объяснять один простой сценарий: зайти, проверить, усилить, сравнить.</p>
+          </div>
+        </div>
+
+        <div class="flow-list">
+          <article class="flow-item">
+            <div class="flow-item__num">1</div>
+            <div>
+              <strong>Войти бесплатно</strong>
+              <span>Начать без оплаты, зайти в кабинет и увидеть базовый рабочий контур продукта.</span>
+            </div>
+          </article>
+
+          <article class="flow-item">
+            <div class="flow-item__num">2</div>
+            <div>
+              <strong>Проверить объявление</strong>
+              <span>Открыть экран аудита и получить понятные выводы по тексту, фото и инфографике.</span>
+            </div>
+          </article>
+
+          <article class="flow-item">
+            <div class="flow-item__num">3</div>
+            <div>
+              <strong>Усилить слабые места</strong>
+              <span>Исправить заголовок, первый кадр, оффер и визуальные акценты по понятным рекомендациям.</span>
+            </div>
+          </article>
+
+          <article class="flow-item">
+            <div class="flow-item__num">4</div>
+            <div>
+              <strong>Сравнить с рынком</strong>
+              <span>Дальше продукт ведет к benchmark и сравнению с похожими объявлениями по городу и услуге.</span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <div>© 2026 АВИТО КОНСТРУКТОР • бесплатный старт на текущем этапе</div>
+      <div class="footer__links">
+        <a class="footer-link" href="/cabinet/">Личный кабинет</a>
+        <a class="footer-link" href="/api/core/health.php">API health</a>
+        <a class="footer-link" href="/policy.html">Политика</a>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      function toggleMobile(open) {
+        var menu = document.getElementById('mobileMenu');
+        var burger = document.getElementById('burger');
+        if (!menu || !burger) return;
+        var isOpen = (open !== undefined) ? open : menu.classList.contains('is-open');
+        if (isOpen) {
+          menu.classList.remove('is-open');
+          menu.hidden = true;
+          burger.setAttribute('aria-expanded', 'false');
+        } else {
+          menu.hidden = false;
+          menu.classList.add('is-open');
+          burger.setAttribute('aria-expanded', 'true');
+        }
+      }
+
+      async function startLogin() {
+        var res = await fetch('/api/core/auth-yandex-start.php', { credentials: 'same-origin' });
+        var data = await res.json();
+        if (!data || !data.success || !data.authorize_url) {
+          throw new Error((data && data.error) ? data.error : 'Не удалось начать вход');
+        }
+        window.location.href = data.authorize_url;
+      }
+
+      var burger = document.getElementById('burger');
+      if (burger) {
+        burger.addEventListener('click', function () {
+          toggleMobile();
+        });
+      }
+
+      ['loginBtnTop', 'loginBtnMobile', 'loginBtnHero'].forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+          startLogin().catch(function (e) {
+            alert(e && e.message ? e.message : String(e));
+          });
+        });
+      });
+
+      var mobile = document.getElementById('mobileMenu');
+      if (mobile) {
+        mobile.addEventListener('click', function (e) {
+          var t = e.target;
+          if (t && t.tagName === 'A') {
+            toggleMobile(true);
+          }
+        });
+      }
+
+    })();
+  </script>
+</body>
+</html>

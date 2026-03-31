@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "avito-portfolio-production"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"powershell.cwd": "avito-portfolio-production",
+		"liveServer.settings.multiRootWorkspaceName": "Test"
+	}
+}

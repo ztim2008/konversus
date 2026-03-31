@@ -1,0 +1,76 @@
+# CHANGELOG
+
+## 2026-03-31
+- Добавлена стратегия деплоя и git-процесса для production-like контура и GitHub-репозитория:
+  - docs/DEPLOYMENT-STRATEGY.md
+  - README.md
+  - AGENTS.md
+- Добавлен календарь разработки с уже завершенными этапами, текущим фокусом и ближайшими окнами:
+  - docs/DEVELOPMENT-CALENDAR.md
+  - README.md
+- Добавлен корневой регламент для агентов с правилами чтения проекта, постановки задач, открытия/закрытия дня и проверки перед push:
+  - AGENTS.md
+  - README.md
+- Подключена живая страница политики конфиденциальности и ссылка из футера главной:
+  - policy.html
+  - index.html
+  - docs/checklists/NEW_BLOCK_CHECKLIST_STATUS.json
+- Полностью обновлена главная страница проекта под бесплатный старт и продуктовую витрину:
+  - index.html
+  - docs/checklists/NEW_BLOCK_CHECKLIST_STATUS.json
+- Зафиксирован callback endpoint для Avito OAuth и точный Redirect URL для настройки приложения:
+  - api/core/auth-avito-callback.php
+  - docs/ENV.md
+  - docs/CORE-MVP-SETUP.md
+- Добавлен backend audit endpoint и привязка экрана аудита к реальному API:
+  - api/core/audit.php
+  - api/core/audit-lib.php
+  - cabinet/assets/app.js
+  - docs/CORE-MVP-SETUP.md
+- В кабинете добавлен новый экран аудита с адаптивной UI-структурой и локальными Lucide-иконками:
+  - cabinet/index.html
+  - cabinet/assets/app.js
+  - cabinet/assets/app.css
+  - cabinet/assets/lucide-local.js
+- Добавлена новая one-page концепция ядра MVP: аудит и улучшение объявлений Авито по ссылке:
+  - docs/product/MVP-CORE-CONCEPT.md
+- Уточнена продуктовая концепция: Avito API как основа платформы, audit-first вход и визуальный аудит фото/инфографики:
+  - docs/product/MVP-CORE-CONCEPT.md
+  - docs/PROJECT-IDEOLOGY.md
+- Добавлены продуктовые документы для взрослого планирования API-first MVP:
+  - docs/product/AVITO-API-MVP-MAP.md
+  - docs/product/AUDIT-SCORING-SYSTEM.md
+- Добавлены практические спецификации для следующего шага разработки:
+  - docs/tech/AVITO-DATA-HUB-CONTRACT.md
+  - docs/product/FIRST-AUDIT-SCREEN.md
+- Добавлен продуктовый слой рыночного benchmark и спеку источников данных:
+  - docs/product/MARKET-BENCHMARK-MODULE.md
+  - docs/tech/MARKET-BENCHMARK-DATA-SOURCES.md
+- Добавлены SQL-миграции и проектирование UI для benchmark-слоя:
+  - sql/acb-core-mvp-migrate-003-data-hub.sql
+  - sql/acb-core-mvp-migrate-004-market-benchmark.sql
+  - docs/tech/MARKET-BENCHMARK-SQL-LAYER.md
+  - docs/product/AUDIT-MARKET-GAP-BLOCK.md
+- Обновлен экран аудита под встроенный блок рыночного gap:
+  - docs/product/FIRST-AUDIT-SCREEN.md
+- Обновлены roadmap/backlog под новый фокус платформы:
+  - docs/MVP-BACKLOG.md
+  - docs/PROJECT-DEVELOPMENT-PLAN.md
+  - docs/product/PRODUCT-LOGIC.md
+  - docs/product/MVP-CORE-CONCEPT.md
+  - README.md
+- Удален WordPress-слой из корня проекта:
+  - Удалены корневые PHP entry/config файлы WordPress.
+  - Удалены директории wp-admin, wp-includes, wp-content.
+- Обновлена маршрутизация в .htaccess (fallback на index.html).
+- Обновлен README под AVITO CONVERSION BUILDER.
+- Очищен .vscode/tasks.json от задач, завязанных на WordPress.
+- Добавлен набор базовой документации:
+  - ARCHITECTURE, MONOREPO-STRUCTURE, ENV, MVP-BACKLOG,
+    RELEASE-CHECKLIST, RUNBOOK, продуктовые и технические спецификации.
+- Добавлена стартовая страница index.html.
+- Добавлен каркас монорепо: apps, packages, infra.
+- Добавлен отчет миграции WordPress с ссылками на backup.
+- Добавлен Core MVP API каркас (PHP): OAuth через Яндекс ID + JWT + refresh, CRUD объявлений:
+  - api/core/*
+  - sql/acb-core-mvp.sql

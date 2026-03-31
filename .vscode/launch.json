@@ -1,0 +1,15 @@
+{
+  "$schema": "vscode://schemas/launch",
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug: Start (Node)",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/dist/index.js",
+      "preLaunchTask": "Build TypeScript",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

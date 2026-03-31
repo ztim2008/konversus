@@ -1,0 +1,17 @@
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteRule ^ index.html [L]
+</IfModule>
+
+# BEGIN Really Simple Security No Index
+# Директивы (строки) между `BEGIN Really Simple Security No Index` и `END Really Simple Security No Index`
+# созданы автоматически и подлежат изменению только через фильтры WordPress.
+# Сделанные вручную изменения между этими маркерами будут перезаписаны.
+Options -Indexes
+# END Really Simple Security No Index

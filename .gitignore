@@ -1,0 +1,70 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Бэкапы и архивы
+avitoeditor-backup-*/
+avito-portfolio-backup-*/
+avito-portfolio-FRESH/
+avito-portfolio-v2/
+avito-portfolio-v2-upload/
+releases/
+releases-out/
+готовые плагины/
+*.zip
+*.rar
+*.7z
+
+# Временные и рабочие файлы
+PHASE-*.md
+SESSION-*.md
+DEPLOYMENT-*.md
+TESTING-*.md
+FINAL-*.md
+555.txt
+*.jpg
+*.png
+*.jpeg
+*.gif
+
+# Логи
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Переменные окружения
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Редакторы
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Тесты
+coverage/
+.nyc_output/
+
+# Временные файлы
+*.tmp
+*.temp
+.cache/
+
+# Production файлы
+/public/uploads/*
+!/public/uploads/.gitkeep
