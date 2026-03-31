@@ -28,7 +28,7 @@
 | Week 1 | 🔵 В работе | Авторизация v1 (Яндекс ID + JWT + refresh), базовый рабочий контур пользователя | Пользователь входит через Яндекс и обновляет сессию |
 | Week 2 | 🔴 Запланировано | Подключение Avito аккаунта + импорт объявлений + единый кабинет | Пользователь видит свои объявления в одном месте |
 | Week 3 | 🔴 Запланировано | Audit engine v1: текст + фото + инфографика | Пользователь получает объяснимый аудит и список правок |
-| Week 4 | 🔴 Запланировано | Improved version flow + before/after + client report v1 | End-to-end цикл: подключить -> проверить -> улучшить -> показать результат |
+| Week 4 | 🔴 Запланировано | Improved version flow + before/after + client report v1 + bridge в avitoeditor | End-to-end цикл: подключить -> проверить -> улучшить -> собрать новый визуал/баннер -> показать результат |
 
 ### Wave 2: A/B + Analytics MVP (Недели 5-8)
 
@@ -53,6 +53,7 @@
 - 🔵 Avito connection and import model
 - 🔵 Audit engine v1 (text, photo, infographic)
 - 🔵 Recommendations and improved version workflow
+- 🔵 Подготовка avitoeditor как встроенного конструктора баннеров и визуального improvement-модуля
 
 ## Риски и блокеры (owner + deadline)
 
@@ -94,5 +95,5 @@
 
 ## Ближайшие 3 результата
 - Довести Core MVP до первого цикла: подключить Avito -> увидеть объявления -> получить аудит.
-- Подготовить improved version flow и короткий отчет до/после.
+- Подготовить improved version flow с переходом в avitoeditor для сборки баннера/визуала и короткий отчет до/после.
 - Зафиксировать контракт Data Hub, ruleset для текста/фото/инфографики и логику benchmark v1.

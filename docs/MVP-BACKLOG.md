@@ -16,6 +16,7 @@
 
 ## Priority 2
 - Improvement workspace for updated listing version.
+- Banner builder bridge via avitoeditor for visual improvements.
 - Listing update flow back into working process.
 - Change history and before/after comparison.
 - Client-ready short report.

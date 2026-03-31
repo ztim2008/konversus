@@ -1,6 +1,11 @@
 # CHANGELOG
 
 ## 2026-03-31
+- Зафиксировано продуктовое решение: avitoeditor нужен основному проекту как встроенный конструктор баннеров и visual improvement module:
+  - docs/SERVICE-MAP.md
+  - docs/tech/AVITOEDITOR-INTEGRATION-CONTRACT.md
+  - docs/PROJECT-DEVELOPMENT-PLAN.md
+  - docs/MVP-BACKLOG.md
 - Начата первая реальная санация avitoeditor и зафиксирован его интеграционный контракт с core-платформой:
   - avitoeditor/.gitignore
   - avitoeditor/api/config.php
