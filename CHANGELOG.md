@@ -1,6 +1,14 @@
 # CHANGELOG
 
 ## 2026-03-31
+- Зафиксированы взрослый git-процесс, staging-план и карта санации legacy-папок перед второй волной публикации в GitHub:
+  - docs/GIT-WORKFLOW.md
+  - docs/STAGING-PLAN.md
+  - docs/LEGACY-SANITIZATION.md
+  - README.md
+  - AGENTS.md
+  - .gitignore
+  - avitoeditor/.env.example
 - Добавлена стратегия деплоя и git-процесса для production-like контура и GitHub-репозитория:
   - docs/DEPLOYMENT-STRATEGY.md
   - README.md

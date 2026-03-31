@@ -22,7 +22,9 @@ AVITO CONVERSION BUILDER — платформа для роста конверс
 5. docs/ARCHITECTURE.md и docs/MONOREPO-STRUCTURE.md — если задача затрагивает архитектуру, интеграции или структуру монорепо.
 6. docs/ENV.md и docs/CORE-MVP-SETUP.md — если задача касается env, БД, OAuth, API и runtime-проверок.
 7. docs/DEPLOYMENT-STRATEGY.md — если задача касается деплоя, релиза, git, GitHub или production-like режима.
-8. Профильные продуктовые и технические документы из docs/product/* и docs/tech/* — только после понимания текущего спринта.
+8. docs/GIT-WORKFLOW.md и docs/STAGING-PLAN.md — если задача касается веток, выката, staging или release-порядка.
+9. docs/LEGACY-SANITIZATION.md — если задача касается legacy-папок и их публикации в GitHub.
+10. Профильные продуктовые и технические документы из docs/product/* и docs/tech/* — только после понимания текущего спринта.
 
 Если задача касается кабинета, сначала смотри:
 1. cabinet/index.html

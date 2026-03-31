@@ -28,6 +28,7 @@ FINAL-*.md
 *.png
 *.jpeg
 *.gif
+!docs/DEPLOYMENT-STRATEGY.md
 
 # Логи
 *.log
@@ -68,3 +69,11 @@ coverage/
 # Production файлы
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# Legacy-папки до санации перед публичным mirror
+_backups/
+avito-portfolio-production/
+avitoeditor/
+avitologi/
+html-enhancer/
+portfolio/
