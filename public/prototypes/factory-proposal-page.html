@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Прототип клиентской страницы</title>
+  <meta name="description" content="Прототип итоговой клиентской страницы для Factory Proposal Builder.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #e9e4db;
+      --paper: #f5f1e8;
+      --ink: #0f1418;
+      --muted: #5b646c;
+      --line: rgba(15, 20, 24, 0.14);
+      --accent: #ba7f45;
+      --accent-soft: #d8bf9f;
+      --panel: #ece6dc;
+      --dark: #161b20;
+      --dark-soft: #222a32;
+      --max: 1320px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(15, 20, 24, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 20, 24, 0.04) 1px, transparent 1px),
+        var(--bg);
+      background-size: 36px 36px, 36px 36px, auto;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid var(--line);
+      background: rgba(245, 241, 232, 0.88);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar-inner,
+    .hero,
+    .section,
+    .footer {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      min-height: 42px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .button-primary {
+      border-color: rgba(186, 127, 69, 0.55);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .hero {
+      padding: 36px 0 22px;
+    }
+
+    .hero-frame {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .hero-main,
+    .hero-aside,
+    .section-card,
+    .metric,
+    .timeline-item,
+    .gallery-card,
+    .footer-card {
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .hero-main {
+      padding: 34px;
+      min-height: 560px;
+      display: grid;
+      align-content: space-between;
+      background:
+        linear-gradient(180deg, rgba(186, 127, 69, 0.08), transparent 34%),
+        var(--paper);
+    }
+
+    .kicker,
+    .eyebrow {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .hero-title {
+      max-width: 11ch;
+      margin: 22px 0 0;
+      font-size: clamp(46px, 7vw, 94px);
+      line-height: 0.9;
+      letter-spacing: -0.07em;
+    }
+
+    .hero-copy {
+      max-width: 62ch;
+      margin-top: 22px;
+      font-size: 18px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    .hero-badges,
+    .hero-points,
+    .metrics,
+    .gallery,
+    .footer-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-badges {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 28px;
+    }
+
+    .badge {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .badge strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+      color: var(--ink);
+    }
+
+    .hero-aside {
+      padding: 28px;
+      background: var(--dark);
+      color: #eef2f4;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .hero-aside .kicker,
+    .hero-aside .eyebrow,
+    .hero-aside .note {
+      color: rgba(238, 242, 244, 0.68);
+    }
+
+    .hero-aside h2 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-points {
+      margin-top: 4px;
+    }
+
+    .hero-point {
+      padding: 14px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 15px;
+      line-height: 1.7;
+      color: rgba(238, 242, 244, 0.82);
+    }
+
+    .hero-point strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+
+    .note {
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .section {
+      padding: 0 0 18px;
+    }
+
+    .section-card {
+      padding: 30px;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+      margin-bottom: 26px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: clamp(30px, 4.5vw, 52px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+    }
+
+    .section-copy {
+      max-width: 66ch;
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    .metrics {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .metric {
+      padding: 22px;
+      min-height: 170px;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .metric-value {
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 0.92;
+      letter-spacing: -0.07em;
+    }
+
+    .metric-label {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: 18px;
+    }
+
+    .manifesto {
+      display: grid;
+      gap: 16px;
+    }
+
+    .manifesto-block {
+      padding: 22px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .manifesto-block:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .manifesto-block h3,
+    .timeline-item h3,
+    .gallery-card h3,
+    .footer-card h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      letter-spacing: -0.04em;
+    }
+
+    .manifesto-block p,
+    .timeline-item p,
+    .gallery-card p,
+    .footer-card p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    .timeline {
+      display: grid;
+      gap: 14px;
+    }
+
+    .timeline-item {
+      padding: 22px;
+      background: var(--panel);
+    }
+
+    .timeline-step {
+      display: inline-flex;
+      min-height: 26px;
+      align-items: center;
+      padding: 0 8px;
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .gallery {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .gallery-card {
+      min-height: 320px;
+      padding: 22px;
+      display: grid;
+      align-content: space-between;
+      background:
+        linear-gradient(180deg, rgba(186, 127, 69, 0.06), transparent 55%),
+        var(--paper);
+    }
+
+    .gallery-placeholder {
+      min-height: 180px;
+      border: 1px dashed var(--line);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .cta {
+      padding: 34px;
+      background: var(--dark);
+      color: #fff;
+    }
+
+    .cta-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+      gap: 26px;
+      align-items: end;
+    }
+
+    .cta-title {
+      margin: 14px 0 0;
+      max-width: 13ch;
+      font-size: clamp(34px, 5vw, 60px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+    }
+
+    .cta-copy {
+      margin-top: 18px;
+      max-width: 56ch;
+      color: rgba(255,255,255,0.7);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .cta-panel {
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 22px;
+      background: var(--dark-soft);
+    }
+
+    .cta-panel .button,
+    .footer-card .button {
+      width: 100%;
+    }
+
+    .footer {
+      padding: 0 0 42px;
+    }
+
+    .footer-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .footer-card {
+      padding: 22px;
+      min-height: 200px;
+    }
+
+    @media (max-width: 1080px) {
+      .hero-frame,
+      .split,
+      .cta-grid,
+      .section-head,
+      .footer-grid,
+      .metrics,
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-badges {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner { align-items: flex-start; }
+      .topbar-actions { width: 100%; }
+      .topbar-actions .button { flex: 1 1 auto; }
+      .hero-main,
+      .hero-aside,
+      .section-card,
+      .cta,
+      .footer-card { padding: 20px; }
+      .hero { padding-top: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">FPB</div>
+        <div>
+          <div>Factory Proposal Builder</div>
+          <div class="kicker">Прототип клиентской страницы</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a class="button" href="/dashboard">В кабинет</a>
+        <a class="button" href="/dashboard/proposals/e7796137-fb54-449c-93df-d87c9b2afaab">В редактор</a>
+        <a class="button button-primary" href="#contact">Следующий шаг</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-frame">
+        <div class="hero-main">
+          <div>
+            <div class="eyebrow">Концепт для производственной компании Домострой</div>
+            <h1 class="hero-title">Новая цифровая подача, которая делает компанию крупнее в глазах клиента.</h1>
+            <p class="hero-copy">
+              Это не рабочий редактор, а макет того, как может выглядеть итоговая клиентская страница: с четкой иерархией,
+              журнальной версткой, плотной сеткой и спокойной производственной подачей без ощущения интерфейса конструктора.
+            </p>
+          </div>
+
+          <div>
+            <div class="hero-badges">
+              <div class="badge">
+                <strong>Формат</strong>
+                Живая презентационная страница вместо абстрактного описания услуг.
+              </div>
+              <div class="badge">
+                <strong>Задача</strong>
+                Показать масштаб, надежность и зрелость бизнеса на первом экране.
+              </div>
+              <div class="badge">
+                <strong>Итог</strong>
+                Клиент понимает логику будущего сайта до старта продакшна.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-aside">
+          <div>
+            <div class="kicker">Режим подачи</div>
+            <h2>Не админка, а клиентский документ</h2>
+          </div>
+          <div class="hero-points">
+            <div class="hero-point">
+              <strong>Один главный narrative</strong>
+              Каждый блок не существует сам по себе, а усиливает общий образ компании и ведет к следующему шагу.
+            </div>
+            <div class="hero-point">
+              <strong>Реальный editorial layout</strong>
+              Блоки выглядят как части готовой страницы, а не как карточки конструктора или панели CRM.
+            </div>
+            <div class="hero-point">
+              <strong>Плотная производственная эстетика</strong>
+              Без закруглений, с ясной типографикой, тактильной сеткой и акцентом на инженерную серьезность.
+            </div>
+          </div>
+          <div class="note">
+            Этот прототип нужен как отдельный визуальный эталон. Потом его принципы будут перенесены обратно в builder как preview-mode.
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="kicker">Контекст компании</div>
+          <div>
+            <h2 class="section-title">Что клиент должен понять о бизнесе за первые 40 секунд.</h2>
+            <div class="section-copy">
+              Здесь нет интерфейсной суеты. Вместо этого страница быстро сообщает, кто компания, на каком масштабе работает,
+              почему ей можно доверять и какой цифровой образ должен быть собран дальше.
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <article class="metric">
+            <div class="kicker">Площадка</div>
+            <div class="metric-value">12 000 м²</div>
+            <div class="metric-label">Суммарная площадь производства и складской инфраструктуры.</div>
+          </article>
+          <article class="metric">
+            <div class="kicker">Команда</div>
+            <div class="metric-value">86</div>
+            <div class="metric-label">Специалистов в производстве, комплектации и инженерном сопровождении.</div>
+          </article>
+          <article class="metric">
+            <div class="kicker">География</div>
+            <div class="metric-value">18 регионов</div>
+            <div class="metric-label">Поставка, внедрение и сопровождение проектов по России.</div>
+          </article>
+          <article class="metric">
+            <div class="kicker">Опыт</div>
+            <div class="metric-value">11 лет</div>
+            <div class="metric-label">Практика в сегменте стройматериалов и промышленных решений.</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="split">
+        <div class="section-card">
+          <div class="section-head">
+            <div class="kicker">Проблема текущей подачи</div>
+            <div>
+              <h2 class="section-title">Сейчас сайт выглядит слабее, чем реальная компания.</h2>
+              <div class="section-copy">
+                Основная потеря не в продукте, а в восприятии. Цифровая оболочка не передает масштаб, доверие и инженерный уровень,
+                поэтому часть потенциальных клиентов считает бизнес меньше и проще, чем он есть на самом деле.
+              </div>
+            </div>
+          </div>
+
+          <div class="manifesto">
+            <div class="manifesto-block">
+              <h3>Первый экран не держит вес компании</h3>
+              <p>Подача не фиксирует масштаб производства, специализацию и зрелость на первом касании.</p>
+            </div>
+            <div class="manifesto-block">
+              <h3>Каталог и экспертиза разорваны</h3>
+              <p>Продукция, кейсы и аргументы доверия живут отдельно, поэтому документ не складывается в одну убедительную историю.</p>
+            </div>
+            <div class="manifesto-block">
+              <h3>Следующий шаг не артикулирован</h3>
+              <p>Клиенту неясно, к чему именно его ведут: к заявке, разговору, техническому брифу или расчету.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline">
+          <article class="timeline-item">
+            <div class="timeline-step">Шаг 01</div>
+            <h3>Собрать сильный вход</h3>
+            <p>Первый экран, который сразу передает индустриальный масштаб и взрослый уровень компании.</p>
+          </article>
+          <article class="timeline-item">
+            <div class="timeline-step">Шаг 02</div>
+            <h3>Раскрыть доверие через фактуру</h3>
+            <p>Показать производство, метрики, кейсы, сертификаты и реальные доказательства, а не общие обещания.</p>
+          </article>
+          <article class="timeline-item">
+            <div class="timeline-step">Шаг 03</div>
+            <h3>Закрыть на разговор</h3>
+            <p>Финал страницы должен приводить к конкретному следующему действию: обсуждению концепта и структуры внедрения.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="kicker">Визуальный слой</div>
+          <div>
+            <h2 class="section-title">Как может выглядеть фактура страницы после переноса в production visual.</h2>
+            <div class="section-copy">
+              Здесь вместо редакторских карточек идут реальные page-sections: галерея, proof-блоки, архитектура структуры и большие editorial-переходы.
+              То есть builder остается рабочим инструментом, а клиент получает отдельную полноценную страницу.
+            </div>
+          </div>
+        </div>
+
+        <div class="gallery">
+          <article class="gallery-card">
+            <div>
+              <div class="kicker">Фрагмент 01</div>
+              <h3>Секция масштаба производства</h3>
+              <p>Крупный блок с цифрами, площадями, цехами и зонами отгрузки.</p>
+            </div>
+            <div class="gallery-placeholder">Фото / видео / схема</div>
+          </article>
+          <article class="gallery-card">
+            <div>
+              <div class="kicker">Фрагмент 02</div>
+              <h3>Секция технологической базы</h3>
+              <p>Оборудование, инженерные решения, процессы и контроль качества.</p>
+            </div>
+            <div class="gallery-placeholder">Технический медиаблок</div>
+          </article>
+          <article class="gallery-card">
+            <div>
+              <div class="kicker">Фрагмент 03</div>
+              <h3>Секция доказательств</h3>
+              <p>Кейсы, стандарты, лицензии, сертификаты и контракты, собранные в единую narrative-линию.</p>
+            </div>
+            <div class="gallery-placeholder">Proof gallery</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="cta" id="contact">
+        <div class="cta-grid">
+          <div>
+            <div class="kicker">Следующий шаг</div>
+            <h2 class="cta-title">Если логика концепта совпадает с вектором компании, двигаемся в рабочую сборку.</h2>
+            <p class="cta-copy">
+              На следующем звонке фиксируются приоритетные страницы, медиаслой, структура каталога и этапы запуска. После этого builder уже работает как внутренняя production-среда,
+              а клиентская страница остается чистой презентационной оболочкой.
+            </p>
+          </div>
+          <aside class="cta-panel">
+            <div class="kicker">Контактный сценарий</div>
+            <h3>Созвон на 30 минут</h3>
+            <p>Разбор структуры, архитектуры страниц, материалов и коммерческой рамки проекта.</p>
+            <div style="margin-top: 18px; display: grid; gap: 10px;">
+              <a class="button button-primary" href="#">Назначить следующий шаг</a>
+              <a class="button" href="#">Скачать PDF-версию</a>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <article class="footer-card">
+          <div class="kicker">Что важно</div>
+          <h3>Это визуальный эталон</h3>
+          <p>Не builder, а будущая клиентская форма документа. Она должна жить отдельно и не выглядеть как панель редактирования.</p>
+        </article>
+        <article class="footer-card">
+          <div class="kicker">Что переносим обратно</div>
+          <h3>Логику секций и ритм</h3>
+          <p>Из прототипа в editor переедут композиция секций, hierarchy текста и режим preview, но не весь внешний chrome редактора.</p>
+        </article>
+        <article class="footer-card">
+          <div class="kicker">Следующее действие</div>
+          <h3>Собрать preview-mode</h3>
+          <p>После утверждения этого слоя builder можно перевести из карточечного canvas в режим, который ближе к реальной странице.</p>
+        </article>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

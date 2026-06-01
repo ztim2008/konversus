@@ -1,9 +1,0 @@
-{
-  "shop_id": "CHANGE_ME",
-  "secret_key": "CHANGE_ME",
-  "test_mode": false,
-  "dev_mode": true,
-  "template_price": 700,
-  "subscription_monthly": 700,
-  "subscription_yearly": 7000
-}

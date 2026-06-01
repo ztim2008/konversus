@@ -1,0 +1,254 @@
+{
+    "v": 3,
+    "meta": {
+        "type": "profile",
+        "theme": "avito-premium",
+        "name": "Рекламное агентство \"ПРОСТО\"",
+        "specialty": "Продающий профиль специалиста",
+        "title": "Помогаем получать больше заявок с Авито",
+        "description": "Оформляем профиль, составляем объявления, которые читают до конца и настраиваем воронку. Работаем небольшой командой - поэтому всегда на связи",
+        "telegram": "ProstoAgencyy",
+        "phone": "+7 995 601-96-37"
+    },
+    "blocks": [
+        {
+            "id": 1,
+            "type": "nav",
+            "data": {
+                "name": "Рекламное агентство \"ПРОСТО\"",
+                "ctaText": "Бесплатный аудит",
+                "showAvito": true
+            }
+        },
+        {
+            "id": 2,
+            "type": "hero",
+            "data": {
+                "availability": "Готовы взять несколько клиентов на июнь",
+                "title": "Помогаем получать\nбольше заявок с Авито",
+                "subtitle": "Оформляем профиль, составляем объявления, которые читают до конца и настраиваем воронку. Работаем небольшой командой  - поэтому всегда на связи",
+                "ctaText": "Разобрать мой Авито — бесплатно",
+                "cta2Text": "Посмотреть кейс",
+                "badge": "✓ Авитологи с 7-летним опытом",
+                "trustPills": [
+                    "Запуск всего за 3 дня",
+                    "Возврат, если за 2 недели не получили заявок",
+                    "Бесплатная инфографика"
+                ],
+                "photoUrl": "/sales-doc/uploads/2026/05/50221d3ce52d8371eae4340e.jpg",
+                "photoAlt": "Фото авитолога Рекламное агентство \"ПРОСТО\" — Авитолог · Продвижение на Авито"
+            }
+        },
+        {
+            "id": 3,
+            "type": "avito",
+            "data": {
+                "chip": "Профиль на Avito",
+                "title": "Авито — Объявления на сайте Авито",
+                "description": "Авито — Объявления на сайте Авито",
+                "url": "https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2",
+                "location": "Brands",
+                "imageUrl": "https://m.avito.ru/icons/touch-icon-512x512.png",
+                "imageAlt": "Скриншот публичной страницы Avito: Авито — Объявления на сайте Авито",
+                "note": "Данные подтянуты из публичной страницы Avito",
+                "blocked": false
+            }
+        },
+        {
+            "id": 4,
+            "type": "stats",
+            "data": {
+                "items": [
+                    {
+                        "num": "259",
+                        "color": "blue",
+                        "desc": "клиентов получили\nрезультат"
+                    },
+                    {
+                        "num": "+54%",
+                        "color": "green",
+                        "desc": "средний рост заявок\nза 2 недели"
+                    },
+                    {
+                        "num": "1280+",
+                        "color": "orange",
+                        "desc": "объявлений\nнаписали сами "
+                    },
+                    {
+                        "num": "7+ лет",
+                        "color": "",
+                        "desc": "работаем с Авито"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 5,
+            "type": "services",
+            "data": {
+                "chip": "Что я делаю",
+                "title": "Четыре услуги — конкретные результаты",
+                "subtitle": "Каждая закрывает одну задачу: вы получаете больше заявок с Авито",
+                "items": [
+                    {
+                        "icon": "edit",
+                        "color": "",
+                        "name": "Оформление профиля",
+                        "desc": "Шапка, описание, фотографии. Создаем образ надёжного продавца — клиент видит и уже хочет написать.",
+                        "result": "→ CTR растёт в 1.5–2×",
+                        "price": "от 4 900 ₽"
+                    },
+                    {
+                        "icon": "file",
+                        "color": "green",
+                        "name": "Написание объявлений",
+                        "desc": "Заголовок, описание, фото с правильными ракурсами. Формируем текст на языке вашей аудитории — не рекламным текстом, а живо.",
+                        "result": "→ Читают в 3× чаще",
+                        "price": "от 700 ₽/шт."
+                    },
+                    {
+                        "icon": "chart",
+                        "color": "orange",
+                        "name": "Ведение аккаунта под ключ",
+                        "desc": "Поднятие объявлений, A/B тесты заголовков, контроль позиций. Вы занимаетесь бизнесом — мы - Авито.",
+                        "result": "→ 50+ объявлений под контролем",
+                        "price": "от 35 000 ₽/мес"
+                    },
+                    {
+                        "icon": "search",
+                        "color": "red",
+                        "name": "Аудит и стратегия",
+                        "desc": "Отсматриваем ваш профиль, конкурентов, спрос. Даем пошаговый план — что сделать в первую очередь.",
+                        "result": "→ Plan на 30 дней",
+                        "price": "10 000 ₽"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 6,
+            "type": "case",
+            "data": {
+                "chip": "Кейс",
+                "title": "Реальный результат клиента",
+                "subtitle": "Один конкретный пример — с цифрами из кабинета Авито",
+                "niche": "Строительство и продажа бань · Москва и МО",
+                "caseTitle": "Профиль с маленьким количеством заявок превратился в главный источник клиентов за первые 14 дней",
+                "bigStat": "×6",
+                "bigLabel": "рост входящих звонков за 2 недели",
+                "metrics": [
+                    {
+                        "num": "19",
+                        "style": "was",
+                        "label": "звонков/мес. было"
+                    },
+                    {
+                        "num": "124",
+                        "style": "up",
+                        "label": "звонков/мес. стало"
+                    },
+                    {
+                        "num": "+246%",
+                        "style": "up",
+                        "label": "рост просмотров"
+                    },
+                    {
+                        "num": "11 дн.",
+                        "style": "",
+                        "label": "срок выхода"
+                    }
+                ],
+                "quote": "«Считал, что Авито — это доска объявлений для б/у вещей. Ребята показали, как сделать из профиля полноценный продающий канал. Уже на второй неделе пошли активные обращения, не ожидал, что смогу продать в первый месяц 2 бани»",
+                "authorInitials": "АК",
+                "authorName": "Виталий Корчагин",
+                "authorRole": "Строительство, свое производство",
+                "imageUrl": "/sales-doc/uploads/2026/05/dbff958b5cf621ee49e49e01.jpg",
+                "imageAlt": "Скриншот статистики Авито по кейсу",
+                "ctaText": "Хочу такой же результат →"
+            }
+        },
+        {
+            "id": 7,
+            "type": "process",
+            "data": {
+                "title": "4 шага от первого сообщения до результата",
+                "steps": [
+                    {
+                        "title": "Созвон 30 мин.",
+                        "desc": "Рассказываете про бизнес, мы задаем уточняющие вопросы",
+                        "time": "День 1",
+                        "active": false
+                    },
+                    {
+                        "title": "Аудит и план",
+                        "desc": "Проводим анализ ниши, конкурентов, спроса. Пишем план с приоритетами.",
+                        "time": "День 2–3",
+                        "active": true
+                    },
+                    {
+                        "title": "Действия",
+                        "desc": "Оформляем, пишем, публикуем. Каждый понедельник  отчёт за неделю",
+                        "time": "День 4",
+                        "active": false
+                    },
+                    {
+                        "title": "Результат",
+                        "desc": "Тестируем рекламные связки, расширяем публикации, донастраиваем трафик. Забираем лиды.",
+                        "time": "День 5+",
+                        "active": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": 8,
+            "type": "contacts",
+            "data": {
+                "title": "Свяжитесь удобным способом",
+                "subtitle": "Telegram предпочтительнее — отвечаем там быстрее всего",
+                "primaryUrl": "https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2",
+                "primaryNewTab": true,
+                "tgHandle": "ProstoAgencyy",
+                "tgUrl": "",
+                "tgNewTab": true,
+                "maxPhone": "9956019637",
+                "maxUrl": "",
+                "maxNewTab": true,
+                "phone": "+7 995 601-96-37",
+                "phoneUrl": "",
+                "phoneNewTab": false,
+                "waPhone": "",
+                "waUrl": "",
+                "waNewTab": false,
+                "trust": [
+                    "Отвечаю за 5-15 минут в рабочее время",
+                    "Работаем удалённо по всей России",
+                    "Договор с ИП · Закрывающие документы"
+                ]
+            }
+        },
+        {
+            "id": 9,
+            "type": "cta",
+            "data": {
+                "chip": "Следующий шаг",
+                "title": "Разберем ваш Авито\nбесплатно — за 2 часа",
+                "subtitle": "Присылаете ссылку на профиль — получаете конкретный разбор: что мешает заявкам и что сделать в первую очередь.",
+                "btnText": "Получить бесплатный аудит",
+                "tgHandle": "avitolog",
+                "note": "Отвечаем за 30 минут · Берем не более 5 клиентов в месяц · Договор с ИП"
+            }
+        },
+        {
+            "id": 10,
+            "type": "footer",
+            "data": {
+                "name": "Рекламное агентство \"ПРОСТО\"",
+                "ogrnip": "326700000014161",
+                "tgHandle": "ProstoAgencyy"
+            }
+        }
+    ],
+    "body_html": "<nav><div class=\"container\"><div class=\"nav-inner\"><div class=\"nav-logo\"><div class=\"avito-dots\"><span></span><span></span><span></span><span></span></div>Рекламное агентство &quot;ПРОСТО&quot;</div><ul class=\"nav-links\"><li><a href=\"#avito\">Авито</a></li><li><a href=\"#services\">Услуги</a></li><li><a href=\"#case\">Кейс</a></li><li><a href=\"#process\">Процесс</a></li><li><a href=\"#contacts\">Контакты</a></li></ul><div class=\"nav-right\"><a href=\"https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2\" target=\"_blank\" rel=\"noopener\" class=\"btn-nav\">Бесплатный аудит</a></div></div></div></nav>\n<section id=\"hero\" class=\"section-white\"><div class=\"container\"><div class=\"hero-grid\"><div><div class=\"hero-label\">Готовы взять несколько клиентов на июнь</div><h1 class=\"hero-title\">Помогаем получать<br>больше заявок с Авито</h1><p class=\"hero-sub\">Оформляем профиль, составляем объявления, которые читают до конца и настраиваем воронку. Работаем небольшой командой  - поэтому всегда на связи</p><div class=\"hero-actions\"><a href=\"https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2\" target=\"_blank\" rel=\"noopener\" class=\"btn btn-primary\">Разобрать мой Авито — бесплатно</a><a href=\"https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2\" target=\"_blank\" rel=\"noopener\" class=\"btn btn-outline\">Посмотреть кейс</a></div><div class=\"hero-trust\"><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-shield\" aria-hidden=\"true\"></span>Запуск всего за 3 дня</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-zap\" aria-hidden=\"true\"></span>Возврат, если за 2 недели не получили заявок</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span>Бесплатная инфографика</span></div></div><div class=\"hero-photo-wrap\"><div class=\"hero-photo-outer\"><div class=\"deco-ring deco-ring-1\"></div><div class=\"deco-ring deco-ring-2\"></div><div class=\"deco-dot deco-dot-1\"></div><div class=\"deco-dot deco-dot-2\"></div><div class=\"deco-dot deco-dot-3\"></div><div class=\"deco-dot deco-dot-4\"></div><div class=\"hero-photo-inner\"><img src=\"/sales-doc/uploads/2026/05/50221d3ce52d8371eae4340e.jpg\" alt=\"Фото авитолога Рекламное агентство &quot;ПРОСТО&quot; — Авитолог · Продвижение на Авито\" style=\"width:100%;height:100%;object-fit:cover;border-radius:50%;\"></div><div class=\"photo-badge\">✓ Авитологи с 7-летним опытом</div></div></div></div></div></section>\n<section id=\"avito\" class=\"section-white\"><div class=\"container\"><div class=\"avito-proof-card\"><div class=\"avito-proof-copy\"><span class=\"chip avito-chip\">Профиль на Avito</span><h2>Авито — Объявления на сайте Авито</h2><p>Авито — Объявления на сайте Авито</p><div class=\"avito-proof-meta\"><span><span class=\"sd-icon sd-icon-target\" aria-hidden=\"true\"></span>Brands</span><span><span class=\"sd-icon sd-icon-check\" aria-hidden=\"true\"></span>Публичная ссылка</span></div><a class=\"avito-proof-link\" href=\"https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2\" target=\"_blank\" rel=\"noopener\">Открыть на Avito</a><div class=\"avito-proof-note\">Данные подтянуты из публичной страницы Avito</div></div><a href=\"https://m.avito.ru/icons/touch-icon-512x512.png\" class=\"avito-proof-shot\" data-sd-lightbox=\"1\" data-alt=\"Скриншот публичной страницы Avito: Авито — Объявления на сайте Авито\"><img src=\"https://m.avito.ru/icons/touch-icon-512x512.png\" alt=\"Скриншот публичной страницы Avito: Авито — Объявления на сайте Авито\"></a></div></div></section>\n<div id=\"stats\"><div class=\"container\"><div class=\"stats-row\"><div class=\"stat-cell\"><span class=\"stat-num blue\">259</span><span class=\"stat-desc\">клиентов получили<br>результат</span></div><div class=\"stat-cell\"><span class=\"stat-num green\">+54%</span><span class=\"stat-desc\">средний рост заявок<br>за 2 недели</span></div><div class=\"stat-cell\"><span class=\"stat-num orange\">1280+</span><span class=\"stat-desc\">объявлений<br>написали сами </span></div><div class=\"stat-cell\"><span class=\"stat-num \">7+ лет</span><span class=\"stat-desc\">работаем с Авито</span></div></div></div></div>\n<section id=\"services\" class=\"section-bg\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Что я делаю</span><h2>Четыре услуги — конкретные результаты</h2><p>Каждая закрывает одну задачу: вы получаете больше заявок с Авито</p></div><div class=\"services-grid\"><div class=\"svc-card\"><span class=\"svc-price\">от 4 900 ₽</span><div class=\"svc-icon \"><span class=\"sd-icon sd-icon-edit\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Оформление профиля</div><p class=\"svc-desc\">Шапка, описание, фотографии. Создаем образ надёжного продавца — клиент видит и уже хочет написать.</p><span class=\"svc-result\">→ CTR растёт в 1.5–2×</span></div><div class=\"svc-card\"><span class=\"svc-price\">от 700 ₽/шт.</span><div class=\"svc-icon green\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Написание объявлений</div><p class=\"svc-desc\">Заголовок, описание, фото с правильными ракурсами. Формируем текст на языке вашей аудитории — не рекламным текстом, а живо.</p><span class=\"svc-result\">→ Читают в 3× чаще</span></div><div class=\"svc-card\"><span class=\"svc-price\">от 35 000 ₽/мес</span><div class=\"svc-icon orange\"><span class=\"sd-icon sd-icon-chart\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Ведение аккаунта под ключ</div><p class=\"svc-desc\">Поднятие объявлений, A/B тесты заголовков, контроль позиций. Вы занимаетесь бизнесом — мы - Авито.</p><span class=\"svc-result\">→ 50+ объявлений под контролем</span></div><div class=\"svc-card\"><span class=\"svc-price\">10 000 ₽</span><div class=\"svc-icon red\"><span class=\"sd-icon sd-icon-search\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Аудит и стратегия</div><p class=\"svc-desc\">Отсматриваем ваш профиль, конкурентов, спрос. Даем пошаговый план — что сделать в первую очередь.</p><span class=\"svc-result\">→ Plan на 30 дней</span></div></div></div></section>\n<section id=\"case\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip green\">Кейс</span><h2>Реальный результат клиента</h2><p>Один конкретный пример — с цифрами из кабинета Авито</p></div><div class=\"case-featured\"><div class=\"case-left\"><div><span class=\"case-niche-tag\">Строительство и продажа бань · Москва и МО</span><h3>Профиль с маленьким количеством заявок превратился в главный источник клиентов за первые 14 дней</h3></div><a href=\"/sales-doc/uploads/2026/05/dbff958b5cf621ee49e49e01.jpg\" class=\"case-shot-link\" data-sd-lightbox=\"1\" data-alt=\"Скриншот статистики Авито по кейсу\"><img class=\"case-shot-img\" src=\"/sales-doc/uploads/2026/05/dbff958b5cf621ee49e49e01.jpg\" alt=\"Скриншот статистики Авито по кейсу\"><span class=\"case-shot-zoom\">Увеличить</span></a><div><div class=\"case-big-stat\">×6</div><div class=\"case-big-label\">рост входящих звонков за 2 недели</div></div></div><div class=\"case-right\"><div class=\"case-metrics-grid\"><div class=\"case-m\"><span class=\"case-m-num was\">19</span><span class=\"case-m-label\">звонков/мес. было</span></div><div class=\"case-m\"><span class=\"case-m-num up\">124</span><span class=\"case-m-label\">звонков/мес. стало</span></div><div class=\"case-m\"><span class=\"case-m-num up\">+246%</span><span class=\"case-m-label\">рост просмотров</span></div><div class=\"case-m\"><span class=\"case-m-num \">11 дн.</span><span class=\"case-m-label\">срок выхода</span></div></div><div class=\"case-quote\">«Считал, что Авито — это доска объявлений для б/у вещей. Ребята показали, как сделать из профиля полноценный продающий канал. Уже на второй неделе пошли активные обращения, не ожидал, что смогу продать в первый месяц 2 бани»</div><div class=\"case-author\"><div class=\"case-ava\">АК</div><div><div class=\"case-author-name\">Виталий Корчагин</div><div class=\"case-author-role\">Строительство, свое производство</div></div></div><a href=\"https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2\" target=\"_blank\" rel=\"noopener\" class=\"more-cases-link\">Хочу такой же результат →</a></div></div></div></section>\n<section id=\"process\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Как работаем</span><h2>4 шага от первого сообщения до результата</h2></div><div class=\"process-steps\"><div class=\"step\"><div class=\"step-circle\">1</div><div class=\"step-title\">Созвон 30 мин.</div><p class=\"step-desc\">Рассказываете про бизнес, мы задаем уточняющие вопросы</p><span class=\"step-time\">День 1</span></div><div class=\"step\"><div class=\"step-circle active\">2</div><div class=\"step-title\">Аудит и план</div><p class=\"step-desc\">Проводим анализ ниши, конкурентов, спроса. Пишем план с приоритетами.</p><span class=\"step-time\">День 2–3</span></div><div class=\"step\"><div class=\"step-circle\">3</div><div class=\"step-title\">Действия</div><p class=\"step-desc\">Оформляем, пишем, публикуем. Каждый понедельник  отчёт за неделю</p><span class=\"step-time\">День 4</span></div><div class=\"step\"><div class=\"step-circle\">4</div><div class=\"step-title\">Результат</div><p class=\"step-desc\">Тестируем рекламные связки, расширяем публикации, донастраиваем трафик. Забираем лиды.</p><span class=\"step-time\">День 5+</span></div></div></div></section>\n<section id=\"contacts\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Контакты</span><h2>Свяжитесь удобным способом</h2><p>Telegram предпочтительнее — отвечаем там быстрее всего</p></div><div class=\"contacts-grid\"><a href=\"https://t.me/ProstoAgencyy\" target=\"_blank\" rel=\"noopener\" class=\"contact-card contact-tg\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-message\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">Telegram</div><div class=\"contact-val\">@ProstoAgencyy</div><span class=\"contact-action\">Написать в Telegram →</span></a><a href=\"tel:+79956019637\" class=\"contact-card contact-max\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-smartphone\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">MAX</div><div class=\"contact-val\">+7 995 601-96-37</div><span class=\"contact-action\">Связаться →</span></a><a href=\"tel:+79956019637\" class=\"contact-card contact-phone\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-phone\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">Звонок</div><div class=\"contact-val\">+7 995 601-96-37</div><span class=\"contact-action\">Позвонить →</span></a><a href=\"https://wa.me/79956019637\" class=\"contact-card contact-wa\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-message\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">WhatsApp</div><div class=\"contact-val\">+7 995 601-96-37</div><span class=\"contact-action\">Написать →</span></a></div><div class=\"contacts-trust\"><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-zap\" aria-hidden=\"true\"></span>Отвечаю за 5-15 минут в рабочее время</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-target\" aria-hidden=\"true\"></span>Работаем удалённо по всей России</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span>Договор с ИП · Закрывающие документы</span></div></div></section>\n<section id=\"cta-final\"><div class=\"container\"><span class=\"cta-chip\">Следующий шаг</span><h2>Разберем ваш Авито<br>бесплатно — за 2 часа</h2><p class=\"cta-sub\">Присылаете ссылку на профиль — получаете конкретный разбор: что мешает заявкам и что сделать в первую очередь.</p><div class=\"cta-btns\"><a href=\"https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2\" target=\"_blank\" rel=\"noopener\" class=\"btn-white\">Получить бесплатный аудит</a><a href=\"https://www.avito.ru/brands/ade4ebb50c28609c43420c1fa3df1fb2\" target=\"_blank\" rel=\"noopener\" class=\"btn-tg\"><span class=\"sd-icon sd-icon-external\" aria-hidden=\"true\"></span> Открыть профиль</a></div><p class=\"cta-note\">Отвечаем за 30 минут · Берем не более 5 клиентов в месяц · Договор с ИП</p></div></section>\n<footer><div class=\"container\"><div class=\"footer-inner\"><div style=\"display:flex;align-items:center;gap:10px;\"><div class=\"avito-dots\"><span></span><span></span><span></span><span></span></div><span class=\"footer-copy\">© 2026 Рекламное агентство &quot;ПРОСТО&quot; · Авитолог · ИП · ОГРНИП 326700000014161</span></div><ul class=\"footer-links\"><li><a href=\"#\">Договор оферты</a></li><li><a href=\"#\">Конфиденциальность</a></li><li><a href=\"https://t.me/ProstoAgencyy\">Telegram</a></li></ul></div></div></footer>",
+    "created_at": "2026-05-07 07:46:22"
+}

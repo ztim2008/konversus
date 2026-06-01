@@ -1,0 +1,1823 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Прототип блоков мини-брендбука</title>
+  <meta name="description" content="Единый прототип block families для редактора мини-брендбука компании.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1419;
+      --bg-2: #151c24;
+      --bg-panel: rgba(255, 255, 255, 0.03);
+      --paper: #f1eadf;
+      --paper-2: #e7dcc9;
+      --paper-3: rgba(255, 255, 255, 0.5);
+      --ink: #171d24;
+      --muted: #67717c;
+      --muted-strong: rgba(247, 245, 240, 0.76);
+      --line: rgba(23, 29, 36, 0.12);
+      --line-soft: rgba(255, 255, 255, 0.08);
+      --accent: #bc8451;
+      --accent-strong: #945e2d;
+      --accent-soft: rgba(188, 132, 81, 0.14);
+      --white: #f7f5f0;
+      --shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
+      --font-ui: "Manrope", sans-serif;
+      --font-display: "Montserrat", sans-serif;
+      --font-mono: "IBM Plex Mono", monospace;
+      --before-ratio: 52%;
+      --pdf-page-width: 1120px;
+      --pdf-page-min-height: 1260px;
+    }
+
+    body[data-theme="steel"] {
+      --bg: #0f1720;
+      --bg-2: #162230;
+      --bg-panel: rgba(148, 190, 219, 0.06);
+      --paper: #edf2f4;
+      --paper-2: #dde7eb;
+      --paper-3: rgba(255, 255, 255, 0.62);
+      --ink: #15212b;
+      --muted: #5b6c79;
+      --accent: #6fa5c9;
+      --accent-strong: #417ea8;
+      --accent-soft: rgba(111, 165, 201, 0.18);
+    }
+
+    body[data-theme="copper"] {
+      --bg: #120f0e;
+      --bg-2: #1b1512;
+      --bg-panel: rgba(255, 213, 174, 0.05);
+      --paper: #f3e7da;
+      --paper-2: #ead8c6;
+      --paper-3: rgba(255, 255, 255, 0.42);
+      --ink: #201915;
+      --muted: #73665d;
+      --accent: #c17846;
+      --accent-strong: #995028;
+      --accent-soft: rgba(193, 120, 70, 0.18);
+    }
+
+    body[data-theme="forest"] {
+      --bg: #0e1411;
+      --bg-2: #152019;
+      --bg-panel: rgba(180, 200, 170, 0.05);
+      --paper: #eef0e4;
+      --paper-2: #e0e5d4;
+      --paper-3: rgba(255, 255, 255, 0.42);
+      --ink: #182119;
+      --muted: #677264;
+      --accent: #8ca16b;
+      --accent-strong: #617845;
+      --accent-soft: rgba(140, 161, 107, 0.18);
+    }
+
+    body[data-theme="mist"] {
+      --bg: #dfe5ea;
+      --bg-2: #cfd7de;
+      --bg-panel: rgba(255, 255, 255, 0.66);
+      --paper: #fbfcfd;
+      --paper-2: #f0f4f7;
+      --paper-3: rgba(255, 255, 255, 0.88);
+      --ink: #16212b;
+      --muted: #5c6b78;
+      --muted-strong: rgba(22, 33, 43, 0.8);
+      --line: rgba(22, 33, 43, 0.12);
+      --line-soft: rgba(22, 33, 43, 0.1);
+      --accent: #8197ab;
+      --accent-strong: #5a748b;
+      --accent-soft: rgba(129, 151, 171, 0.18);
+      --white: #ffffff;
+      --shadow: 0 28px 60px rgba(74, 92, 112, 0.16);
+    }
+
+    body[data-theme="white"] {
+      --bg: #f7f8fa;
+      --bg-2: #ffffff;
+      --bg-panel: rgba(255, 255, 255, 0.9);
+      --paper: #ffffff;
+      --paper-2: #fbfcfd;
+      --paper-3: rgba(246, 248, 250, 0.96);
+      --ink: #121820;
+      --muted: #5a6673;
+      --muted-strong: rgba(18, 24, 32, 0.8);
+      --line: rgba(18, 24, 32, 0.1);
+      --line-soft: rgba(18, 24, 32, 0.08);
+      --accent: #486579;
+      --accent-strong: #29485c;
+      --accent-soft: rgba(72, 101, 121, 0.12);
+      --white: #ffffff;
+      --shadow: 0 24px 54px rgba(37, 55, 73, 0.1);
+    }
+
+    body[data-theme="mist"] .topbar,
+    body[data-theme="white"] .topbar {
+      color: var(--ink);
+    }
+
+    body[data-theme="mist"] .brand-kicker,
+    body[data-theme="mist"] .theme-label,
+    body[data-theme="mist"] .nav-link,
+    body[data-theme="mist"] .theme-button,
+    body[data-theme="white"] .brand-kicker,
+    body[data-theme="white"] .theme-label,
+    body[data-theme="white"] .nav-link,
+    body[data-theme="white"] .theme-button {
+      color: var(--ink);
+    }
+
+    body[data-theme="mist"] .theme-button:not(.is-active),
+    body[data-theme="mist"] .nav-link,
+    body[data-theme="white"] .theme-button:not(.is-active),
+    body[data-theme="white"] .nav-link {
+      color: var(--ink);
+    }
+
+    body[data-theme="mist"] .nav-link,
+    body[data-theme="mist"] .theme-button,
+    body[data-theme="white"] .nav-link,
+    body[data-theme="white"] .theme-button {
+      border-color: var(--line);
+      background: rgba(255,255,255,0.68);
+    }
+
+    body[data-theme="mist"] .sheet,
+    body[data-theme="mist"] .pdf-panel,
+    body[data-theme="white"] .sheet,
+    body[data-theme="white"] .pdf-panel {
+      color: var(--ink);
+    }
+
+    body[data-theme="mist"] .sheet-copy,
+    body[data-theme="mist"] .pdf-copy,
+    body[data-theme="mist"] .pdf-list,
+    body[data-theme="mist"] .footer-note,
+    body[data-theme="mist"] .pdf-note,
+    body[data-theme="mist"] .sheet-title,
+    body[data-theme="white"] .sheet-copy,
+    body[data-theme="white"] .pdf-copy,
+    body[data-theme="white"] .pdf-list,
+    body[data-theme="white"] .footer-note,
+    body[data-theme="white"] .pdf-note,
+    body[data-theme="white"] .sheet-title {
+      color: color-mix(in srgb, var(--ink) 76%, transparent 24%);
+    }
+
+    body[data-theme="mist"] .hero-actions .button-ghost,
+    body[data-theme="white"] .hero-actions .button-ghost {
+      color: #f7f5f0;
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    body[data-theme="mist"] .theme-button.is-active,
+    body[data-theme="white"] .theme-button.is-active {
+      color: #ffffff;
+      background: color-mix(in srgb, var(--accent-strong) 88%, white 12%);
+      border-color: color-mix(in srgb, var(--accent-strong) 78%, white 22%);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-ui);
+      color: var(--white);
+      background:
+        radial-gradient(circle at top left, var(--accent-soft), transparent 24%),
+        radial-gradient(circle at right top, rgba(255, 255, 255, 0.05), transparent 18%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 52%, var(--bg) 100%);
+      transition: background 220ms ease, color 220ms ease;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(circle at center, black 38%, transparent 78%);
+      opacity: 0.75;
+    }
+
+    body[data-theme="mist"]::before,
+    body[data-theme="white"]::before {
+      background-image:
+        linear-gradient(rgba(18, 24, 32, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(18, 24, 32, 0.035) 1px, transparent 1px);
+      opacity: 0.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      width: min(1460px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 22px 0 120px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid var(--line-soft);
+      background: var(--bg-panel);
+      backdrop-filter: blur(14px);
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand,
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .brand-copy { display: grid; gap: 3px; }
+
+    .brand-kicker,
+    .nav-link,
+    .section-kicker,
+    .meta-label,
+    .caption,
+    .timeline-step-index,
+    .commercial-label,
+    .footer-note,
+    .slider-counter,
+    .theme-label,
+    .designer-note,
+    .pdf-note,
+    .video-meta,
+    .gallery-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .brand-kicker,
+    .theme-label,
+    .pdf-note,
+    .footer-note,
+    .designer-note {
+      color: color-mix(in srgb, var(--white) 64%, transparent 36%);
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .nav,
+    .theme-switcher { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .nav-link,
+    .theme-button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255,255,255,0.02);
+      color: var(--white);
+      cursor: pointer;
+    }
+
+    .theme-button.is-active {
+      border-color: color-mix(in srgb, var(--accent) 55%, white 15%);
+      background: color-mix(in srgb, var(--accent) 90%, white 10%);
+      color: #1f150d;
+    }
+
+    .hero {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .hero-panel,
+    .pdf-panel {
+      border: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-visual {
+      position: relative;
+      overflow: hidden;
+      min-height: 640px;
+      border: 1px solid var(--line-soft);
+      box-shadow: var(--shadow);
+      background:
+        linear-gradient(90deg, rgba(10, 14, 19, 0.92) 0%, rgba(10, 14, 19, 0.84) 42%, rgba(10, 14, 19, 0.38) 75%, rgba(10, 14, 19, 0.16) 100%),
+        linear-gradient(145deg, rgba(87, 111, 128, 0.46) 0%, rgba(36, 49, 62, 0.1) 35%, rgba(15, 21, 28, 0.82) 100%),
+        url("https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80") center/cover;
+    }
+
+    .hero-visual::after {
+      content: "";
+      position: absolute;
+      inset: 18px;
+      border: 1px solid rgba(255,255,255,0.14);
+      pointer-events: none;
+    }
+
+    .hero-visual-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 20px;
+      min-height: 640px;
+      padding: 28px;
+    }
+
+    .hero-content,
+    .hero-side-photo,
+    .hero-card-stack,
+    .hero-card,
+    .pdf-layout,
+    .hero-photo-frame,
+    .slider-head,
+    .slider-grid,
+    .about-grid,
+    .about-list,
+    .block-grid,
+    .editorial,
+    .editorial-columns,
+    .metrics-grid,
+    .gallery-grid,
+    .gallery-photo-grid,
+    .gallery-photo,
+    .video-grid,
+    .timeline-grid,
+    .commercial-grid,
+    .footer-grid,
+    .compare-grid,
+    .pdf-group,
+    .block-stack,
+    .hero-actions,
+    .cta-actions,
+    .about-actions {
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero-content {
+      align-content: end;
+      max-width: 760px;
+    }
+
+    .hero-title,
+    .block-title,
+    .editorial-title,
+    .compare-title,
+    .timeline-title,
+    .commercial-title,
+    .cta-title,
+    .about-title,
+    .slider-title,
+    .video-title {
+      margin: 12px 0 0;
+      font-family: var(--font-display);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: clamp(1.55rem, 2.35vw, 3.1rem);
+      line-height: 0.96;
+      letter-spacing: -0.06em;
+    }
+
+    .hero-title { max-width: 12ch; }
+
+    .hero-visual .brand-kicker,
+    .hero-title,
+    .hero-copy,
+    .hero-card-value,
+    .hero-card-copy,
+    .hero-card .caption {
+      color: #f7f5f0;
+    }
+
+    .block-title,
+    .editorial-title,
+    .compare-title,
+    .timeline-title,
+    .commercial-title,
+    .cta-title,
+    .about-title,
+    .slider-title,
+    .video-title {
+      max-width: 15ch;
+      color: var(--ink);
+    }
+
+    .hero-copy,
+    .editorial-copy,
+    .before-after-copy,
+    .commercial-copy,
+    .cta-copy,
+    .timeline-copy,
+    .about-copy,
+    .slider-copy,
+    .video-copy {
+      margin: 18px 0 0;
+      max-width: 68ch;
+      font-size: 16px;
+      line-height: 1.78;
+    }
+
+    .hero-copy,
+    .cta-copy { color: var(--muted-strong); }
+
+    .editorial-copy,
+    .before-after-copy,
+    .commercial-copy,
+    .about-copy,
+    .slider-copy,
+    .video-copy { color: var(--muted); }
+
+    .hero-actions,
+    .cta-actions,
+    .about-actions {
+      grid-template-columns: repeat(2, max-content);
+      margin-top: 28px;
+      gap: 12px;
+    }
+
+    .button,
+    .button-ghost,
+    .slider-button,
+    .video-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .button,
+    .slider-button,
+    .video-button {
+      border-color: color-mix(in srgb, var(--accent) 55%, white 8%);
+      background: color-mix(in srgb, var(--accent) 90%, white 10%);
+      color: #20160d;
+    }
+
+    .button-ghost {
+      border-color: var(--line-soft);
+      background: rgba(255,255,255,0.03);
+      color: var(--white);
+    }
+
+    .hero-side-photo {
+      align-content: end;
+      justify-items: end;
+    }
+
+    .hero-photo-frame {
+      width: min(100%, 360px);
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero-photo {
+      min-height: 410px;
+      background:
+        linear-gradient(180deg, rgba(18, 24, 32, 0) 0%, rgba(18, 24, 32, 0.66) 100%),
+        url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80") center/cover;
+      position: relative;
+    }
+
+    .hero-photo::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .hero-card-stack {
+      width: min(100%, 360px);
+      gap: 12px;
+    }
+
+    .hero-card {
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(8, 12, 18, 0.48);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-card-value {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.75rem;
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+    }
+
+    .hero-card-copy {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(247, 245, 240, 0.78);
+    }
+
+    .meta-label,
+    .caption,
+    .section-kicker,
+    .slider-counter,
+    .gallery-meta,
+    .video-meta,
+    .commercial-label,
+    .timeline-step-index { color: color-mix(in srgb, var(--accent-strong) 68%, #7b6d60 32%); }
+
+    .pdf-panel {
+      margin-top: 18px;
+      padding: 18px 20px;
+    }
+
+    .pdf-layout {
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: start;
+    }
+
+    .pdf-copy {
+      max-width: 64ch;
+      font-size: 14px;
+      line-height: 1.8;
+      color: color-mix(in srgb, var(--white) 70%, transparent 30%);
+    }
+
+    .pdf-list {
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      font-size: 14px;
+      line-height: 1.75;
+      color: color-mix(in srgb, var(--white) 78%, transparent 22%);
+    }
+
+    .sheet {
+      margin-top: 18px;
+      padding: 20px;
+      border: 1px solid var(--line-soft);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .sheet-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .sheet-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .sheet-copy {
+      max-width: 82ch;
+      font-size: 13px;
+      line-height: 1.72;
+      color: color-mix(in srgb, var(--white) 68%, transparent 32%);
+    }
+
+    .pdf-group {
+      align-content: start;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      -webkit-column-break-inside: avoid;
+    }
+
+    .block {
+      background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+      color: var(--ink);
+      border: 1px solid rgba(20, 26, 32, 0.08);
+      padding: 32px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+      transition: background 220ms ease, color 220ms ease;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      overflow: hidden;
+    }
+
+    .editorial-note,
+    .about-note {
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      font-size: 15px;
+      line-height: 1.8;
+      color: #3d4650;
+    }
+
+    .metric-card,
+    .gallery-card,
+    .gallery-photo,
+    .timeline-step,
+    .commercial-card,
+    .about-card,
+    .slider-card,
+    .video-panel,
+    .compare-card {
+      border: 1px solid var(--line);
+      background: var(--paper-3);
+      padding: 18px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .metric-value,
+    .price,
+    .about-figure,
+    .timeline-step-title,
+    .compare-slab-title,
+    .about-card-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.05em;
+      line-height: 0.96;
+    }
+
+    .metric-value,
+    .price,
+    .about-figure {
+      font-size: clamp(1.7rem, 1.9vw, 2.4rem);
+      color: var(--ink);
+    }
+
+    .metric-label,
+    .commercial-copy-small,
+    .timeline-copy,
+    .gallery-caption,
+    .about-card-copy,
+    .slider-card-copy,
+    .video-panel-copy {
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+
+    .gallery-photo-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .gallery-photo-grid .gallery-photo:first-child {
+      grid-column: span 2;
+      min-height: 340px;
+    }
+
+    .gallery-photo {
+      min-height: 260px;
+      display: grid;
+      align-content: end;
+      position: relative;
+      overflow: hidden;
+      color: var(--white);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .gallery-photo::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(12, 17, 22, 0.02) 0%, rgba(12, 17, 22, 0.78) 100%);
+    }
+
+    .gallery-photo::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .gallery-photo > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .gallery-photo.photo-1 {
+      background-image: url("https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80");
+    }
+
+    .gallery-photo.photo-2 {
+      background-image: url("https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80");
+    }
+
+    .gallery-photo.photo-3 {
+      background-image: url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80");
+    }
+
+    .gallery-card {
+      min-height: 340px;
+      display: grid;
+      align-content: end;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(21,26,32,0.74) 100%),
+        linear-gradient(145deg, color-mix(in srgb, var(--accent) 42%, #7e6c5b 58%) 0%, #455363 48%, #202a33 100%);
+      color: var(--white);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .gallery-card::before,
+    .video-stage::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      pointer-events: none;
+    }
+
+    .gallery-card.wide { min-height: 520px; }
+
+    .gallery-grid .gallery-card:not(.wide) {
+      min-height: 280px;
+    }
+
+    .gallery-caption {
+      color: rgba(247,245,240,0.76);
+      position: relative;
+      z-index: 1;
+    }
+
+    .gallery-meta,
+    .video-meta { color: rgba(247,245,240,0.68); }
+
+    .video-grid {
+      align-items: start;
+      margin-top: 24px;
+    }
+
+    .video-stage {
+      position: relative;
+      min-height: 620px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(10, 13, 18, 0.08) 0%, rgba(10, 13, 18, 0.68) 100%),
+        linear-gradient(135deg, rgba(89, 118, 136, 0.32) 0%, rgba(25, 34, 43, 0.12) 40%, rgba(11, 16, 21, 0.86) 100%),
+        url("https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1600&q=80") center/cover;
+      display: grid;
+      align-content: end;
+      padding: 30px;
+      border: 1px solid var(--line);
+    }
+
+    .video-stage-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 44ch;
+      color: rgba(247,245,240,0.82);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    .video-play {
+      position: absolute;
+      top: 26px;
+      right: 26px;
+      width: 86px;
+      height: 86px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(7, 10, 15, 0.46);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--white);
+      backdrop-filter: blur(12px);
+    }
+
+    .video-panel-title {
+      margin-top: 8px;
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.2rem;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+    }
+
+    .slider-head { margin-bottom: 22px; }
+
+    .slider-shell {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.34);
+      position: relative;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .slider-track {
+      display: flex;
+      transition: transform 260ms ease;
+    }
+
+    .slider-slide {
+      min-width: 100%;
+      display: grid;
+      gap: 16px;
+      padding: 22px;
+    }
+
+    .slider-visual {
+      min-height: 280px;
+      border: 1px solid rgba(23,29,36,0.1);
+      background:
+        linear-gradient(180deg, transparent, rgba(15,20,25,0.7)),
+        linear-gradient(145deg, color-mix(in srgb, var(--accent) 35%, #a9b5c2 65%), #29323d 62%, #11171e 100%);
+      position: relative;
+      display: grid;
+      align-content: end;
+      padding: 18px;
+      color: var(--white);
+    }
+
+    .slider-visual::before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .slider-visual-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 34ch;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .slider-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .slider-nav,
+    .slider-dots,
+    .theme-switcher,
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .slider-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(23,29,36,0.12);
+      background: rgba(23,29,36,0.16);
+      cursor: pointer;
+    }
+
+    .slider-dot.is-active {
+      background: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 70%, black 30%);
+    }
+
+    .slider-counter { color: #7b6d60; }
+
+    .compare-grid { margin-top: 24px; }
+
+    .compare-label { color: #7b6d60; }
+
+    .before-after-shell {
+      position: relative;
+      min-height: 390px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #d8d1c7;
+      cursor: ew-resize;
+      user-select: none;
+      --before-ratio: 52%;
+    }
+
+    .before-after-pane {
+      position: absolute;
+      inset: 0;
+      padding: 24px;
+      display: grid;
+      align-content: end;
+      gap: 12px;
+    }
+
+    .before-after-pane.before {
+      background: linear-gradient(180deg, #ddd5c7 0%, #c7bcab 100%);
+      color: #645c54;
+    }
+
+    .before-after-pane.after {
+      width: var(--before-ratio);
+      overflow: hidden;
+      background: linear-gradient(160deg, #1a222b 0%, #0f151c 100%);
+      color: var(--white);
+      border-right: 1px solid rgba(255,255,255,0.16);
+    }
+
+    .before-after-title {
+      max-width: 15ch;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(1.7rem, 2vw, 2.7rem);
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+    }
+
+    .before-after-list {
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .before-after-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: var(--before-ratio);
+      width: 1px;
+      background: rgba(255,255,255,0.8);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .before-after-handle::before {
+      content: "◀ ▶";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(15, 20, 25, 0.82);
+      color: var(--white);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .before-after-range {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: ew-resize;
+      margin: 0;
+    }
+
+    .timeline-intro {
+      max-width: 60ch;
+      margin-top: 18px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    .timeline-step-title {
+      font-size: 1.25rem;
+      color: var(--ink);
+    }
+
+    .about-card-title {
+      font-size: 1.15rem;
+    }
+
+    @media (max-width: 1280px) {
+      .page {
+        width: min(100% - 28px, 1240px);
+      }
+
+      .pdf-group,
+      #gallery.pdf-group,
+      #video.pdf-group,
+      #compare.pdf-group,
+      #commercial.pdf-group,
+      .video-grid,
+      .slider-grid,
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-visual-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+      }
+    }
+
+    .commercial-card.featured {
+      background: linear-gradient(180deg, #171e25 0%, #10161d 100%);
+      color: var(--white);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .commercial-card.featured .commercial-label,
+    .commercial-card.featured .commercial-copy-small,
+    .commercial-card.featured .price-meta { color: rgba(247,245,240,0.72); }
+
+    .price-meta {
+      margin-top: 8px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .about-panel {
+      border: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, #171e25 0%, #10161d 100%);
+      padding: 24px;
+      color: var(--white);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .about-title,
+    .about-panel .section-kicker,
+    .about-panel .about-copy,
+    .about-panel .about-note,
+    .about-panel .designer-note,
+    .about-panel .about-card-copy,
+    .about-panel .about-card-title { color: var(--white); }
+
+    .about-card {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .cta-block {
+      background: linear-gradient(180deg, #141b22 0%, #0f1419 100%);
+      color: var(--white);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .cta-block .cta-title { color: var(--white); max-width: 12ch; }
+
+    .cta-grid {
+      display: grid;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .cta-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .cta-side {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .cta-photo-card,
+    .cta-contact-card {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      padding: 16px;
+    }
+
+    .cta-photo {
+      min-height: 340px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(10,14,19,0.06) 0%, rgba(10,14,19,0.72) 100%),
+        url("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80") center/cover;
+    }
+
+    .cta-photo::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .cta-contact-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .cta-contact-item {
+      display: grid;
+      gap: 4px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .cta-contact-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .cta-contact-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(247,245,240,0.54);
+    }
+
+    .cta-contact-value {
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--white);
+      word-break: break-word;
+    }
+
+    .cta-note {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(247,245,240,0.68);
+    }
+
+    .footer-grid {
+      margin-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 18px;
+    }
+
+    .screen-only { display: inline-flex; }
+
+    @media (min-width: 960px) {
+      .hero-visual-grid {
+        grid-template-columns: minmax(0, 1.25fr) minmax(300px, 360px);
+        align-items: end;
+      }
+
+      .pdf-group {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .editorial-columns,
+      .footer-grid,
+      .about-list,
+      .video-grid,
+      .slider-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+      .metrics-grid,
+      .timeline-grid,
+      .commercial-grid,
+      .gallery-photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+      .gallery-grid {
+        grid-template-columns: 1.2fr 0.8fr;
+        align-items: stretch;
+      }
+
+      .pdf-layout {
+        grid-template-columns: 1.15fr 0.85fr;
+      }
+
+      .cta-grid {
+        grid-template-columns: minmax(0, 1fr) 340px;
+      }
+
+      #gallery.pdf-group,
+      #video.pdf-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 959px) {
+      .page { width: min(100% - 20px, 1460px); padding-bottom: 72px; }
+
+      .topbar,
+      .hero-panel,
+      .pdf-panel,
+      .sheet,
+      .block,
+      .about-panel { padding: 18px; }
+
+      .hero-visual,
+      .hero-visual-grid { min-height: auto; }
+
+      .hero-visual-grid {
+        padding: 18px;
+        grid-template-columns: 1fr;
+      }
+
+      .hero-photo-frame,
+      .hero-card-stack { width: 100%; }
+
+      .pdf-group,
+      .pdf-layout,
+      .editorial-columns,
+      .metrics-grid,
+      .gallery-grid,
+      .gallery-photo-grid,
+      .video-grid,
+      .timeline-grid,
+      .commercial-grid,
+      .footer-grid,
+      .about-list,
+      .slider-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-title,
+      .block-title,
+      .editorial-title,
+      .compare-title,
+      .timeline-title,
+      .commercial-title,
+      .cta-title,
+      .about-title,
+      .slider-title,
+      .video-title {
+        font-size: clamp(1.45rem, 6.8vw, 2.15rem);
+      }
+
+      .hero-copy,
+      .editorial-copy,
+      .before-after-copy,
+      .commercial-copy,
+      .cta-copy,
+      .timeline-copy,
+      .about-copy,
+      .slider-copy,
+      .video-copy {
+        font-size: 15px;
+        line-height: 1.72;
+      }
+
+      .hero-actions,
+      .cta-actions,
+      .about-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .button,
+      .button-ghost,
+      .slider-button,
+      .video-button { width: 100%; }
+
+      .slider-controls {
+        align-items: stretch;
+      }
+
+      .slider-nav,
+      .slider-dots { width: 100%; justify-content: space-between; }
+
+      .before-after-shell { min-height: 320px; }
+
+      .gallery-photo,
+      .gallery-photo-grid .gallery-photo:first-child,
+      .gallery-card,
+      .gallery-card.wide,
+      .gallery-grid .gallery-card:not(.wide) {
+        min-height: 240px;
+      }
+
+      .video-stage { min-height: 360px; padding: 20px; }
+      .cta-photo { min-height: 280px; }
+      .video-play { top: 18px; right: 18px; width: 72px; height: 72px; }
+
+      .screen-only.nav {
+        display: none !important;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+
+      html,
+      body {
+        background: #ffffff !important;
+        color: #111827 !important;
+      }
+
+      body::before {
+        display: none;
+      }
+
+      .page {
+        width: min(100%, var(--pdf-page-width));
+        padding: 0;
+      }
+
+      .topbar {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        box-shadow: none;
+        background: #ffffff;
+        color: #111827;
+      }
+
+      .hero-visual,
+      .hero-panel,
+      .pdf-panel,
+      .sheet,
+      .block,
+      .about-panel {
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .hero-visual,
+      .pdf-group,
+      .slider-shell,
+      .before-after-shell,
+      .video-stage,
+      .gallery-photo-grid,
+      .gallery-grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .hero-visual {
+        min-height: 0;
+      }
+
+      .hero-visual-grid,
+      .pdf-group,
+      .gallery-grid,
+      .gallery-photo-grid,
+      .video-grid,
+      .slider-grid,
+      .metrics-grid,
+      .timeline-grid,
+      .commercial-grid,
+      .about-list,
+      .footer-grid,
+      .editorial-columns {
+        gap: 12px;
+      }
+
+      .screen-only { display: none !important; }
+
+      .nav-link,
+      .theme-button,
+      .slider-button,
+      .slider-dot,
+      .before-after-range,
+      .video-button,
+      .video-play {
+        display: none !important;
+      }
+
+      .hero-visual,
+      .video-stage,
+      .gallery-card,
+      .gallery-photo {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .hero-visual,
+      .sheet,
+      .pdf-panel,
+      .block,
+      .about-panel {
+        margin-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body data-theme="graphite">
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">KB</div>
+        <div class="brand-copy">
+          <div class="brand-kicker">Прототип системы блоков</div>
+          <div class="brand-title">Мини-брендбук компании</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="theme-label">Палитра</div>
+        <div class="theme-switcher" aria-label="Смена цветовой схемы">
+          <button class="theme-button is-active" type="button" data-theme="graphite">Графит</button>
+          <button class="theme-button" type="button" data-theme="steel">Сталь</button>
+          <button class="theme-button" type="button" data-theme="copper">Медь</button>
+          <button class="theme-button" type="button" data-theme="forest">Олива</button>
+          <button class="theme-button" type="button" data-theme="mist">Светло-серый</button>
+          <button class="theme-button" type="button" data-theme="white">Белый</button>
+        </div>
+      </div>
+      <nav class="nav screen-only">
+        <a class="nav-link" href="#cover">Обложка</a>
+        <a class="nav-link" href="#gallery">Фото</a>
+        <a class="nav-link" href="#video">Видео</a>
+        <a class="nav-link" href="#compare">До/После</a>
+        <a class="nav-link" href="#commercial">Коммерция</a>
+        <a class="nav-link" href="#cta">CTA</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-visual" id="cover">
+        <div class="hero-visual-grid">
+          <div class="hero-content">
+            <div class="brand-kicker">Новая цифровая упаковка для производств</div>
+            <h1 class="hero-title">Компания должна выглядеть в digital так же сильно, как она работает в реальности</h1>
+            <p class="hero-copy">Первый экран здесь сразу решает две задачи. Он даёт плотный визуальный образ через тёмный фон с фото и затемнением, а справа добавляет живую фотографию и деловые опорные карточки. Такой hero уже можно переносить в реальный editor и в PDF без развала композиции.</p>
+            <div class="hero-actions">
+              <a class="button" href="#gallery">Смотреть блоки</a>
+              <a class="button-ghost" href="#cta">Финальный маршрут</a>
+            </div>
+          </div>
+          <div class="hero-side-photo">
+            <div class="hero-photo-frame">
+              <div class="hero-photo"></div>
+            </div>
+            <div class="hero-card-stack">
+              <div class="hero-card">
+                <div class="caption">Образ</div>
+                <div class="hero-card-value">Масштаб</div>
+                <div class="hero-card-copy">Клиент должен почувствовать зрелость и производственную мощность без длинных объяснений.</div>
+              </div>
+              <div class="hero-card">
+                <div class="caption">Подача</div>
+                <div class="hero-card-value">Доверие</div>
+                <div class="hero-card-copy">Сильная типографика, фотография и ритм секций делают proposal цельным и дорогим.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pdf-panel">
+        <div class="pdf-layout">
+          <div>
+            <div class="pdf-note">PDF-safe логика</div>
+            <div class="pdf-copy">Весь reference собран так, чтобы потом встраиваться в PDF как монолит: большие секции не дробятся, карточки и медиа не режутся пополам, у hero и ключевых media-блоков есть безопасные контейнеры с break-inside avoid. Это критично, потому что PDF для клиента должен выглядеть как законченный арт-дирекшн-документ, а не как веб-страница, случайно распечатанная в браузере.</div>
+          </div>
+          <ul class="pdf-list">
+            <li>Каждая крупная секция уже обёрнута в PDF-safe контейнер.</li>
+            <li>Print-режим отключает лишний UI и сохраняет фоны медиа-блоков.</li>
+            <li>В реальном builder надо экспортировать блоки не по одному, а заранее собранными PDF-группами.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet">
+      <div class="sheet-head">
+        <div>
+          <div class="brand-kicker">Набор блоков</div>
+          <div class="sheet-title">Система уже учитывает экран, мобильный и будущую PDF-сборку</div>
+        </div>
+        <div class="sheet-copy">Ниже блоки разложены не просто как коллекция секций, а как будущие группы для builder: cover и intro, narrative и proof, photo и media, compare и roadmap, commercial и contact. Это важнее, чем просто красота страницы, потому что в PDF экспортироваться должны не отдельные карточки, а цельные смысловые пласты.</div>
+      </div>
+
+      <div class="block-stack">
+        <div class="pdf-group">
+          <section class="block">
+            <div class="section-kicker">01 / Текстовый editorial блок</div>
+            <h2 class="editorial-title">Мы показываем не просто сайт, а новую систему презентации бизнеса в digital</h2>
+            <p class="editorial-copy">У большинства производственных компаний есть реальная экспертиза, мощности и опыт, но цифровая подача не поддерживает этот уровень. Поэтому редизайн здесь работает как инструмент усиления доверия: компания начинает выглядеть собраннее, современнее и понятнее для клиента, закупщика и партнёра.</p>
+            <div class="editorial-columns">
+              <div class="editorial-note">Новая подача должна собирать всё важное в единый маршрут: первый экран, доказательства, фото, большое медиа, сценарий сравнения и спокойный коммерческий переход. Тогда предложение ощущается как единая digital-концепция, а не набор разрозненных экранов.</div>
+              <div class="editorial-note">Это универсальный смысловой шаблон для производств, промышленного сервиса, B2B и оптовых поставщиков. Он не привязан к одной нише, но точно попадает в рыночную проблему: сильный бизнес визуально выглядит слабее, чем есть на самом деле.</div>
+            </div>
+          </section>
+
+          <section class="block">
+            <div class="section-kicker">02 / Метрики</div>
+            <h2 class="block-title">Цифры переводят впечатление в конкретное доказательство уровня</h2>
+            <div class="metrics-grid">
+              <div class="metric-card"><div class="metric-value">10+</div><div class="metric-label">лет устойчивой работы в своей нише, которые подтверждают, что компания не вчера появилась на рынке</div></div>
+              <div class="metric-card"><div class="metric-value">50+</div><div class="metric-label">сотрудников, подрядных единиц или производственных ролей, которые создают ощущение реального масштаба</div></div>
+              <div class="metric-card"><div class="metric-value">100+</div><div class="metric-label">реализованных проектов, поставок или контрактов, которые можно превратить в trust-слой</div></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="pdf-group" id="gallery">
+          <section class="block">
+            <div class="section-kicker">03 / Фото-галерея</div>
+            <h2 class="block-title">Фото здесь обязательно, потому что без реальной среды индустриальный бизнес не чувствуется</h2>
+            <p class="slider-copy">Галерея должна показывать не абстрактные картинки, а конкретную производственную среду: людей, процесс, оборудование, материальность и порядок. В builder этот блок лучше делать отдельной family со слотами под реальные фотографии, подписями и логикой безопасной упаковки в PDF.</p>
+            <div class="gallery-photo-grid">
+              <article class="gallery-photo photo-1"><div class="gallery-meta">Команда и процесс</div><div class="gallery-caption">Кадр с людьми и рабочей средой добавляет доверие и снимает ощущение обезличенной компании.</div></article>
+              <article class="gallery-photo photo-2"><div class="gallery-meta">Материал и точность</div><div class="gallery-caption">Деталь производства показывает внимание к качеству, технологии и фактуре реальной работы.</div></article>
+              <article class="gallery-photo photo-3"><div class="gallery-meta">Масштаб и порядок</div><div class="gallery-caption">Общий кадр пространства помогает быстро считать уровень организации и зрелость бизнеса.</div></article>
+            </div>
+          </section>
+
+          <section class="block">
+            <div class="section-kicker">04 / Галерея и media-story</div>
+            <h2 class="block-title">Один крупный визуальный акцент и две вспомогательные сцены собирают сильную фотоподачу</h2>
+            <div class="gallery-grid">
+              <article class="gallery-card wide"><div class="gallery-meta">Главный кадр</div><div class="gallery-caption">Крупный hero-photo внутри страницы нужен для эмоциональной фиксации масштаба, пространства и общего характера компании.</div></article>
+              <article class="gallery-card"><div class="gallery-meta">Деталь</div><div class="gallery-caption">Второй кадр показывает материал, технологию или инженерную дисциплину.</div></article>
+              <article class="gallery-card"><div class="gallery-meta">Среда</div><div class="gallery-caption">Третий кадр нужен, чтобы страница ощущалась не декоративной, а живой и производственной.</div></article>
+            </div>
+          </section>
+        </div>
+
+        <div class="pdf-group" id="video">
+          <section class="block">
+            <div class="section-kicker">05 / Большой media-video блок</div>
+            <h2 class="video-title">Большой видео-блок нужен как главный deep-dive в реальную атмосферу компании</h2>
+            <p class="video-copy">Это не маленький embed где-то между текстом. Это отдельная heavy-section, которая показывает производство, движение, технологичность и фактуру среды. В живой версии здесь может быть autoplay-preview или poster с открытием видео, а в PDF он должен выглядеть как сильный кинематографичный кадр, а не как пустая рамка.</p>
+            <div class="video-grid">
+              <div class="video-stage">
+                <div class="video-play screen-only">Play</div>
+                <div class="video-meta">Видео-история / Среда компании</div>
+                <div class="video-stage-copy">Крупный media-frame показывает, что мы умеем продавать не только словами и сеткой, но и ощущением присутствия внутри процесса. В PDF эта зона работает как статичный poster-кадр с подписью и коротким смысловым пояснением.</div>
+              </div>
+              <div class="about-list">
+                <article class="video-panel"><div class="video-meta">В онлайне</div><div class="video-panel-title">Poster + запуск видео</div><div class="video-panel-copy">В builder этот блок должен поддерживать poster-изображение, заголовок, подпись и ссылку или встроенный playback.</div></article>
+                <article class="video-panel"><div class="video-meta">В PDF</div><div class="video-panel-title">Единый статичный hero-frame</div><div class="video-panel-copy">При экспорте нужно подменять видео на подготовленный cover-shot без переносов, с сохранённым затемнением и подписью.</div></article>
+                <article class="video-panel"><div class="video-meta">Смысл</div><div class="video-panel-title">Показать реальную среду, а не интерфейс</div><div class="video-panel-copy">Видео здесь усиливает доверие к компании и добавляет глубину, которую не даст даже хорошая галерея.</div></article>
+              </div>
+            </div>
+          </section>
+
+          <section class="block" id="slider">
+            <div class="slider-head">
+              <div>
+                <div class="section-kicker">06 / Слайдер блок</div>
+                <h2 class="slider-title">Слайдер нужен там, где важно показать несколько сильных состояний одной компании</h2>
+                <p class="slider-copy">Это может быть серия ключевых экранов, разные сценарии подачи или последовательность выразительных сцен. В builder такой блок должен жить отдельно от галереи: со своими карточками, подписями и логикой контроля. Для PDF экспортируется один заранее выбранный активный слайд.</p>
+              </div>
+              <div class="slider-card">
+                <div class="designer-note">PDF-ограничение</div>
+                <div class="about-card-title" style="color:var(--ink);">Один активный кадр на страницу</div><div class="slider-card-copy">Слайдер остаётся интерактивным в браузере, но при PDF-сборке должен фиксироваться на выбранном кадре без точек, кнопок и бегущей карусели.</div>
+              </div>
+            </div>
+            <div class="slider-grid">
+              <div>
+                <div class="slider-shell" data-slider>
+                  <div class="slider-track">
+                    <section class="slider-slide"><div class="slider-visual"><div class="caption" style="color:rgba(247,245,240,0.72);">Слайд 01 / Первый экран</div><div class="slider-visual-copy">Крупный индустриальный акцент, сильный заголовок и ощущение, что перед клиентом зрелая современная компания.</div></div></section>
+                    <section class="slider-slide"><div class="slider-visual"><div class="caption" style="color:rgba(247,245,240,0.72);">Слайд 02 / Производственная среда</div><div class="slider-visual-copy">Второй кадр раскрывает процессы, оборудование и внутренний порядок, который обычно не попадает в обычный сайт.</div></div></section>
+                    <section class="slider-slide"><div class="slider-visual"><div class="caption" style="color:rgba(247,245,240,0.72);">Слайд 03 / Коммерческая зрелость</div><div class="slider-visual-copy">Третий слайд связывает доверие, каталог, обращение и следующий шаг клиента в одну деловую подачу.</div></div></section>
+                  </div>
+                </div>
+                <div class="slider-controls screen-only">
+                  <div class="slider-nav">
+                    <button class="slider-button" type="button" data-slider-prev>Назад</button>
+                    <button class="slider-button" type="button" data-slider-next>Дальше</button>
+                  </div>
+                  <div class="slider-counter" data-slider-counter>01 / 03</div>
+                  <div class="slider-dots">
+                    <button class="slider-dot is-active" type="button" data-slider-dot="0" aria-label="Слайд 1"></button>
+                    <button class="slider-dot" type="button" data-slider-dot="1" aria-label="Слайд 2"></button>
+                    <button class="slider-dot" type="button" data-slider-dot="2" aria-label="Слайд 3"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="about-list">
+                <article class="slider-card"><div class="caption">Польза</div><div class="about-card-title" style="color:var(--ink);">Даёт странице ритм и смену крупных акцентов</div><div class="slider-card-copy">Слайдер полезен, когда один кадр не вытягивает весь смысл блока и нужно показать серию выразительных сцен.</div></article>
+                <article class="slider-card"><div class="caption">Важно</div><div class="about-card-title" style="color:var(--ink);">Не превращать в баннерную карусель</div><div class="slider-card-copy">Внутри editor этот блок должен быть сдержанным, дорогим и медленным по ощущению, а не похожим на маркетплейс.</div></article>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="pdf-group" id="compare">
+          <section class="block">
+            <div class="section-kicker">07 / До / После с перетаскиванием</div>
+            <h2 class="compare-title">Интерактивный compare-блок позволяет буквально провести границу между старой и новой подачей</h2>
+            <p class="before-after-copy">Этот блок особенно важен для продаж. Он делает эффект редизайна наглядным: слева текущее состояние, справа новый цифровой образ компании. Пользователь сам двигает границу и лучше чувствует разницу в уровне подачи. В PDF фиксируется заранее выбранная позиция разделителя.</p>
+            <div class="compare-grid">
+              <article class="compare-card">
+                <div class="compare-label">Перетяните разделитель</div>
+                <div class="before-after-shell" data-before-after>
+                  <div class="before-after-pane before">
+                    <div class="caption" style="color:#6c645d;">Текущее состояние</div>
+                    <div class="before-after-title">Сайт не показывает настоящий уровень компании</div>
+                    <div class="before-after-list">
+                      <div>Слабый первый экран и разрозненная структура</div>
+                      <div>Нет ощущения масштаба, среды и компетентности</div>
+                      <div>Коммерческий потенциал бизнеса не считывается визуально</div>
+                    </div>
+                  </div>
+                  <div class="before-after-pane after">
+                    <div class="caption" style="color:rgba(247,245,240,0.72);">Новая подача</div>
+                    <div class="before-after-title">Компания выглядит как сильный современный industrial-бренд</div>
+                    <div class="before-after-list">
+                      <div>Чёткий визуальный фрейм и дорогая типографика</div>
+                      <div>Масштаб, доверие и зрелость считываются сразу</div>
+                      <div>Страница ведёт к понятному следующему шагу</div>
+                    </div>
+                  </div>
+                  <div class="before-after-handle"></div>
+                  <input class="before-after-range screen-only" type="range" min="15" max="85" value="52" aria-label="Сравнение до и после">
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="block">
+            <div class="section-kicker">08 / Таймлайн и этапы</div>
+            <h2 class="timeline-title">После согласования предложение должно вести к понятному пути реализации</h2>
+            <div class="timeline-intro">Для производственных клиентов важно ощущение управляемости. Поэтому этапы здесь показываются как спокойный маршрут: анализ текущего образа, сборка концепта, визуальная система и дальнейший запуск.</div>
+            <div class="timeline-grid">
+              <article class="timeline-step"><div class="timeline-step-index">Этап 01</div><div class="timeline-step-title">Анализируем текущий образ компании и точки потери доверия</div><div class="timeline-copy">Разбираем сайт, подачу, структуру, визуальный тон и то, почему сильный бизнес сейчас выглядит слабее своего реального уровня.</div></article>
+              <article class="timeline-step"><div class="timeline-step-index">Этап 02</div><div class="timeline-step-title">Собираем новую систему страниц, блоков и маршрута</div><div class="timeline-copy">На этом этапе формируется логика первого экрана, доверительного слоя, медиаподачи, каталога и следующего шага клиента.</div></article>
+              <article class="timeline-step"><div class="timeline-step-index">Этап 03</div><div class="timeline-step-title">Доводим подачу до уровня, который можно показывать и продавать</div><div class="timeline-copy">Получается не просто дизайн, а новая digital-версия компании, которую можно обсуждать, презентовать и запускать в работу.</div></article>
+            </div>
+          </section>
+        </div>
+
+        <div class="pdf-group" id="commercial">
+          <section class="block">
+            <div class="section-kicker">09 / Коммерческий блок</div>
+            <h2 class="commercial-title">Коммерческая рамка должна ощущаться как логичное продолжение сильной подачи, а не как прайс-лист</h2>
+            <p class="commercial-copy">Этот шаблон подходит большинству производств, потому что продаёт не абстрактный сайт, а комплексную цифровую упаковку бизнеса: образ, структуру, фотоподачу, медиасцену, доверительные блоки, контентную систему и следующий шаг коммуникации.</p>
+            <div class="commercial-grid">
+              <article class="commercial-card featured"><div class="commercial-label">Базовая рамка</div><div class="price">от 250 000</div><div class="price-meta">концепт, система блоков, визуальная логика, смысловой маршрут, hero с фото, photo/media блоки и каркас цифровой презентации компании</div></article>
+              <article class="commercial-card"><div class="commercial-label">Что входит</div><div class="commercial-copy-small">Новый первый экран, фото-галерея, большой media-video frame, доверительные секции, compare, сценарий перехода к обсуждению и общая digital-рамка проекта.</div></article>
+              <article class="commercial-card"><div class="commercial-label">PDF-выгрузка</div><div class="commercial-copy-small">Экспорт должен собираться как полноценный документ с зафиксированными состояниями hero, slider, compare и media-постеров без разрывов внутри секций.</div></article>
+            </div>
+          </section>
+
+          <section class="about-panel" id="about">
+            <div class="about-grid">
+              <div>
+                <div class="section-kicker">10 / Обо мне как о дизайнере</div>
+                <h2 class="about-title">Я собираю для производства не просто сайт, а новый цифровой образ компании</h2>
+                <p class="about-copy">Моя задача не в том, чтобы нарисовать очередную страницу. Я перевожу реальный масштаб, опыт и зрелость бизнеса в визуальный язык, который помогает компании выглядеть убедительно для клиента, партнёра или закупщика. Поэтому здесь так важны композиция, фото, media-кадры и целостность документа в PDF.</p>
+                <div class="about-actions">
+                  <span class="button">Посмотреть подход</span>
+                  <span class="button-ghost">Обсудить проект</span>
+                </div>
+              </div>
+              <div class="about-list">
+                <article class="about-card"><div class="designer-note">Фокус</div><div class="about-card-title">Производства, industrial и B2B-компании</div><div class="about-card-copy">Я работаю с нишами, где важно показывать не трендовость, а надёжность, масштаб, порядок и деловую зрелость.</div></article>
+                <article class="about-card"><div class="designer-note">Подход</div><div class="about-card-title">Сначала смысл и маршрут, потом форма</div><div class="about-card-copy">Сильный дизайн в этой нише строится не на декоративности, а на ясной аргументации, хорошей структуре и уверенном визуальном характере.</div></article>
+              </div>
+            </div>
+            <div class="footer-grid">
+              <div class="about-note">Этот блок нужен не для биографии ради биографии. Он помогает клиенту понять, почему именно такой дизайнер умеет упаковывать сильные, но визуально недопроданные производственные бизнесы.</div>
+              <div class="about-note">В builder он должен быть отдельной family с фото, короткой позицией, тезисами подхода, ссылками на кейсы и безопасной упаковкой в PDF-группу.</div>
+            </div>
+          </section>
+        </div>
+
+        <section class="block cta-block" id="cta">
+          <div class="cta-grid">
+            <div class="cta-panel">
+              <div class="section-kicker">11 / Финальный CTA</div>
+              <h2 class="cta-title">Если вам близка эта подача, можно сразу связаться со мной и обсудить проект</h2>
+              <p class="cta-copy">Финальный блок здесь должен не просто закрывать страницу, а переводить её в прямой контакт. Поэтому вместо абстрактного CTA здесь фото, мой контактный стек и понятные каналы связи для быстрого старта обсуждения.</p>
+              <div class="cta-actions">
+                <span class="button">Написать в Telegram</span>
+                <span class="button-ghost">Отправить письмо</span>
+              </div>
+              <div class="footer-grid">
+                <div class="footer-note">Для PDF этот блок тоже должен оставаться персональным: фото, имя, каналы связи и один короткий маршрут к обсуждению.</div>
+                <div class="footer-note">В runtime editor такой CTA нужно сделать отдельной family, чтобы контакты и фото менялись без ручной правки HTML.</div>
+              </div>
+            </div>
+            <div class="cta-side">
+              <div class="cta-photo-card">
+                <div class="cta-photo"></div>
+              </div>
+              <div class="cta-contact-card">
+                <div class="designer-note">Контакты</div>
+                <div class="cta-contact-list">
+                  <div class="cta-contact-item">
+                    <div class="cta-contact-label">Телефон</div>
+                    <div class="cta-contact-value">+7 (___) ___-__-__</div>
+                  </div>
+                  <div class="cta-contact-item">
+                    <div class="cta-contact-label">Почта</div>
+                    <div class="cta-contact-value">bilariuss@yandex.ru</div>
+                  </div>
+                  <div class="cta-contact-item">
+                    <div class="cta-contact-label">Telegram</div>
+                    <div class="cta-contact-value">t.me/your_telegram</div>
+                  </div>
+                  <div class="cta-contact-item">
+                    <div class="cta-contact-label">Max</div>
+                    <div class="cta-contact-value">max / ваш профиль</div>
+                  </div>
+                </div>
+                <div class="cta-note">Если захотите, я дальше подставлю сюда ваши реальные телефон, Telegram и Max без изменения дизайна блока.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const body = document.body;
+    const themeButtons = Array.from(document.querySelectorAll('.theme-button'));
+
+    themeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        body.dataset.theme = button.dataset.theme;
+        themeButtons.forEach((item) => item.classList.toggle('is-active', item === button));
+      });
+    });
+
+    const sliderTrack = document.querySelector('.slider-track');
+    const sliderCounter = document.querySelector('[data-slider-counter]');
+    const sliderDots = Array.from(document.querySelectorAll('[data-slider-dot]'));
+    let sliderIndex = 0;
+    const sliderTotal = sliderDots.length;
+
+    function renderSlider() {
+      if (!sliderTrack || !sliderCounter || !sliderTotal) return;
+      sliderTrack.style.transform = `translateX(-${sliderIndex * 100}%)`;
+      sliderCounter.textContent = `${String(sliderIndex + 1).padStart(2, '0')} / ${String(sliderTotal).padStart(2, '0')}`;
+      sliderDots.forEach((dot, index) => dot.classList.toggle('is-active', index === sliderIndex));
+    }
+
+    document.querySelector('[data-slider-prev]')?.addEventListener('click', () => {
+      sliderIndex = (sliderIndex - 1 + sliderTotal) % sliderTotal;
+      renderSlider();
+    });
+
+    document.querySelector('[data-slider-next]')?.addEventListener('click', () => {
+      sliderIndex = (sliderIndex + 1) % sliderTotal;
+      renderSlider();
+    });
+
+    sliderDots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        sliderIndex = index;
+        renderSlider();
+      });
+    });
+
+    renderSlider();
+
+    const compareShell = document.querySelector('[data-before-after]');
+    const compareRange = compareShell?.querySelector('.before-after-range');
+
+    function setCompareRatio(value) {
+      if (!compareShell) return;
+      compareShell.style.setProperty('--before-ratio', `${value}%`);
+    }
+
+    compareRange?.addEventListener('input', (event) => {
+      setCompareRatio(event.target.value);
+    });
+
+    setCompareRatio(compareRange?.value || 52);
+  </script>
+</body>
+</html>

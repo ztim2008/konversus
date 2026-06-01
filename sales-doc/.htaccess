@@ -1,0 +1,13 @@
+Options -Indexes
+
+# Clean URL: /sales-doc/doc/xxxxxxxxxxxx → doc.php?slug=xxxxxxxxxxxx
+RewriteEngine On
+RewriteBase /sales-doc/
+
+RewriteRule ^doc/([a-z2-9]{12})/?$ doc.php?slug=$1 [L,QSA]
+
+# Защита папки data
+<FilesMatch "\.json$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>

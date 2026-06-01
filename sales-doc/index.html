@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Портфолио авитолога бесплатно — SalesDoc для клиентов в мессенджерах | маркет-фон.рф</title>
+  <meta name="description" content="Бесплатный конструктор SalesDoc: создайте короткое портфолио авитолога с услугами, кейсами, Avito-ссылкой, контактами, AI-аудитом и публичной ссылкой для клиента.">
+  <meta name="keywords" content="портфолио авитолога, профиль авитолога, презентация авитолога, SalesDoc, ссылка для клиента, Авито продвижение, авитолог услуги">
+  <link rel="canonical" href="https://xn----7Sbptikgmuv.xn--p1ai/sales-doc/">
+  <meta property="og:title" content="Портфолио авитолога бесплатно — SalesDoc">
+  <meta property="og:description" content="Соберите профиль доверия авитолога: услуги, кейсы, контакты, Avito-ссылка и AI-аудит. Готовую ссылку удобно отправлять клиенту в Telegram, WhatsApp, MAX или Avito.">
+  <meta property="og:site_name" content="маркет-фон.рф">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://xn----7Sbptikgmuv.xn--p1ai/sales-doc/">
+  <meta property="og:image" content="https://xn----7Sbptikgmuv.xn--p1ai/assets/images/og-salesdoc.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Портфолио авитолога бесплатно — SalesDoc">
+  <meta name="twitter:description" content="Короткий профиль доверия авитолога для клиента в мессенджере: кейсы, услуги, контакты и AI-аудит.">
+  <meta name="twitter:image" content="https://xn----7Sbptikgmuv.xn--p1ai/assets/images/og-salesdoc.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20260506-13">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SalesDoc — портфолио авитолога",
+    "alternateName": "Профиль доверия авитолога",
+    "url": "https://xn----7Sbptikgmuv.xn--p1ai/sales-doc/",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "isAccessibleForFree": true,
+    "description": "Бесплатный конструктор короткого профиля доверия для авитологов и специалистов Avito: услуги, кейсы, контакты, Avito-ссылка, AI-аудит и публичная ссылка для клиента.",
+    "provider": {
+      "@type": "Organization",
+      "name": "маркет-фон.рф",
+      "url": "https://xn----7Sbptikgmuv.xn--p1ai/"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "RUB"
+    }
+  }
+  </script>
+</head>
+<body class="ed-body">
+
+  <!-- TOP BAR -->
+  <header class="ed-topbar">
+    <div class="ed-topbar-l">
+      <a class="ed-brand" href="/">SalesDoc</a>
+      <span class="ed-sep">/</span>
+      <span class="ed-title">Профиль доверия</span>
+    </div>
+    <div class="ed-canvas-mode-sw" id="canvas-mode-sw">
+      <button class="ed-mode-btn active" id="btn-mode-desktop" onclick="switchCanvasMode('desktop')" title="Десктоп (1100px)">💻</button>
+      <button class="ed-mode-btn" id="btn-mode-mobile" onclick="switchCanvasMode('mobile')" title="Мобайл (390px)">📱</button>
+    </div>
+    <div class="ed-topbar-r">
+      <span class="ed-save-status" id="ed-save-status">Не сохранено</span>
+      <button class="ed-btn-ghost ed-btn-compact" id="ed-btn-undo" title="Отменить" disabled>↶</button>
+      <button class="ed-btn-ghost ed-btn-compact" id="ed-btn-redo" title="Повторить" disabled>↷</button>
+      <button class="ed-btn-ghost" id="ed-btn-draft">Сохранить</button>
+      <button class="ed-btn-ghost" id="ed-btn-load">Открыть</button>
+      <button class="ed-btn-ghost ed-btn-danger" id="ed-btn-reset">Удалить</button>
+      <button class="ed-btn-ghost" id="ed-btn-audit">AI аудит</button>
+      <button class="ed-btn-ghost" id="ed-btn-share">Ссылка</button>
+      <button class="ed-btn-accent" id="ed-btn-pdf">PDF</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="ed-main">
+
+    <!-- LEFT: catalog + structure -->
+    <aside class="ed-aside ed-aside-l">
+      <div class="ed-panel-section">
+        <div class="ed-panel-hdr">Блоки</div>
+        <div class="blocks-catalog" id="blocks-catalog"></div>
+      </div>
+      <div class="ed-panel-section ed-panel-order">
+        <div class="ed-panel-hdr">Структура страницы</div>
+        <div class="order-list" id="order-list"></div>
+      </div>
+    </aside>
+
+    <!-- CENTER: canvas (iframe) -->
+    <main class="ed-canvas-area">
+      <div class="ed-canvas-scroll" id="canvas-scroll"
+           ondragover="event.preventDefault()"
+           ondrop="handleDrop(event)">
+        <div class="canvas-empty" id="canvas-empty"
+             ondragover="onEmptyDragOver(event)"
+             ondragleave="onEmptyDragLeave(event)"
+             ondrop="handleDrop(event)">
+          <div class="canvas-empty-icon">✦</div>
+          <p>Перетащите блок слева<br>или нажмите <b>+</b> в каталоге</p>
+        </div>
+        <div id="canvas-outer" style="display:none">
+          <div class="ed-canvas-frame-wrap" id="canvas-frame-wrap">
+            <iframe id="preview-frame" scrolling="no"></iframe>
+            <div class="drop-overlay" id="drop-overlay"
+                 ondragover="event.preventDefault()"
+                 ondrop="handleDrop(event)">
+              <div class="drop-msg">✦ Отпустите для добавления блока</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT: props panel -->
+    <aside class="ed-aside ed-aside-r" id="ed-aside-r">
+      <div class="ed-props-section">
+        <div class="ed-panel-section">
+          <div class="ed-panel-hdr" id="props-title">Свойства</div>
+        </div>
+        <div class="props-body" id="props-body">
+          <p class="props-hint">Выберите блок в структуре<br>для редактирования</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <button class="ed-mobile-btn" id="ed-mobile-btn">⚙</button>
+  <div class="ed-toast hidden" id="toast"><span id="toast-text"></span></div>
+
+  <!-- ─── ONBOARDING WIZARD ─── -->
+  <div class="wz-overlay hidden" id="wz-overlay" onclick="wzOverlayClick(event)">
+    <div class="wz-modal">
+      <div class="wz-dots"><span></span><span></span><span></span><span></span></div>
+      <h2 class="wz-title">Создадим профиль доверия</h2>
+      <p class="wz-sub">Короткая страница для мессенджера: кто вы, чем полезны и почему клиенту стоит продолжить диалог.</p>
+
+      <div class="wz-photo-row">
+        <div class="wz-avatar" id="wz-avatar">
+          <label for="wz-photo-inp" style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;">
+            <div class="wz-avatar-ph" id="wz-avatar-ph">📷<span>Фото</span></div>
+            <img id="wz-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+          </label>
+          <input type="file" accept="image/*" id="wz-photo-inp" style="display:none">
+        </div>
+        <p class="wz-photo-hint">Нажмите для загрузки фото</p>
+      </div>
+
+      <div class="wz-fields">
+        <label class="wz-label">Имя и Фамилия
+          <input class="wz-input" id="wz-name" type="text" placeholder="Иван Проценко" autocomplete="name">
+        </label>
+        <label class="wz-label">Специальность
+          <input class="wz-input" id="wz-specialty" type="text" placeholder="Авитолог · Продвижение на Авито" value="Авитолог · Продвижение на Авито">
+        </label>
+        <label class="wz-label">Публичная страница на Авито
+          <input class="wz-input" id="wz-avito-url" type="url" placeholder="https://www.avito.ru/...">
+        </label>
+        <div class="wz-row">
+          <label class="wz-label">Телефон (без +7)
+            <input class="wz-input" id="wz-phone" type="tel" placeholder="9001234567">
+          </label>
+          <label class="wz-label">Telegram (без @)
+            <input class="wz-input" id="wz-tg" type="text" placeholder="avitolog">
+          </label>
+        </div>
+      </div>
+
+      <button class="wz-btn" id="wz-ai-submit" onclick="submitWizard(true)">Создать с AI</button>
+      <button class="wz-btn wz-btn-secondary" id="wz-submit" onclick="submitWizard(false)">Создать профиль</button>
+      <button class="wz-skip" onclick="closeWizard()">Пропустить — заполню вручную</button>
+    </div>
+  </div>
+
+  <script src="app.js?v=20260526-25"></script>
+  <script src="/assets/global-nav.js?v=20260506-1"></script>
+</body>
+</html>

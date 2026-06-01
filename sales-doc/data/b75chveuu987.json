@@ -1,0 +1,31 @@
+{
+    "v": 3,
+    "meta": {
+        "name": "Тестовый авитолог",
+        "title": "Профиль доверия",
+        "description": "Короткая страница доверия для клиента",
+        "type": "profile",
+        "theme": "avito-premium"
+    },
+    "blocks": [
+        {
+            "id": 1,
+            "type": "hero",
+            "data": {
+                "title": "Помогу получать больше заявок",
+                "subtitle": "Тестовый SalesDoc документ",
+                "ctaText": "Написать",
+                "cta2Text": "Кейс",
+                "availability": "На связи",
+                "badge": "Авитолог",
+                "trustPills": [
+                    "Договор",
+                    "Кейсы"
+                ],
+                "photoUrl": ""
+            }
+        }
+    ],
+    "body_html": "<section id=\"hero\" class=\"section-white\"><div class=\"container\"><h1 class=\"hero-title\">Помогу получать больше заявок</h1><p class=\"hero-sub\">Тестовый SalesDoc документ</p></div></section>",
+    "created_at": "2026-05-06 13:42:31"
+}

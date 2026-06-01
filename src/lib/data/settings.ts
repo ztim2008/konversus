@@ -1,0 +1,86 @@
+import "server-only";
+
+import type { RowDataPacket } from "mysql2";
+
+import { getDbPool } from "@/lib/db";
+
+type SettingRow = RowDataPacket & { key: string; value: string | null };
+
+export const SETTING_DEFAULTS: Record<string, string> = {
+  // ── SEO ──
+  seo_title:
+    "Цифровая упаковка для производственных компаний — Тимофеев Алексей",
+  seo_description:
+    "Нахожу производство, анализирую сайт, создаю уникальный цифровой образ товара и компании. Клиент получает персональную презентацию: мини-сайт, видео-аудит и PDF для B2B-продаж.",
+  seo_keywords:
+    "цифровая упаковка производства, digital proposal для B2B, персональная презентация компании, концепт для производственных компаний, коммерческое предложение дизайн, b2b презентация, тимофеев алексей дизайнер, konversus",
+  seo_og_image: "https://konversus.ru/og-image.jpg",
+
+  // ── Аналитика ──
+  ym_id: "109448101",
+  yw_verification: "f9c5fd333ceeca7f",
+  ga_id: "",
+
+  // ── Вставка кода (виджеты, чаты, пиксели) ──
+  body_scripts: "",
+
+  // ── Главная: Hero ──
+  hero_badge: "Доступен для новых проектов",
+  hero_title: "Упаковываю производство в digital-актив, который продаёт.",
+  hero_subtitle:
+    "Нахожу вашу компанию, анализирую сайт, создаю уникальный цифровой образ товара и производства в целом. Клиент получает персональную презентацию — мини-сайт, видео-аудит и PDF, которые работают вместо холодного звонка.",
+  hero_cta_primary: "Обсудить проект",
+  hero_cta_secondary: "Как это работает",
+
+  // ── Главная: О себе ──
+  about_experience: "17 лет в digital",
+  about_bio_1:
+    "Меня зовут Алексей. Последние 17 лет я создаю digital-проекты, которые приносят клиентам реальную выручку — не просто «красивые сайты», а инструменты продаж. За эти годы прошёл путь от вёрстки страниц до комплексной цифровой упаковки бизнеса: продающий сайт, фирменный стиль, персональный концепт для первого касания с крупным заказчиком.",
+  about_bio_2:
+    "Специализация — производственные компании и B2B. Там, где продукт сложный, аудитория серьёзная, а обычный маркетолог не понимает ни производства, ни заказчика. Я понимаю обоих — и делаю упаковку, которая работает.",
+
+  // ── Главная: Контакты ──
+  contact_phone: "+7 921 201-32-52",
+  contact_phone_href: "tel:+79212013252",
+  contact_email: "bilariuss@yandex.ru",
+  contact_telegram: "@bilarius",
+  contact_telegram_href: "https://t.me/bilarius",
+  contact_max_href:
+    "https://max.ru/join/EmVxaadn5GxQNTErVmbyRKcQAZDNHjEhxcPQqSTR9wA",
+};
+
+export async function getAllSettings(): Promise<Record<string, string>> {
+  const db = getDbPool();
+  const [rows] = await db.query<SettingRow[]>(
+    "SELECT `key`, `value` FROM site_settings"
+  );
+  const result: Record<string, string> = { ...SETTING_DEFAULTS };
+  for (const row of rows) {
+    result[row.key] = row.value ?? "";
+  }
+  return result;
+}
+
+export async function getSetting(key: string): Promise<string> {
+  const db = getDbPool();
+  const [rows] = await db.query<SettingRow[]>(
+    "SELECT `value` FROM site_settings WHERE `key` = ?",
+    [key]
+  );
+  if (rows.length > 0 && rows[0].value !== null) return rows[0].value;
+  return SETTING_DEFAULTS[key] ?? "";
+}
+
+export async function setManySetting(
+  data: Record<string, string>
+): Promise<void> {
+  const db = getDbPool();
+  const entries = Object.entries(data);
+  if (entries.length === 0) return;
+  for (const [key, value] of entries) {
+    await db.execute(
+      "INSERT INTO site_settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), updated_at = NOW()",
+      [key, value]
+    );
+  }
+}

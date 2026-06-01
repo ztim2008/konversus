@@ -1,0 +1,224 @@
+{
+    "v": 3,
+    "meta": {
+        "type": "profile",
+        "theme": "avito-premium",
+        "name": "456",
+        "specialty": "Продающий профиль специалиста",
+        "title": "Помогу получать больше заявок с Авито уже через 14 дней",
+        "description": "Оформлю профиль, напишу объявления которые читают до конца и настрою воронку. Работаю один — вы всегда знаете с кем говорите.",
+        "telegram": "avitolog",
+        "phone": ""
+    },
+    "blocks": [
+        {
+            "id": 1,
+            "type": "nav",
+            "data": {
+                "name": "456",
+                "ctaText": "Бесплатный аудит"
+            }
+        },
+        {
+            "id": 2,
+            "type": "hero",
+            "data": {
+                "availability": "Беру новых клиентов в июне",
+                "title": "Помогу получать\nбольше заявок с Авито\nуже через 14 дней",
+                "subtitle": "Оформлю профиль, напишу объявления которые читают до конца и настрою воронку. Работаю один — вы всегда знаете с кем говорите.",
+                "ctaText": "Разобрать мой Авито — бесплатно",
+                "cta2Text": "Посмотреть кейс",
+                "badge": "✓ Авитолог с 3-летним опытом",
+                "trustPills": [
+                    "🛡 Возврат если нет роста",
+                    "⚡ Отвечаю за 2 часа",
+                    "📋 Договор с ИП"
+                ],
+                "photoUrl": ""
+            }
+        },
+        {
+            "id": 3,
+            "type": "stats",
+            "data": {
+                "items": [
+                    {
+                        "num": "147",
+                        "color": "blue",
+                        "desc": "клиентов получили\nрезультат"
+                    },
+                    {
+                        "num": "+54%",
+                        "color": "green",
+                        "desc": "средний рост заявок\nза 2 недели"
+                    },
+                    {
+                        "num": "870+",
+                        "color": "orange",
+                        "desc": "объявлений\nнаписано лично мной"
+                    },
+                    {
+                        "num": "3 года",
+                        "color": "",
+                        "desc": "работаю только\nс Авито"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 4,
+            "type": "services",
+            "data": {
+                "chip": "Что я делаю",
+                "title": "Четыре услуги — конкретные результаты",
+                "subtitle": "Каждая закрывает одну задачу: вы получаете больше заявок с Авито",
+                "items": [
+                    {
+                        "icon": "🎨",
+                        "color": "",
+                        "name": "Оформление профиля",
+                        "desc": "Шапка, описание, фотографии. Создаю образ надёжного продавца — клиент видит и уже хочет написать.",
+                        "result": "→ CTR растёт в 1.5–2×",
+                        "price": "от 4 900 ₽"
+                    },
+                    {
+                        "icon": "📝",
+                        "color": "green",
+                        "name": "Написание объявлений",
+                        "desc": "Заголовок, описание, фото с правильными ракурсами. Пишу на языке вашей аудитории — не рекламным текстом, а живо.",
+                        "result": "→ Читают в 3× чаще",
+                        "price": "от 700 ₽/шт."
+                    },
+                    {
+                        "icon": "📊",
+                        "color": "orange",
+                        "name": "Ведение аккаунта",
+                        "desc": "Поднятие объявлений, A/B тесты заголовков, контроль позиций. Вы занимаетесь бизнесом — я Авито.",
+                        "result": "→ 50+ объявлений под контролем",
+                        "price": "от 9 900 ₽/мес"
+                    },
+                    {
+                        "icon": "🔍",
+                        "color": "red",
+                        "name": "Аудит и стратегия",
+                        "desc": "Смотрю ваш профиль, конкурентов, спрос. Даю пошаговый план — что сделать в первую очередь.",
+                        "result": "→ Plan на 30 дней",
+                        "price": "2 900 ₽"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 5,
+            "type": "case",
+            "data": {
+                "chip": "Кейс",
+                "title": "Реальный результат клиента",
+                "subtitle": "Один конкретный пример — с цифрами из кабинета Авито",
+                "niche": "Стройматериалы · Екатеринбург",
+                "caseTitle": "Профиль без заявок превратился в главный источник клиентов за 11 дней",
+                "bigStat": "×7",
+                "bigLabel": "рост входящих звонков за 2 недели",
+                "metrics": [
+                    {
+                        "num": "8",
+                        "style": "was",
+                        "label": "звонков/мес. было"
+                    },
+                    {
+                        "num": "61",
+                        "style": "up",
+                        "label": "звонков/мес. стало"
+                    },
+                    {
+                        "num": "+340%",
+                        "style": "up",
+                        "label": "рост просмотров"
+                    },
+                    {
+                        "num": "11 дн.",
+                        "style": "",
+                        "label": "срок выхода"
+                    }
+                ],
+                "quote": "«Думал, что Авито — это доски объявлений для б/у вещей. Иван показал, как сделать из профиля полноценный продающий канал. Уже на второй неделе пришлось отказывать клиентам»",
+                "authorInitials": "АК",
+                "authorName": "Алексей К.",
+                "authorRole": "ИП, стройматериалы, бригада 8 человек",
+                "ctaText": "Хочу такой же результат →"
+            }
+        },
+        {
+            "id": 6,
+            "type": "process",
+            "data": {
+                "title": "4 шага от первого сообщения до результата",
+                "steps": [
+                    {
+                        "title": "Созвон 30 мин.",
+                        "desc": "Рассказываете про бизнес, я задаю вопросы.",
+                        "time": "День 1",
+                        "active": false
+                    },
+                    {
+                        "title": "Аудит и план",
+                        "desc": "Анализирую конкурентов, спрос, профиль. Пишу план с приоритетами.",
+                        "time": "День 2–3",
+                        "active": true
+                    },
+                    {
+                        "title": "Делаю",
+                        "desc": "Оформляю, пишу, публикую. Каждый день отчёт.",
+                        "time": "День 4–14",
+                        "active": false
+                    },
+                    {
+                        "title": "Результат",
+                        "desc": "Смотрим итоговую статистику. Первые 30 дней — поддержка бесплатно.",
+                        "time": "День 15+",
+                        "active": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": 7,
+            "type": "contacts",
+            "data": {
+                "title": "Свяжитесь удобным способом",
+                "subtitle": "Telegram предпочтительнее — отвечаю там быстрее всего",
+                "tgHandle": "avitolog",
+                "maxPhone": "",
+                "phone": "",
+                "trust": [
+                    "⚡ Отвечаю за 2 часа в рабочее время",
+                    "📍 Работаю удалённо по всей России",
+                    "📋 Договор с ИП · Закрывающие документы"
+                ]
+            }
+        },
+        {
+            "id": 8,
+            "type": "cta",
+            "data": {
+                "chip": "Следующий шаг",
+                "title": "Разберу ваш Авито\nбесплатно — за 24 часа",
+                "subtitle": "Присылаете ссылку на профиль — получаете конкретный разбор: что мешает заявкам и что сделать в первую очередь.",
+                "btnText": "Получить бесплатный аудит",
+                "tgHandle": "avitolog",
+                "note": "Отвечаю за 2 часа · Беру 3–5 клиентов в месяц · Договор с ИП"
+            }
+        },
+        {
+            "id": 9,
+            "type": "footer",
+            "data": {
+                "name": "456",
+                "ogrnip": "000000000000000",
+                "tgHandle": "avitolog"
+            }
+        }
+    ],
+    "body_html": "<nav><div class=\"container\"><div class=\"nav-inner\"><div class=\"nav-logo\"><div class=\"avito-dots\"><span></span><span></span><span></span><span></span></div>456</div><ul class=\"nav-links\"><li><a href=\"#services\">Услуги</a></li><li><a href=\"#case\">Кейс</a></li><li><a href=\"#process\">Процесс</a></li><li><a href=\"#contacts\">Контакты</a></li></ul><div class=\"nav-right\"><a href=\"#cta-final\" class=\"btn-nav\">Бесплатный аудит</a></div></div></div></nav>\n<section id=\"hero\" class=\"section-white\"><div class=\"container\"><div class=\"hero-grid\"><div><div class=\"hero-label\">Беру новых клиентов в июне</div><h1 class=\"hero-title\">Помогу получать<br>больше заявок с Авито<br>уже через 14 дней</h1><p class=\"hero-sub\">Оформлю профиль, напишу объявления которые читают до конца и настрою воронку. Работаю один — вы всегда знаете с кем говорите.</p><div class=\"hero-actions\"><a href=\"#cta-final\" class=\"btn btn-primary\">Разобрать мой Авито — бесплатно</a><a href=\"#case\" class=\"btn btn-outline\">Посмотреть кейс</a></div><div class=\"hero-trust\"><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-shield\" aria-hidden=\"true\"></span>Возврат если нет роста</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-zap\" aria-hidden=\"true\"></span>Отвечаю за 2 часа</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span>Договор с ИП</span></div></div><div class=\"hero-photo-wrap\"><div class=\"hero-photo-outer\"><div class=\"deco-ring deco-ring-1\"></div><div class=\"deco-ring deco-ring-2\"></div><div class=\"deco-dot deco-dot-1\"></div><div class=\"deco-dot deco-dot-2\"></div><div class=\"deco-dot deco-dot-3\"></div><div class=\"deco-dot deco-dot-4\"></div><div class=\"hero-photo-inner\"><span class=\"photo-placeholder\"><span class=\"sd-icon sd-icon-user\" aria-hidden=\"true\"></span></span><span class=\"photo-placeholder-text\">Ваше фото</span></div><div class=\"photo-badge\">✓ Авитолог с 3-летним опытом</div></div></div></div></div></section>\n<div id=\"stats\"><div class=\"container\"><div class=\"stats-row\"><div class=\"stat-cell\"><span class=\"stat-num blue\">147</span><span class=\"stat-desc\">клиентов получили<br>результат</span></div><div class=\"stat-cell\"><span class=\"stat-num green\">+54%</span><span class=\"stat-desc\">средний рост заявок<br>за 2 недели</span></div><div class=\"stat-cell\"><span class=\"stat-num orange\">870+</span><span class=\"stat-desc\">объявлений<br>написано лично мной</span></div><div class=\"stat-cell\"><span class=\"stat-num \">3 года</span><span class=\"stat-desc\">работаю только<br>с Авито</span></div></div></div></div>\n<section id=\"services\" class=\"section-bg\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Что я делаю</span><h2>Четыре услуги — конкретные результаты</h2><p>Каждая закрывает одну задачу: вы получаете больше заявок с Авито</p></div><div class=\"services-grid\"><div class=\"svc-card\"><span class=\"svc-price\">от 4 900 ₽</span><div class=\"svc-icon \"><span class=\"sd-icon sd-icon-edit\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Оформление профиля</div><p class=\"svc-desc\">Шапка, описание, фотографии. Создаю образ надёжного продавца — клиент видит и уже хочет написать.</p><span class=\"svc-result\">→ CTR растёт в 1.5–2×</span></div><div class=\"svc-card\"><span class=\"svc-price\">от 700 ₽/шт.</span><div class=\"svc-icon green\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Написание объявлений</div><p class=\"svc-desc\">Заголовок, описание, фото с правильными ракурсами. Пишу на языке вашей аудитории — не рекламным текстом, а живо.</p><span class=\"svc-result\">→ Читают в 3× чаще</span></div><div class=\"svc-card\"><span class=\"svc-price\">от 9 900 ₽/мес</span><div class=\"svc-icon orange\"><span class=\"sd-icon sd-icon-chart\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Ведение аккаунта</div><p class=\"svc-desc\">Поднятие объявлений, A/B тесты заголовков, контроль позиций. Вы занимаетесь бизнесом — я Авито.</p><span class=\"svc-result\">→ 50+ объявлений под контролем</span></div><div class=\"svc-card\"><span class=\"svc-price\">2 900 ₽</span><div class=\"svc-icon red\"><span class=\"sd-icon sd-icon-search\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Аудит и стратегия</div><p class=\"svc-desc\">Смотрю ваш профиль, конкурентов, спрос. Даю пошаговый план — что сделать в первую очередь.</p><span class=\"svc-result\">→ Plan на 30 дней</span></div></div></div></section>\n<section id=\"case\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip green\">Кейс</span><h2>Реальный результат клиента</h2><p>Один конкретный пример — с цифрами из кабинета Авито</p></div><div class=\"case-featured\"><div class=\"case-left\"><div><span class=\"case-niche-tag\">Стройматериалы · Екатеринбург</span><h3>Профиль без заявок превратился в главный источник клиентов за 11 дней</h3></div><div><div class=\"case-big-stat\">×7</div><div class=\"case-big-label\">рост входящих звонков за 2 недели</div></div></div><div class=\"case-right\"><div class=\"case-metrics-grid\"><div class=\"case-m\"><span class=\"case-m-num was\">8</span><span class=\"case-m-label\">звонков/мес. было</span></div><div class=\"case-m\"><span class=\"case-m-num up\">61</span><span class=\"case-m-label\">звонков/мес. стало</span></div><div class=\"case-m\"><span class=\"case-m-num up\">+340%</span><span class=\"case-m-label\">рост просмотров</span></div><div class=\"case-m\"><span class=\"case-m-num \">11 дн.</span><span class=\"case-m-label\">срок выхода</span></div></div><div class=\"case-quote\">«Думал, что Авито — это доски объявлений для б/у вещей. Иван показал, как сделать из профиля полноценный продающий канал. Уже на второй неделе пришлось отказывать клиентам»</div><div class=\"case-author\"><div class=\"case-ava\">АК</div><div><div class=\"case-author-name\">Алексей К.</div><div class=\"case-author-role\">ИП, стройматериалы, бригада 8 человек</div></div></div><a href=\"#cta-final\" class=\"more-cases-link\">Хочу такой же результат →</a></div></div></div></section>\n<section id=\"process\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Как работаем</span><h2>4 шага от первого сообщения до результата</h2></div><div class=\"process-steps\"><div class=\"step\"><div class=\"step-circle\">1</div><div class=\"step-title\">Созвон 30 мин.</div><p class=\"step-desc\">Рассказываете про бизнес, я задаю вопросы.</p><span class=\"step-time\">День 1</span></div><div class=\"step\"><div class=\"step-circle active\">2</div><div class=\"step-title\">Аудит и план</div><p class=\"step-desc\">Анализирую конкурентов, спрос, профиль. Пишу план с приоритетами.</p><span class=\"step-time\">День 2–3</span></div><div class=\"step\"><div class=\"step-circle\">3</div><div class=\"step-title\">Делаю</div><p class=\"step-desc\">Оформляю, пишу, публикую. Каждый день отчёт.</p><span class=\"step-time\">День 4–14</span></div><div class=\"step\"><div class=\"step-circle\">4</div><div class=\"step-title\">Результат</div><p class=\"step-desc\">Смотрим итоговую статистику. Первые 30 дней — поддержка бесплатно.</p><span class=\"step-time\">День 15+</span></div></div></div></section>\n<section id=\"contacts\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Контакты</span><h2>Свяжитесь удобным способом</h2><p>Telegram предпочтительнее — отвечаю там быстрее всего</p></div><div class=\"contacts-grid\"><a href=\"https://t.me/avitolog\" class=\"contact-card contact-tg\" target=\"_blank\" rel=\"noopener\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-message\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">Telegram</div><div class=\"contact-val\">@avitolog</div><span class=\"contact-action\">Написать в Telegram →</span></a><a href=\"tel:+7\" class=\"contact-card contact-max\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-smartphone\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">MAX</div><div class=\"contact-val\">Напишите номер</div><span class=\"contact-action\">Связаться →</span></a><a href=\"tel:+7\" class=\"contact-card contact-phone\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-phone\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">Звонок</div><div class=\"contact-val\">Напишите номер</div><span class=\"contact-action\">Позвонить →</span></a></div><div class=\"contacts-trust\"><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-zap\" aria-hidden=\"true\"></span>Отвечаю за 2 часа в рабочее время</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-target\" aria-hidden=\"true\"></span>Работаю удалённо по всей России</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span>Договор с ИП · Закрывающие документы</span></div></div></section>\n<section id=\"cta-final\"><div class=\"container\"><span class=\"cta-chip\">Следующий шаг</span><h2>Разберу ваш Авито<br>бесплатно — за 24 часа</h2><p class=\"cta-sub\">Присылаете ссылку на профиль — получаете конкретный разбор: что мешает заявкам и что сделать в первую очередь.</p><div class=\"cta-btns\"><a href=\"https://t.me/avitolog\" class=\"btn-white\">Получить бесплатный аудит</a><a href=\"https://t.me/avitolog\" class=\"btn-tg\"><span class=\"sd-icon sd-icon-message\" aria-hidden=\"true\"></span> Telegram</a></div><p class=\"cta-note\">Отвечаю за 2 часа · Беру 3–5 клиентов в месяц · Договор с ИП</p></div></section>\n<footer><div class=\"container\"><div class=\"footer-inner\"><div style=\"display:flex;align-items:center;gap:10px;\"><div class=\"avito-dots\"><span></span><span></span><span></span><span></span></div><span class=\"footer-copy\">© 2026 456 · Авитолог · ИП · ОГРНИП 000000000000000</span></div><ul class=\"footer-links\"><li><a href=\"#\">Договор оферты</a></li><li><a href=\"#\">Конфиденциальность</a></li><li><a href=\"https://t.me/avitolog\">Telegram</a></li></ul></div></div></footer>",
+    "created_at": "2026-05-06 14:52:27"
+}

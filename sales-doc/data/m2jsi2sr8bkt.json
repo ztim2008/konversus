@@ -1,0 +1,377 @@
+{
+    "v": 3,
+    "meta": {
+        "type": "profile",
+        "theme": "avito-premium",
+        "name": "Иван Проценко",
+        "specialty": "Авитолог · Сертифицированный специалист Avito",
+        "title": "Помогу получать больше заявок с Авито уже через 14 дней",
+        "description": "Оформлю профиль, напишу объявления которые читают до конца и настрою воронку. Работаю один — вы всегда знаете с кем говорите.",
+        "telegram": "avito_pro",
+        "phone": "9001234567"
+    },
+    "blocks": [
+        {
+            "id": 1,
+            "type": "nav",
+            "data": {
+                "name": "Алексей Петров",
+                "ctaText": "Бесплатный аудит",
+                "showAvito": true
+            }
+        },
+        {
+            "id": 2,
+            "type": "hero",
+            "data": {
+                "availability": "Беру новых клиентов в июне",
+                "title": "Помогу получать\nбольше заявок с Авито\nуже через 14 дней",
+                "subtitle": "Оформлю профиль, напишу объявления которые читают до конца и настрою воронку. Работаю один — вы всегда знаете с кем говорите.",
+                "ctaText": "Разобрать мой Авито — бесплатно",
+                "cta2Text": "Посмотреть кейс",
+                "badge": "✓ Авитолог с 3-летним опытом",
+                "trustPills": [
+                    "Возврат если нет роста",
+                    "Отвечаю за 2 часа",
+                    "Договор с ИП"
+                ],
+                "photoUrl": ""
+            }
+        },
+        {
+            "id": 3,
+            "type": "avito",
+            "data": {
+                "chip": "Профиль на Avito",
+                "title": "Авитолог Маркетолог Вывод В Топ И Рекомендации",
+                "description": "Публичная страница на Avito. Ссылка сохранена, описание можно уточнить вручную.",
+                "url": "https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA",
+                "location": "Боровичи",
+                "imageUrl": "/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg",
+                "note": "Ссылка сохранена. Если Avito не отдал данные автоматически, заголовок и описание можно поправить вручную.",
+                "blocked": true,
+                "imageAlt": "Тестовый alt скрина Avito"
+            }
+        },
+        {
+            "id": 4,
+            "type": "stats",
+            "data": {
+                "items": [
+                    {
+                        "num": "147",
+                        "color": "blue",
+                        "desc": "клиентов получили\nрезультат"
+                    },
+                    {
+                        "num": "+54%",
+                        "color": "green",
+                        "desc": "средний рост заявок\nза 2 недели"
+                    },
+                    {
+                        "num": "870+",
+                        "color": "orange",
+                        "desc": "объявлений\nнаписано лично мной"
+                    },
+                    {
+                        "num": "3 года",
+                        "color": "",
+                        "desc": "работаю только\nс Авито"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 5,
+            "type": "services",
+            "data": {
+                "chip": "Что я делаю",
+                "title": "Четыре услуги — конкретные результаты",
+                "subtitle": "Каждая закрывает одну задачу: вы получаете больше заявок с Авито",
+                "items": [
+                    {
+                        "icon": "edit",
+                        "color": "",
+                        "name": "Оформление профиля",
+                        "desc": "Шапка, описание, фотографии. Создаю образ надёжного продавца — клиент видит и уже хочет написать.",
+                        "result": "→ CTR растёт в 1.5–2×",
+                        "price": "от 4 900 ₽"
+                    },
+                    {
+                        "icon": "file",
+                        "color": "green",
+                        "name": "Написание объявлений",
+                        "desc": "Заголовок, описание, фото с правильными ракурсами. Пишу на языке вашей аудитории — не рекламным текстом, а живо.",
+                        "result": "→ Читают в 3× чаще",
+                        "price": "от 700 ₽/шт."
+                    },
+                    {
+                        "icon": "chart",
+                        "color": "orange",
+                        "name": "Ведение аккаунта",
+                        "desc": "Поднятие объявлений, A/B тесты заголовков, контроль позиций. Вы занимаетесь бизнесом — я Авито.",
+                        "result": "→ 50+ объявлений под контролем",
+                        "price": "от 9 900 ₽/мес"
+                    },
+                    {
+                        "icon": "search",
+                        "color": "red",
+                        "name": "Аудит и стратегия",
+                        "desc": "Смотрю ваш профиль, конкурентов, спрос. Даю пошаговый план — что сделать в первую очередь.",
+                        "result": "→ Plan на 30 дней",
+                        "price": "2 900 ₽"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 6,
+            "type": "case",
+            "data": {
+                "chip": "Кейс",
+                "title": "Реальный результат клиента",
+                "subtitle": "Один конкретный пример — с цифрами из кабинета Авито",
+                "niche": "Стройматериалы · Екатеринбург",
+                "caseTitle": "Профиль без заявок превратился в главный источник клиентов за 11 дней",
+                "bigStat": "×7",
+                "bigLabel": "рост входящих звонков за 2 недели",
+                "metrics": [
+                    {
+                        "num": "8",
+                        "style": "was",
+                        "label": "звонков/мес. было"
+                    },
+                    {
+                        "num": "61",
+                        "style": "up",
+                        "label": "звонков/мес. стало"
+                    },
+                    {
+                        "num": "+340%",
+                        "style": "up",
+                        "label": "рост просмотров"
+                    },
+                    {
+                        "num": "11 дн.",
+                        "style": "",
+                        "label": "срок выхода"
+                    }
+                ],
+                "quote": "«Думал, что Авито — это доски объявлений для б/у вещей. Иван показал, как сделать из профиля полноценный продающий канал. Уже на второй неделе пришлось отказывать клиентам»",
+                "authorInitials": "АК",
+                "authorName": "Алексей К.",
+                "authorRole": "ИП, стройматериалы, бригада 8 человек",
+                "ctaText": "Хочу такой же результат →",
+                "imageUrl": "/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg",
+                "imageAlt": "Тестовый alt фото одного кейса"
+            }
+        },
+        {
+            "id": 7,
+            "type": "process",
+            "data": {
+                "title": "4 шага от первого сообщения до результата",
+                "steps": [
+                    {
+                        "title": "Созвон 30 мин.",
+                        "desc": "Рассказываете про бизнес, я задаю вопросы.",
+                        "time": "День 1",
+                        "active": false
+                    },
+                    {
+                        "title": "Аудит и план",
+                        "desc": "Анализирую конкурентов, спрос, профиль. Пишу план с приоритетами.",
+                        "time": "День 2–3",
+                        "active": true
+                    },
+                    {
+                        "title": "Делаю",
+                        "desc": "Оформляю, пишу, публикую. Каждый день отчёт.",
+                        "time": "День 4–14",
+                        "active": false
+                    },
+                    {
+                        "title": "Результат",
+                        "desc": "Смотрим итоговую статистику. Первые 30 дней — поддержка бесплатно.",
+                        "time": "День 15+",
+                        "active": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": 8,
+            "type": "contacts",
+            "data": {
+                "title": "Свяжитесь удобным способом",
+                "subtitle": "Telegram предпочтительнее — отвечаю там быстрее всего",
+                "primaryUrl": "https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA",
+                "primaryNewTab": true,
+                "tgHandle": "avito_pro",
+                "tgUrl": "",
+                "tgNewTab": true,
+                "maxPhone": "9001234567",
+                "maxUrl": "",
+                "maxNewTab": true,
+                "phone": "9001234567",
+                "phoneUrl": "",
+                "phoneNewTab": false,
+                "waPhone": "9001234567",
+                "waUrl": "",
+                "waNewTab": true,
+                "trust": [
+                    "Отвечаю за 2 часа в рабочее время",
+                    "Работаю удалённо по всей России",
+                    "Договор с ИП · Закрывающие документы"
+                ]
+            }
+        },
+        {
+            "id": 9,
+            "type": "cta",
+            "data": {
+                "chip": "Следующий шаг",
+                "title": "Разберу ваш Авито\nбесплатно — за 24 часа",
+                "subtitle": "Присылаете ссылку на профиль — получаете конкретный разбор: что мешает заявкам и что сделать в первую очередь.",
+                "btnText": "Получить бесплатный аудит",
+                "tgHandle": "avitolog",
+                "note": "Отвечаю за 2 часа · Беру 3–5 клиентов в месяц · Договор с ИП"
+            }
+        },
+        {
+            "id": 10,
+            "type": "footer",
+            "data": {
+                "name": "Алексей Петров",
+                "ogrnip": "000000000000000",
+                "tgHandle": "avito_pro"
+            }
+        },
+        {
+            "id": 12,
+            "type": "gallery",
+            "data": {
+                "chip": "Работы",
+                "title": "Фото кейсов и результатов",
+                "subtitle": "Скриншоты статистики, примеры оформления и реальные фрагменты работы с Авито.",
+                "items": [
+                    {
+                        "imageUrl": "/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg",
+                        "title": "Рост просмотров за неделю",
+                        "caption": "Проверка подписи SEO для фото работы",
+                        "alt": "Тестовый alt галереи работ Авито"
+                    },
+                    {
+                        "imageUrl": "",
+                        "title": "Полученные контакты",
+                        "caption": "Контакты и обращения после запуска",
+                        "alt": "Скриншот полученных контактов в кабинете Авито"
+                    },
+                    {
+                        "imageUrl": "",
+                        "title": "Воронка продаж",
+                        "caption": "Просмотры, контакты и избранное в динамике",
+                        "alt": "Скриншот воронки продаж Авито"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 13,
+            "type": "pricing",
+            "data": {
+                "title": "Прозрачные цены без сюрпризов",
+                "subtitle": "Всё включено. Никаких «за дополнительную плату»",
+                "plans": [
+                    {
+                        "name": "Старт",
+                        "badge": "",
+                        "price": "9 900 ₽",
+                        "period": "разово · один запуск",
+                        "features": [
+                            "Аудит профиля и конкурентов",
+                            "Оформление профиля",
+                            "5 объявлений под ключ",
+                            "Рекомендации по фото"
+                        ],
+                        "btnText": "Выбрать Старт",
+                        "isBest": false
+                    },
+                    {
+                        "name": "Рост",
+                        "badge": "Популярный",
+                        "price": "18 900 ₽",
+                        "period": "разово · первый месяц",
+                        "features": [
+                            "Всё из пакета «Старт»",
+                            "До 20 объявлений",
+                            "A/B тест заголовков",
+                            "Поддержка 30 дней",
+                            "Ежедневные отчёты"
+                        ],
+                        "btnText": "Выбрать Рост",
+                        "isBest": true
+                    },
+                    {
+                        "name": "Ведение",
+                        "badge": "Подписка",
+                        "price": "24 900 ₽",
+                        "period": "в месяц · без паузы",
+                        "features": [
+                            "Безлимит объявлений",
+                            "Поднятие по расписанию",
+                            "Мониторинг конкурентов",
+                            "Еженедельный отчёт"
+                        ],
+                        "btnText": "Выбрать Ведение",
+                        "isBest": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": 14,
+            "type": "about",
+            "data": {
+                "name": "Иван Проценко",
+                "tagline": "Авитолог · Сертифицированный специалист Avito",
+                "text": "Я занимаюсь только Авито — три года, каждый день. Не «ещё одна услуга в прайсе», а единственный инструмент, который я знаю досконально.\n\nРаботаю лично — без менеджеров и субподрядчиков.",
+                "facts": [
+                    "🎓 Сертификат Авито",
+                    "📍 Работаю по всей России",
+                    "📋 Договор с ИП",
+                    "🔄 Возврат гарантирован"
+                ],
+                "photoUrl": "",
+                "photoAlt": "Фото специалиста по Авито"
+            }
+        },
+        {
+            "id": 15,
+            "type": "faq",
+            "data": {
+                "title": "Частые вопросы",
+                "items": [
+                    {
+                        "q": "Когда будет результат?",
+                        "a": "Первые обращения обычно идут на 3–7 день после публикации. Устойчивый рост виден через 2–3 недели."
+                    },
+                    {
+                        "q": "Гарантируете ли вы результат?",
+                        "a": "Гарантирую рост просмотров минимум на 20% за 14 дней — прописано в договоре. Если не произошло — полный возврат."
+                    },
+                    {
+                        "q": "Нужно ли давать доступ к аккаунту?",
+                        "a": "Для ведения — да, нужен доступ. Для разовых услуг — доступ не нужен, публикуете сами по моим материалам."
+                    },
+                    {
+                        "q": "Новый вопрос?",
+                        "a": "Ответ на вопрокенкенс."
+                    }
+                ]
+            }
+        }
+    ],
+    "body_html": "<nav><div class=\"container\"><div class=\"nav-inner\"><div class=\"nav-logo\"><div class=\"avito-dots\"><span></span><span></span><span></span><span></span></div>Алексей Петров</div><ul class=\"nav-links\"><li><a href=\"#avito\">Авито</a></li><li><a href=\"#services\">Услуги</a></li><li><a href=\"#case\">Кейс</a></li><li><a href=\"#process\">Процесс</a></li><li><a href=\"#contacts\">Контакты</a></li></ul><div class=\"nav-right\"><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"btn-nav\">Бесплатный аудит</a></div></div></div></nav>\n<section id=\"hero\" class=\"section-white\"><div class=\"container\"><div class=\"hero-grid\"><div><div class=\"hero-label\">Беру новых клиентов в июне</div><h1 class=\"hero-title\">Помогу получать<br>больше заявок с Авито<br>уже через 14 дней</h1><p class=\"hero-sub\">Оформлю профиль, напишу объявления которые читают до конца и настрою воронку. Работаю один — вы всегда знаете с кем говорите.</p><div class=\"hero-actions\"><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"btn btn-primary\">Разобрать мой Авито — бесплатно</a><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"btn btn-outline\">Посмотреть кейс</a></div><div class=\"hero-trust\"><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-shield\" aria-hidden=\"true\"></span>Возврат если нет роста</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-zap\" aria-hidden=\"true\"></span>Отвечаю за 2 часа</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span>Договор с ИП</span></div></div><div class=\"hero-photo-wrap\"><div class=\"hero-photo-outer\"><div class=\"deco-ring deco-ring-1\"></div><div class=\"deco-ring deco-ring-2\"></div><div class=\"deco-dot deco-dot-1\"></div><div class=\"deco-dot deco-dot-2\"></div><div class=\"deco-dot deco-dot-3\"></div><div class=\"deco-dot deco-dot-4\"></div><div class=\"hero-photo-inner\"><span class=\"photo-placeholder\"><span class=\"sd-icon sd-icon-user\" aria-hidden=\"true\"></span></span><span class=\"photo-placeholder-text\">Ваше фото</span></div><div class=\"photo-badge\">✓ Авитолог с 3-летним опытом</div></div></div></div></div></section>\n<section id=\"avito\" class=\"section-white\"><div class=\"container\"><div class=\"avito-proof-card\"><div class=\"avito-proof-copy\"><span class=\"chip avito-chip\">Профиль на Avito</span><h2>Авитолог Маркетолог Вывод В Топ И Рекомендации</h2><p>Публичная страница на Avito. Ссылка сохранена, описание можно уточнить вручную.</p><div class=\"avito-proof-meta\"><span><span class=\"sd-icon sd-icon-target\" aria-hidden=\"true\"></span>Боровичи</span><span><span class=\"sd-icon sd-icon-check\" aria-hidden=\"true\"></span>Публичная ссылка</span><span><span class=\"sd-icon sd-icon-shield\" aria-hidden=\"true\"></span>Можно уточнить вручную</span></div><a class=\"avito-proof-link\" href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\">Открыть на Avito</a><div class=\"avito-proof-note\">Ссылка сохранена. Если Avito не отдал данные автоматически, заголовок и описание можно поправить вручную.</div></div><a href=\"/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg\" class=\"avito-proof-shot\" data-sd-lightbox=\"1\" data-alt=\"Тестовый alt скрина Avito\"><img src=\"/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg\" alt=\"Тестовый alt скрина Avito\"></a></div></div></section>\n<div id=\"stats\"><div class=\"container\"><div class=\"stats-row\"><div class=\"stat-cell\"><span class=\"stat-num blue\">147</span><span class=\"stat-desc\">клиентов получили<br>результат</span></div><div class=\"stat-cell\"><span class=\"stat-num green\">+54%</span><span class=\"stat-desc\">средний рост заявок<br>за 2 недели</span></div><div class=\"stat-cell\"><span class=\"stat-num orange\">870+</span><span class=\"stat-desc\">объявлений<br>написано лично мной</span></div><div class=\"stat-cell\"><span class=\"stat-num \">3 года</span><span class=\"stat-desc\">работаю только<br>с Авито</span></div></div></div></div>\n<section id=\"services\" class=\"section-bg\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Что я делаю</span><h2>Четыре услуги — конкретные результаты</h2><p>Каждая закрывает одну задачу: вы получаете больше заявок с Авито</p></div><div class=\"services-grid\"><div class=\"svc-card\"><span class=\"svc-price\">от 4 900 ₽</span><div class=\"svc-icon \"><span class=\"sd-icon sd-icon-edit\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Оформление профиля</div><p class=\"svc-desc\">Шапка, описание, фотографии. Создаю образ надёжного продавца — клиент видит и уже хочет написать.</p><span class=\"svc-result\">→ CTR растёт в 1.5–2×</span></div><div class=\"svc-card\"><span class=\"svc-price\">от 700 ₽/шт.</span><div class=\"svc-icon green\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Написание объявлений</div><p class=\"svc-desc\">Заголовок, описание, фото с правильными ракурсами. Пишу на языке вашей аудитории — не рекламным текстом, а живо.</p><span class=\"svc-result\">→ Читают в 3× чаще</span></div><div class=\"svc-card\"><span class=\"svc-price\">от 9 900 ₽/мес</span><div class=\"svc-icon orange\"><span class=\"sd-icon sd-icon-chart\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Ведение аккаунта</div><p class=\"svc-desc\">Поднятие объявлений, A/B тесты заголовков, контроль позиций. Вы занимаетесь бизнесом — я Авито.</p><span class=\"svc-result\">→ 50+ объявлений под контролем</span></div><div class=\"svc-card\"><span class=\"svc-price\">2 900 ₽</span><div class=\"svc-icon red\"><span class=\"sd-icon sd-icon-search\" aria-hidden=\"true\"></span></div><div class=\"svc-name\">Аудит и стратегия</div><p class=\"svc-desc\">Смотрю ваш профиль, конкурентов, спрос. Даю пошаговый план — что сделать в первую очередь.</p><span class=\"svc-result\">→ Plan на 30 дней</span></div></div></div></section>\n<section id=\"case\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip green\">Кейс</span><h2>Реальный результат клиента</h2><p>Один конкретный пример — с цифрами из кабинета Авито</p></div><div class=\"case-featured\"><div class=\"case-left\"><div><span class=\"case-niche-tag\">Стройматериалы · Екатеринбург</span><h3>Профиль без заявок превратился в главный источник клиентов за 11 дней</h3></div><a href=\"/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg\" class=\"case-shot-link\" data-sd-lightbox=\"1\" data-alt=\"Тестовый alt фото одного кейса\"><img class=\"case-shot-img\" src=\"/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg\" alt=\"Тестовый alt фото одного кейса\"><span class=\"case-shot-zoom\">Увеличить</span></a><div><div class=\"case-big-stat\">×7</div><div class=\"case-big-label\">рост входящих звонков за 2 недели</div></div></div><div class=\"case-right\"><div class=\"case-metrics-grid\"><div class=\"case-m\"><span class=\"case-m-num was\">8</span><span class=\"case-m-label\">звонков/мес. было</span></div><div class=\"case-m\"><span class=\"case-m-num up\">61</span><span class=\"case-m-label\">звонков/мес. стало</span></div><div class=\"case-m\"><span class=\"case-m-num up\">+340%</span><span class=\"case-m-label\">рост просмотров</span></div><div class=\"case-m\"><span class=\"case-m-num \">11 дн.</span><span class=\"case-m-label\">срок выхода</span></div></div><div class=\"case-quote\">«Думал, что Авито — это доски объявлений для б/у вещей. Иван показал, как сделать из профиля полноценный продающий канал. Уже на второй неделе пришлось отказывать клиентам»</div><div class=\"case-author\"><div class=\"case-ava\">АК</div><div><div class=\"case-author-name\">Алексей К.</div><div class=\"case-author-role\">ИП, стройматериалы, бригада 8 человек</div></div></div><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"more-cases-link\">Хочу такой же результат →</a></div></div></div></section>\n<section id=\"process\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Как работаем</span><h2>4 шага от первого сообщения до результата</h2></div><div class=\"process-steps\"><div class=\"step\"><div class=\"step-circle\">1</div><div class=\"step-title\">Созвон 30 мин.</div><p class=\"step-desc\">Рассказываете про бизнес, я задаю вопросы.</p><span class=\"step-time\">День 1</span></div><div class=\"step\"><div class=\"step-circle active\">2</div><div class=\"step-title\">Аудит и план</div><p class=\"step-desc\">Анализирую конкурентов, спрос, профиль. Пишу план с приоритетами.</p><span class=\"step-time\">День 2–3</span></div><div class=\"step\"><div class=\"step-circle\">3</div><div class=\"step-title\">Делаю</div><p class=\"step-desc\">Оформляю, пишу, публикую. Каждый день отчёт.</p><span class=\"step-time\">День 4–14</span></div><div class=\"step\"><div class=\"step-circle\">4</div><div class=\"step-title\">Результат</div><p class=\"step-desc\">Смотрим итоговую статистику. Первые 30 дней — поддержка бесплатно.</p><span class=\"step-time\">День 15+</span></div></div></div></section>\n<section id=\"contacts\" class=\"section-white\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Контакты</span><h2>Свяжитесь удобным способом</h2><p>Telegram предпочтительнее — отвечаю там быстрее всего</p></div><div class=\"contacts-grid\"><a href=\"https://t.me/avito_pro\" target=\"_blank\" rel=\"noopener\" class=\"contact-card contact-tg\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-message\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">Telegram</div><div class=\"contact-val\">@avito_pro</div><span class=\"contact-action\">Написать в Telegram →</span></a><a href=\"tel:+79001234567\" class=\"contact-card contact-max\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-smartphone\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">MAX</div><div class=\"contact-val\">+7 900 123-45-67</div><span class=\"contact-action\">Связаться →</span></a><a href=\"tel:+79001234567\" class=\"contact-card contact-phone\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-phone\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">Звонок</div><div class=\"contact-val\">+7 900 123-45-67</div><span class=\"contact-action\">Позвонить →</span></a><a href=\"https://wa.me/79001234567\" target=\"_blank\" rel=\"noopener\" class=\"contact-card contact-wa\"><div class=\"contact-icon\"><span class=\"sd-icon sd-icon-message\" aria-hidden=\"true\"></span></div><div class=\"contact-name\">WhatsApp</div><div class=\"contact-val\">+7 900 123-45-67</div><span class=\"contact-action\">Написать →</span></a></div><div class=\"contacts-trust\"><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-zap\" aria-hidden=\"true\"></span>Отвечаю за 2 часа в рабочее время</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-target\" aria-hidden=\"true\"></span>Работаю удалённо по всей России</span><span class=\"trust-pill\"><span class=\"sd-icon sd-icon-file\" aria-hidden=\"true\"></span>Договор с ИП · Закрывающие документы</span></div></div></section>\n<section id=\"cta-final\"><div class=\"container\"><span class=\"cta-chip\">Следующий шаг</span><h2>Разберу ваш Авито<br>бесплатно — за 24 часа</h2><p class=\"cta-sub\">Присылаете ссылку на профиль — получаете конкретный разбор: что мешает заявкам и что сделать в первую очередь.</p><div class=\"cta-btns\"><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"btn-white\">Получить бесплатный аудит</a><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"btn-tg\"><span class=\"sd-icon sd-icon-external\" aria-hidden=\"true\"></span> Открыть профиль</a></div><p class=\"cta-note\">Отвечаю за 2 часа · Беру 3–5 клиентов в месяц · Договор с ИП</p></div></section>\n<footer><div class=\"container\"><div class=\"footer-inner\"><div style=\"display:flex;align-items:center;gap:10px;\"><div class=\"avito-dots\"><span></span><span></span><span></span><span></span></div><span class=\"footer-copy\">© 2026 Алексей Петров · Авитолог · ИП · ОГРНИП 000000000000000</span></div><ul class=\"footer-links\"><li><a href=\"#\">Договор оферты</a></li><li><a href=\"#\">Конфиденциальность</a></li><li><a href=\"https://t.me/avito_pro\">Telegram</a></li></ul></div></div></footer>\n<section id=\"gallery\" class=\"section-bg\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Работы</span><h2>Фото кейсов и результатов</h2><p>Скриншоты статистики, примеры оформления и реальные фрагменты работы с Авито.</p></div><div class=\"work-gallery-grid\"><article class=\"work-card\"><a href=\"/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg\" class=\"work-card-img\" data-sd-lightbox=\"1\" data-alt=\"Тестовый alt галереи работ Авито\"><img src=\"/sales-doc/uploads/2026/05/c0edcd2848a01541e7aefc0e.jpg\" alt=\"Тестовый alt галереи работ Авито\"><span class=\"work-zoom\">Увеличить</span></a><div class=\"work-card-body\"><h3>Рост просмотров за неделю</h3><p>Проверка подписи SEO для фото работы</p></div></article><article class=\"work-card\"><div class=\"work-card-empty\"><span class=\"sd-icon sd-icon-image\" aria-hidden=\"true\"></span><span>Добавьте фото</span></div><div class=\"work-card-body\"><h3>Полученные контакты</h3><p>Контакты и обращения после запуска</p></div></article><article class=\"work-card\"><div class=\"work-card-empty\"><span class=\"sd-icon sd-icon-image\" aria-hidden=\"true\"></span><span>Добавьте фото</span></div><div class=\"work-card-body\"><h3>Воронка продаж</h3><p>Просмотры, контакты и избранное в динамике</p></div></article></div></div></section>\n<section id=\"pricing\" class=\"section-bg\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">Стоимость</span><h2>Прозрачные цены без сюрпризов</h2><p>Всё включено. Никаких «за дополнительную плату»</p></div><div class=\"pricing-grid\"><div class=\"plan\"><div class=\"plan-top\"><div class=\"plan-name\">Старт</div></div><div class=\"plan-price\"><sup>от </sup>9 900 ₽</div><div class=\"plan-period\">разово · один запуск</div><div class=\"plan-divider\"></div><ul class=\"plan-list\"><li><span class=\"plan-check\">✓</span> Аудит профиля и конкурентов</li><li><span class=\"plan-check\">✓</span> Оформление профиля</li><li><span class=\"plan-check\">✓</span> 5 объявлений под ключ</li><li><span class=\"plan-check\">✓</span> Рекомендации по фото</li></ul><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"plan-btn ghost\">Выбрать Старт</a></div><div class=\"plan best\"><div class=\"plan-top\"><div class=\"plan-name\">Рост</div><span class=\"plan-badge pop\">Популярный</span></div><div class=\"plan-price\"><sup>от </sup>18 900 ₽</div><div class=\"plan-period\">разово · первый месяц</div><div class=\"plan-divider\"></div><ul class=\"plan-list\"><li><span class=\"plan-check\">✓</span> Всё из пакета «Старт»</li><li><span class=\"plan-check\">✓</span> До 20 объявлений</li><li><span class=\"plan-check\">✓</span> A/B тест заголовков</li><li><span class=\"plan-check\">✓</span> Поддержка 30 дней</li><li><span class=\"plan-check\">✓</span> Ежедневные отчёты</li></ul><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"plan-btn\">Выбрать Рост</a></div><div class=\"plan\"><div class=\"plan-top\"><div class=\"plan-name\">Ведение</div><span class=\"plan-badge pop\">Подписка</span></div><div class=\"plan-price\"><sup>от </sup>24 900 ₽</div><div class=\"plan-period\">в месяц · без паузы</div><div class=\"plan-divider\"></div><ul class=\"plan-list\"><li><span class=\"plan-check\">✓</span> Безлимит объявлений</li><li><span class=\"plan-check\">✓</span> Поднятие по расписанию</li><li><span class=\"plan-check\">✓</span> Мониторинг конкурентов</li><li><span class=\"plan-check\">✓</span> Еженедельный отчёт</li></ul><a href=\"https://www.avito.ru/borovichi/predlozheniya_uslug/avitolog-marketolog_vyvod_v_top_i_rekomendatsii_7895252400?context=H4sIAAAAAAAA_wE_AMD_YToyOntzOjEzOiJsb2NhbFByaW9yaXR5IjtiOjA7czoxOiJ4IjtzOjE2OiJKZjdjVG9oeHBSc1lpRHNCIjt9NKm66D8AAAA\" target=\"_blank\" rel=\"noopener\" class=\"plan-btn ghost\">Выбрать Ведение</a></div></div></div></section>\n<section id=\"about\" class=\"section-bg\"><div class=\"container\"><div class=\"about-grid\"><div style=\"display:flex;flex-direction:column;align-items:center;gap:16px;\"><div class=\"about-photo-circle\">🧑‍💻<div class=\"about-cert\">✓</div></div></div><div><span class=\"chip\">Обо мне</span><div class=\"about-name\">Иван Проценко</div><div class=\"about-tagline\">Авитолог · Сертифицированный специалист Avito</div><p class=\"about-text\">Я занимаюсь только Авито — три года, каждый день. Не «ещё одна услуга в прайсе», а единственный инструмент, который я знаю досконально.<br><br>Работаю лично — без менеджеров и субподрядчиков.</p><div class=\"about-facts\"><span class=\"fact-chip\">🎓 Сертификат Авито</span><span class=\"fact-chip\">📍 Работаю по всей России</span><span class=\"fact-chip\">📋 Договор с ИП</span><span class=\"fact-chip\">🔄 Возврат гарантирован</span></div></div></div></div></section>\n<section id=\"faq\" class=\"section-bg\"><div class=\"container\"><div class=\"section-header\"><span class=\"chip\">FAQ</span><h2>Частые вопросы</h2></div><div class=\"faq-wrap\"><div class=\"faq-item open\"><div class=\"faq-q\">Когда будет результат?<span class=\"faq-icon\">+</span></div><div class=\"faq-a\">Первые обращения обычно идут на 3–7 день после публикации. Устойчивый рост виден через 2–3 недели.</div></div><div class=\"faq-item\"><div class=\"faq-q\">Гарантируете ли вы результат?<span class=\"faq-icon\">+</span></div><div class=\"faq-a\">Гарантирую рост просмотров минимум на 20% за 14 дней — прописано в договоре. Если не произошло — полный возврат.</div></div><div class=\"faq-item\"><div class=\"faq-q\">Нужно ли давать доступ к аккаунту?<span class=\"faq-icon\">+</span></div><div class=\"faq-a\">Для ведения — да, нужен доступ. Для разовых услуг — доступ не нужен, публикуете сами по моим материалам.</div></div><div class=\"faq-item\"><div class=\"faq-q\">Новый вопрос?<span class=\"faq-icon\">+</span></div><div class=\"faq-a\">Ответ на вопрокенкенс.</div></div></div></div></section>",
+    "created_at": "2026-05-06 15:38:11"
+}

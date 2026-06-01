@@ -1,108 +1,143 @@
-# CHANGELOG
+# Changelog
 
-## 2026-03-31
-- Зафиксировано продуктовое решение: avitoeditor нужен основному проекту как встроенный конструктор баннеров и visual improvement module:
-  - docs/SERVICE-MAP.md
-  - docs/tech/AVITOEDITOR-INTEGRATION-CONTRACT.md
-  - docs/PROJECT-DEVELOPMENT-PLAN.md
-  - docs/MVP-BACKLOG.md
-- Начата первая реальная санация avitoeditor и зафиксирован его интеграционный контракт с core-платформой:
-  - avitoeditor/.gitignore
-  - avitoeditor/api/config.php
-  - avitoeditor/api/auth.php
-  - avitoeditor/api/create-payment.php
-  - avitoeditor/api/payment-config.php
-  - avitoeditor/api/payment-test.php
-  - avitoeditor/api/payment-webhook.php
-  - avitoeditor/assets/js/admin.js
-  - avitoeditor/assets/js/editor.js
-  - avitoeditor/assets/js/editor-test.js
-  - avitoeditor/config/payment-config.example.json
-  - docs/tech/AVITOEDITOR-INTEGRATION-CONTRACT.md
-  - docs/LEGACY-SANITIZATION.md
-  - README.md
-- Добавлена карта сервисов и подпроектов вокруг core-платформы, чтобы legacy-папки учитывать как отдельные сервисы, а не как мусор:
-  - docs/SERVICE-MAP.md
-  - README.md
-  - AGENTS.md
-- Зафиксированы взрослый git-процесс, staging-план и карта санации legacy-папок перед второй волной публикации в GitHub:
-  - docs/GIT-WORKFLOW.md
-  - docs/STAGING-PLAN.md
-  - docs/LEGACY-SANITIZATION.md
-  - README.md
-  - AGENTS.md
-  - .gitignore
-  - avitoeditor/.env.example
-- Добавлена стратегия деплоя и git-процесса для production-like контура и GitHub-репозитория:
-  - docs/DEPLOYMENT-STRATEGY.md
-  - README.md
-  - AGENTS.md
-- Добавлен календарь разработки с уже завершенными этапами, текущим фокусом и ближайшими окнами:
-  - docs/DEVELOPMENT-CALENDAR.md
-  - README.md
-- Добавлен корневой регламент для агентов с правилами чтения проекта, постановки задач, открытия/закрытия дня и проверки перед push:
-  - AGENTS.md
-  - README.md
-- Подключена живая страница политики конфиденциальности и ссылка из футера главной:
-  - policy.html
-  - index.html
-  - docs/checklists/NEW_BLOCK_CHECKLIST_STATUS.json
-- Полностью обновлена главная страница проекта под бесплатный старт и продуктовую витрину:
-  - index.html
-  - docs/checklists/NEW_BLOCK_CHECKLIST_STATUS.json
-- Зафиксирован callback endpoint для Avito OAuth и точный Redirect URL для настройки приложения:
-  - api/core/auth-avito-callback.php
-  - docs/ENV.md
-  - docs/CORE-MVP-SETUP.md
-- Добавлен backend audit endpoint и привязка экрана аудита к реальному API:
-  - api/core/audit.php
-  - api/core/audit-lib.php
-  - cabinet/assets/app.js
-  - docs/CORE-MVP-SETUP.md
-- В кабинете добавлен новый экран аудита с адаптивной UI-структурой и локальными Lucide-иконками:
-  - cabinet/index.html
-  - cabinet/assets/app.js
-  - cabinet/assets/app.css
-  - cabinet/assets/lucide-local.js
-- Добавлена новая one-page концепция ядра MVP: аудит и улучшение объявлений Авито по ссылке:
-  - docs/product/MVP-CORE-CONCEPT.md
-- Уточнена продуктовая концепция: Avito API как основа платформы, audit-first вход и визуальный аудит фото/инфографики:
-  - docs/product/MVP-CORE-CONCEPT.md
-  - docs/PROJECT-IDEOLOGY.md
-- Добавлены продуктовые документы для взрослого планирования API-first MVP:
-  - docs/product/AVITO-API-MVP-MAP.md
-  - docs/product/AUDIT-SCORING-SYSTEM.md
-- Добавлены практические спецификации для следующего шага разработки:
-  - docs/tech/AVITO-DATA-HUB-CONTRACT.md
-  - docs/product/FIRST-AUDIT-SCREEN.md
-- Добавлен продуктовый слой рыночного benchmark и спеку источников данных:
-  - docs/product/MARKET-BENCHMARK-MODULE.md
-  - docs/tech/MARKET-BENCHMARK-DATA-SOURCES.md
-- Добавлены SQL-миграции и проектирование UI для benchmark-слоя:
-  - sql/acb-core-mvp-migrate-003-data-hub.sql
-  - sql/acb-core-mvp-migrate-004-market-benchmark.sql
-  - docs/tech/MARKET-BENCHMARK-SQL-LAYER.md
-  - docs/product/AUDIT-MARKET-GAP-BLOCK.md
-- Обновлен экран аудита под встроенный блок рыночного gap:
-  - docs/product/FIRST-AUDIT-SCREEN.md
-- Обновлены roadmap/backlog под новый фокус платформы:
-  - docs/MVP-BACKLOG.md
-  - docs/PROJECT-DEVELOPMENT-PLAN.md
-  - docs/product/PRODUCT-LOGIC.md
-  - docs/product/MVP-CORE-CONCEPT.md
-  - README.md
-- Удален WordPress-слой из корня проекта:
-  - Удалены корневые PHP entry/config файлы WordPress.
-  - Удалены директории wp-admin, wp-includes, wp-content.
-- Обновлена маршрутизация в .htaccess (fallback на index.html).
-- Обновлен README под AVITO CONVERSION BUILDER.
-- Очищен .vscode/tasks.json от задач, завязанных на WordPress.
-- Добавлен набор базовой документации:
-  - ARCHITECTURE, MONOREPO-STRUCTURE, ENV, MVP-BACKLOG,
-    RELEASE-CHECKLIST, RUNBOOK, продуктовые и технические спецификации.
-- Добавлена стартовая страница index.html.
-- Добавлен каркас монорепо: apps, packages, infra.
-- Добавлен отчет миграции WordPress с ссылками на backup.
-- Добавлен Core MVP API каркас (PHP): OAuth через Яндекс ID + JWT + refresh, CRUD объявлений:
-  - api/core/*
-  - sql/acb-core-mvp.sql
+## 2026-05-27
+
+### Удаление концептов и компаний (C-1)
+
+- компонент `DeleteConfirmButton` (`src/components/dashboard/delete-confirm-button.tsx`) — `"use client"`, подтверждение через `window.confirm` перед server action
+- кнопки удаления добавлены в карточки дашборда (компании + концепты) и в топбар редактора
+- server actions: `deleteProposalAction`, `deleteCompanyAction`, `deleteCurrentProposalAction`
+- каскадное удаление: сначала фидбек, затем концепт/компания
+
+### Аналитика устройств (A-1)
+
+- `share_link_views.device_type` — тип устройства (`mobile`/`tablet`/`desktop`/`unknown`)
+- `share_links.mobile_view_count`, `share_links.desktop_view_count` — счётчики по типу
+- функция `detectDevice(userAgent)` в `src/lib/data/share-links.ts`
+- иконки 📱/💻 с цифрами в карточках концептов на дашборде (только при `uniqueViewCount > 0`)
+
+### WOW — вступительная анимация share-страниц
+
+- intro-занавес: монограмма компании + кикер → прогресс-бар → плавный уход
+- CSS: `.fpb-intro`, `.fpb-intro.is-leaving`, `@keyframes fpbIntroLeave/Bar/Item`
+- scroll-reveal через `IntersectionObserver`: `.reveal-pending` → `.reveal-done`
+- hero-блок появляется с анимацией после intro (`fpb-hero-enter`)
+- inline `<script dangerouslySetInnerHTML>` в share-page (нет зависимостей от клиентских компонентов)
+
+### Exit-intent модал на share-страницах
+
+- триггер: `document.mouseleave` через верхний край (desktop) / `setTimeout 35s` (mobile)
+- показывается **один раз за сессию** (`sessionStorage`), не раньше 2.5 сек после intro
+- контент: фото автора, имя, роль, убедительный текст, 3 кнопки (телефон, Telegram, Max.ru)
+- закрывается на `Escape`, клик по backdrop, кнопку ×
+- CSS: `.fpb-exit-backdrop`, `.fpb-exit-modal`, `.fpb-exit-card` и дочерние классы
+
+### Студия КОНВЕРСУС на share-страницах
+
+- badge «СТУДИЯ КОНВЕРСУС» (`studio-badge`) в топбаре share-page, ссылка на `https://konversus.ru`
+- подвал `<footer class="fpb-page-footer">` после FeedbackForm: логотип КВ, слоган, ссылка
+
+### 404 страница
+
+- `src/app/not-found.tsx` — кинематографичная тёмная 404 в стиле проекта
+- водяной знак «404», монограмма КВ, кнопки «На главную» и «Telegram»
+- `robots: { index: false, follow: false }` — не засоряет индекс поиска
+- CSS: `.fpb-404` и дочерние классы в `globals.css`
+
+### Настройки сайта — полный редактор (`/dashboard/settings`)
+
+#### База данных
+- таблица `site_settings` (`key VARCHAR PRIMARY KEY`, `value LONGTEXT`, `updated_at`)
+- изменения применяются без деплоя — данные читаются из БД на каждый запрос
+
+#### Data layer
+- `src/lib/data/settings.ts` — `getAllSettings()`, `getSetting()`, `setManySetting()`
+- константа `SETTING_DEFAULTS` — все дефолтные значения, таблица может быть пустой
+- ключи: `seo_title`, `seo_description`, `seo_keywords`, `seo_og_image`, `ym_id`, `ga_id`, `yw_verification`, `body_scripts`, `hero_badge`, `hero_title`, `hero_subtitle`, `hero_cta_primary`, `hero_cta_secondary`, `about_experience`, `about_bio_1`, `about_bio_2`, `contact_phone`, `contact_phone_href`, `contact_email`, `contact_telegram`, `contact_telegram_href`, `contact_max_href`
+
+#### Server action
+- `src/app/dashboard/settings/actions.ts` → `saveSettingsAction(formData)` — сохраняет все ключи из `SETTING_DEFAULTS`, вызывает `revalidatePath("/")`
+
+#### UI страницы настроек
+- `src/app/dashboard/settings/page.tsx` — полностью переписан
+- секции: Hero, О себе, Контакты, SEO, Аналитика, Вставка кода, Статус интеграций
+- sticky save-bar сверху + кнопка снизу
+- компоненты `Field` (input/textarea) и `SectionHeader` — внутренние helpers
+
+#### Сквозная вставка кода (виджеты, чаты, пиксели)
+- `src/components/body-script-injector.tsx` — `"use client"` компонент
+- парсит произвольный HTML: извлекает `<script>` теги и создаёт их через `document.createElement("script")` (единственный способ исполнить скрипты из innerHTML)
+- монтируется в `src/app/layout.tsx` → работает на **всех страницах** проекта
+- пример: вставить код Jivochat → сохранить → обновить страницу → виджет работает везде
+
+#### layout.tsx — динамические метаданные
+- `export const metadata` заменён на `export async function generateMetadata()` — читает SEO из БД
+- Яндекс.Метрика: ID берётся из `s.ym_id` вместо хардкода
+- `BodyScriptInjector` рендерится в `<body>` с `s.body_scripts`
+
+#### page.tsx (главная) — тексты из БД
+- все ключевые тексты hero-секции, биографии, контактов читаются через `getAllSettings()`
+
+
+
+### V2-редактор концептов
+
+- редактор переведен на простой контур JSON -> HTML preview в iframe,
+- добавлены блоки Hero-вариантов, фактов, текста с фото, фото 100%, видео 100%, галереи до 6 фото, HTML-вставки и контактов,
+- слои вынесены в выпадающий список с действиями поднять, опустить, дублировать и удалить,
+- левая медиатека убрана из постоянной панели; выбор изображений работает через модальное окно из полей,
+- каталог блоков стал прокручиваемым и получил явный плюс для добавления,
+- исправлены сбросы preview при вводе текста и смене палитры: ввод работает через спокойный debounce, палитра меняет iframe без перезагрузки.
+
+### Публикация и доставка
+
+- кнопка публикации стала кнопкой обновления share для уже опубликованных концептов,
+- перед публикацией принудительно сохраняются актуальные блоки и палитра,
+- добавлен PDF download route `/share/[slug]/pdf` как вторичный формат для пересылки,
+- фокус MVP зафиксирован на share-ссылке как главном клиентском сценарии.
+
+### Стабилизация
+
+- увеличен лимит Server Actions до `8mb` для сохранения крупных структур,
+- production-сборки и перезапуск PM2 выполнялись после ключевых изменений,
+- браузерные проверки подтвердили сохранение scroll-позиции preview и отсутствие ошибки сохранения в проверенном сценарии.
+
+## 2026-05-25
+
+### Перезапуск проекта
+
+- старый проект вынесен из рабочего web-root в архив,
+- в корне проекта развернут новый Next.js baseline,
+- зафиксирован новый продуктовый вектор: цифровая упаковка для производств.
+
+### Backend и авторизация
+
+- runtime переведен на локальную MySQL-базу,
+- добавлена локальная cookie-сессия владельца,
+- введены `DB_*`, `ADMIN_*` и `AUTH_SECRET` переменные окружения,
+- подготовлена MySQL-схема в `sql/001_mvp_core_mysql.sql`.
+
+### Dashboard и сущности
+
+- реализованы компании и концепты как базовые сущности,
+- собран первый dashboard владельца,
+- добавлены server actions для создания компаний и концептов.
+
+### Builder и delivery
+
+- добавлен proposal builder с блочной структурой документа,
+- введены типы блоков и шаблоны payload,
+- добавлена публикация share-link,
+- поднята публичная share-page по URL `/share/[slug]`.
+
+### Деплой
+
+- проект переведен на production-деплой через nginx + PM2,
+- домен `konversus.ru` отдает Next.js production build,
+- настроен отдельный production-процесс `konversus-fpb`.
+
+### Документация
+
+- обновлены архитектурные документы под MySQL и builder-first модель,
+- зафиксированы block system, роль Ollama и медиаслой,
+- добавлены индекс документации и статус проекта.

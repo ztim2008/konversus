@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Авитолог — референс дизайна</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ═══ AVITO-STYLE DESIGN TOKENS ═══════════════════════════ */
+:root {
+  /* Light mode (default) */
+  --bg:           #FFFFFF;
+  --bg-2:         #F5F5F5;
+  --bg-3:         #EEF0F5;
+  --bg-card:      #FFFFFF;
+  --border:       #E8E8E8;
+  --border-2:     #D0D0D0;
+  --text:         #1A1A1A;
+  --text-2:       #424242;
+  --text-3:       #767676;
+  --text-4:       #AAAAAA;
+
+  /* Avito brand */
+  --avito-blue:   #00AAFF;
+  --avito-blue-h: #0090E8;
+  --avito-blue-bg:#E6F5FF;
+  --avito-green:  #59BE78;
+  --avito-green-bg: #E8F8EE;
+  --avito-red:    #E84848;
+  --avito-orange: #FF7B25;
+  --avito-yellow: #FAB600;
+
+  /* Dot logo colors */
+  --dot-red:      #FF6946;
+  --dot-orange:   #FF9E28;
+  --dot-green:    #4DBA87;
+  --dot-blue:     #3D9BE9;
+
+  --radius:       16px;
+  --radius-sm:    10px;
+  --radius-xs:    6px;
+  --shadow:       0 2px 12px rgba(0,0,0,.08);
+  --shadow-md:    0 4px 24px rgba(0,0,0,.12);
+  --shadow-lg:    0 8px 40px rgba(0,0,0,.14);
+  --font:         'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --transition:   .2s ease;
+}
+
+[data-theme="dark"] {
+  --bg:           #0F172A;
+  --bg-2:         #1E293B;
+  --bg-3:         #162032;
+  --bg-card:      #1E293B;
+  --border:       rgba(255,255,255,.08);
+  --border-2:     rgba(255,255,255,.15);
+  --text:         #F1F5F9;
+  --text-2:       #CBD5E1;
+  --text-3:       #94A3B8;
+  --text-4:       #64748B;
+  --avito-blue-bg: rgba(0,170,255,.12);
+  --avito-green-bg: rgba(89,190,120,.1);
+  --shadow:       0 2px 12px rgba(0,0,0,.3);
+  --shadow-md:    0 4px 24px rgba(0,0,0,.4);
+  --shadow-lg:    0 8px 40px rgba(0,0,0,.5);
+}
+
+/* ═══ RESET ════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg-2);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+}
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+
+/* ═══ LAYOUT ════════════════════════════════════════════════ */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+section { padding: 72px 0; }
+.section-bg { background: var(--bg-2); }
+.section-white { background: var(--bg); }
+
+/* ═══ AVITO DOTS DECORATION ════════════════════════════════ */
+.avito-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 32px;
+}
+.avito-dots span {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: block;
+}
+.avito-dots span:nth-child(1) { background: var(--dot-red); }
+.avito-dots span:nth-child(2) { background: var(--dot-orange); }
+.avito-dots span:nth-child(3) { background: var(--dot-green); }
+.avito-dots span:nth-child(4) { background: var(--dot-blue); }
+
+/* ═══ TYPOGRAPHY ════════════════════════════════════════════ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: var(--avito-blue-bg);
+  color: var(--avito-blue);
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+.chip.green { background: var(--avito-green-bg); color: var(--avito-green); }
+h1 { font-size: clamp(32px, 5.5vw, 58px); font-weight: 900; line-height: 1.1; letter-spacing: -.5px; }
+h2 { font-size: clamp(26px, 3.5vw, 40px); font-weight: 800; line-height: 1.15; letter-spacing: -.3px; }
+h3 { font-size: 18px; font-weight: 700; }
+
+/* ═══ NAV ════════════════════════════════════════════════ */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  box-shadow: var(--shadow);
+}
+.nav-inner {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.nav-links {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  flex: 1;
+  justify-content: center;
+}
+.nav-links a {
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-3);
+  transition: background var(--transition), color var(--transition);
+}
+.nav-links a:hover { background: var(--bg-2); color: var(--text); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.theme-toggle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+.theme-toggle:hover { background: var(--bg-3); }
+.btn-nav {
+  background: var(--avito-blue);
+  color: #fff;
+  padding: 9px 20px;
+  border-radius: var(--radius-xs);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background var(--transition), transform var(--transition);
+}
+.btn-nav:hover { background: var(--avito-blue-h); transform: translateY(-1px); }
+
+/* ═══ HERO ════════════════════════════════════════════════ */
+#hero {
+  background: var(--bg);
+  padding: 72px 0 64px;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 64px;
+  align-items: center;
+}
+.hero-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--avito-green);
+  background: var(--avito-green-bg);
+  padding: 5px 14px 5px 8px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.hero-label::before {
+  content: '';
+  width: 8px; height: 8px;
+  background: var(--avito-green);
+  border-radius: 50%;
+  animation: pulse 1.8s ease infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .6; transform: scale(.8); }
+}
+.hero-title { margin-bottom: 20px; }
+.hero-title mark {
+  background: none;
+  color: var(--avito-blue);
+}
+.hero-sub {
+  font-size: 17px;
+  color: var(--text-3);
+  max-width: 480px;
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 36px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+  line-height: 1;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn-primary {
+  background: var(--avito-blue);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,170,255,.3);
+}
+.btn-primary:hover {
+  background: var(--avito-blue-h);
+  box-shadow: 0 6px 28px rgba(0,170,255,.4);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--text-2);
+  border: 1.5px solid var(--border-2);
+}
+.btn-outline:hover { border-color: var(--avito-blue); color: var(--avito-blue); }
+.hero-trust { display: flex; gap: 20px; flex-wrap: wrap; }
+.trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+  background: var(--bg-2);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+/* Hero Photo */
+.hero-photo-wrap { display: flex; justify-content: center; align-items: center; }
+.hero-photo-outer {
+  position: relative;
+  width: 340px; height: 340px;
+}
+/* Decorative circles like Avito logo */
+.deco-ring {
+  position: absolute;
+  border-radius: 50%;
+  opacity: .15;
+}
+.deco-ring-1 {
+  width: 340px; height: 340px;
+  top: 0; left: 0;
+  background: linear-gradient(135deg, var(--avito-blue), var(--avito-green));
+}
+.deco-ring-2 {
+  width: 280px; height: 280px;
+  top: 30px; left: 30px;
+  background: var(--avito-blue);
+  opacity: .07;
+}
+/* Avito-style dot decorations */
+.deco-dot {
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+.deco-dot-1 { width: 28px; height: 28px; background: var(--dot-red); top: 20px; right: 30px; }
+.deco-dot-2 { width: 20px; height: 20px; background: var(--dot-orange); bottom: 50px; right: 10px; }
+.deco-dot-3 { width: 16px; height: 16px; background: var(--dot-green); bottom: 20px; left: 30px; }
+.deco-dot-4 { width: 24px; height: 24px; background: var(--dot-blue); top: 40px; left: 10px; }
+
+.hero-photo-inner {
+  position: absolute;
+  top: 20px; left: 20px;
+  right: 20px; bottom: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(155deg, var(--avito-blue-bg) 0%, var(--bg-3) 100%);
+  border: 4px solid var(--bg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.photo-placeholder {
+  font-size: 120px;
+  line-height: 1;
+  filter: grayscale(0.2);
+  padding-bottom: 0;
+  user-select: none;
+}
+.photo-placeholder-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--avito-blue);
+  font-size: 14px;
+  font-weight: 700;
+  opacity: .6;
+  pointer-events: none;
+}
+/* Badge on photo */
+.photo-badge {
+  position: absolute;
+  bottom: 28px;
+  right: -10px;
+  background: var(--avito-green);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--bg);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+}
+
+/* ═══ STATS BAR ════════════════════════════════════════════ */
+#stats {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.stat-cell {
+  padding: 36px 28px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+.stat-cell:last-child { border-right: none; }
+.stat-num {
+  display: block;
+  font-size: clamp(34px, 4vw, 48px);
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+}
+.stat-num.blue { color: var(--avito-blue); }
+.stat-num.green { color: var(--avito-green); }
+.stat-num.orange { color: var(--avito-orange); }
+.stat-desc { font-size: 13px; color: var(--text-3); line-height: 1.5; }
+
+/* ═══ SERVICES ════════════════════════════════════════════ */
+.section-header { text-align: center; margin-bottom: 48px; }
+.section-header h2 { margin-bottom: 12px; }
+.section-header p { font-size: 16px; color: var(--text-3); max-width: 480px; margin: 0 auto; }
+
+.services-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.svc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.svc-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--avito-blue);
+  transform: translateY(-3px);
+}
+.svc-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: var(--avito-blue);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.svc-card:hover::before { opacity: 1; }
+.svc-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 16px;
+  background: var(--avito-blue-bg);
+}
+.svc-icon.green { background: var(--avito-green-bg); }
+.svc-icon.orange { background: rgba(255,123,37,.1); }
+.svc-icon.red { background: rgba(232,72,72,.08); }
+.svc-name { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+.svc-desc { font-size: 14px; color: var(--text-3); line-height: 1.6; margin-bottom: 16px; }
+.svc-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--avito-green);
+  background: var(--avito-green-bg);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+}
+.svc-price {
+  position: absolute;
+  top: 28px; right: 28px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-4);
+}
+
+/* ═══ CASE (ONE FEATURED) ══════════════════════════════════ */
+.case-featured {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.case-left {
+  padding: 48px 40px;
+  background: linear-gradient(135deg, var(--avito-blue) 0%, #0077DD 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.case-niche-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,.2);
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+.case-left h3 {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 28px;
+}
+.case-big-stat { font-size: 64px; font-weight: 900; line-height: 1; letter-spacing: -2px; }
+.case-big-label { font-size: 14px; opacity: .8; margin-top: 6px; }
+.case-right { padding: 48px 40px; }
+.case-metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+.case-m {
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+}
+.case-m-num {
+  display: block;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+.case-m-num.up { color: var(--avito-green); }
+.case-m-num.was { color: var(--avito-red); font-size: 18px; }
+.case-m-label { font-size: 12px; color: var(--text-3); }
+.case-quote {
+  background: var(--bg-2);
+  border-left: 3px solid var(--avito-blue);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  padding: 16px 20px;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.case-author { display: flex; align-items: center; gap: 12px; }
+.case-ava {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--avito-blue), var(--avito-green));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.case-author-name { font-size: 14px; font-weight: 700; }
+.case-author-role { font-size: 12px; color: var(--text-3); }
+.more-cases-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--avito-blue);
+  background: var(--avito-blue-bg);
+  padding: 8px 16px;
+  border-radius: var(--radius-xs);
+  transition: background var(--transition);
+}
+.more-cases-link:hover { background: var(--border); }
+
+/* ═══ PROCESS ══════════════════════════════════════════════ */
+.process-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+.process-steps::after {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(12.5%);
+  width: calc(75%);
+  height: 2px;
+  background: var(--border-2);
+  z-index: 0;
+}
+.step {
+  text-align: center;
+  padding: 0 16px;
+  position: relative;
+  z-index: 1;
+}
+.step-circle {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  background: var(--bg-card);
+  border: 2px solid var(--border-2);
+  color: var(--text-3);
+  position: relative;
+  z-index: 1;
+  transition: background var(--transition), border-color var(--transition);
+}
+.step-circle.active {
+  background: var(--avito-blue);
+  border-color: var(--avito-blue);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,170,255,.3);
+}
+.step-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.step-desc { font-size: 13px; color: var(--text-3); line-height: 1.6; }
+.step-time {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--avito-green);
+  background: var(--avito-green-bg);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* ═══ ABOUT ME (personal) ═══════════════════════════════ */
+.about-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.about-photo-circle {
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(155deg, var(--avito-blue-bg), var(--bg-3));
+  border: 3px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72px;
+  flex-shrink: 0;
+  position: relative;
+}
+.about-cert {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 40px; height: 40px;
+  background: var(--avito-blue);
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.about-name { font-size: 24px; font-weight: 900; margin-bottom: 6px; }
+.about-tagline { font-size: 15px; color: var(--avito-blue); font-weight: 700; margin-bottom: 16px; }
+.about-text { font-size: 15px; color: var(--text-2); line-height: 1.7; margin-bottom: 24px; }
+.about-facts { display: flex; flex-wrap: wrap; gap: 10px; }
+.fact-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+/* ═══ PRICING ══════════════════════════════════════════════ */
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+.plan {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.plan:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+.plan.best {
+  border-color: var(--avito-blue);
+  box-shadow: 0 0 0 3px rgba(0,170,255,.1);
+}
+.plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.plan-name { font-size: 19px; font-weight: 800; }
+.plan-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: var(--avito-blue);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.plan-badge.pop { background: var(--avito-green); color: #fff; }
+.plan-price { font-size: 36px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+.plan-price sup { font-size: 16px; font-weight: 700; }
+.plan-period { font-size: 13px; color: var(--text-3); margin: 4px 0 20px; }
+.plan-divider { height: 1px; background: var(--border); margin: 16px 0; }
+.plan-list { list-style: none; margin-bottom: 24px; }
+.plan-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.plan-list li:last-child { border-bottom: none; }
+.plan-check { color: var(--avito-green); font-weight: 700; font-size: 15px; flex-shrink: 0; }
+.plan-btn {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  background: var(--avito-blue);
+  color: #fff;
+  transition: background var(--transition), transform var(--transition);
+  width: 100%;
+}
+.plan-btn:hover { background: var(--avito-blue-h); transform: translateY(-1px); }
+.plan-btn.ghost {
+  background: var(--bg-2);
+  color: var(--text-2);
+  border: 1.5px solid var(--border-2);
+}
+.plan-btn.ghost:hover { border-color: var(--avito-blue); color: var(--avito-blue); background: var(--avito-blue-bg); }
+
+/* ═══ REVIEWS ══════════════════════════════════════════════ */
+.reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.review {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: box-shadow var(--transition);
+}
+.review:hover { box-shadow: var(--shadow); }
+.review-stars { color: var(--avito-yellow); font-size: 14px; letter-spacing: 2px; }
+.review-text { font-size: 14px; color: var(--text-2); line-height: 1.7; flex: 1; }
+.review-text em { font-style: normal; font-weight: 700; color: var(--avito-green); }
+.review-author { display: flex; align-items: center; gap: 10px; }
+.review-ava {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--avito-blue), #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.review-name { font-size: 13px; font-weight: 700; }
+.review-city { font-size: 12px; color: var(--text-3); }
+
+/* ═══ FAQ ═══════════════════════════════════════════════════ */
+.faq-wrap { max-width: 720px; margin: 0 auto; }
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: box-shadow var(--transition);
+}
+.faq-item.open { box-shadow: var(--shadow); border-color: var(--avito-blue); }
+.faq-q {
+  padding: 18px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+.faq-icon {
+  width: 28px; height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--bg-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--text-3);
+  transition: transform var(--transition), color var(--transition), background var(--transition);
+}
+.faq-item.open .faq-icon { transform: rotate(45deg); color: var(--avito-blue); background: var(--avito-blue-bg); }
+.faq-a {
+  display: none;
+  padding: 0 20px 18px;
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.faq-item.open .faq-a { display: block; }
+
+/* ═══ CTA FINAL ════════════════════════════════════════════ */
+#cta-final {
+  background: var(--avito-blue);
+  color: #fff;
+  text-align: center;
+  padding: 80px 0;
+  position: relative;
+  overflow: hidden;
+}
+#cta-final::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  pointer-events: none;
+}
+#cta-final::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: -60px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+  pointer-events: none;
+}
+#cta-final .container { position: relative; z-index: 1; }
+.cta-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,.2);
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  color: rgba(255,255,255,.9);
+}
+#cta-final h2 { color: #fff; margin-bottom: 16px; }
+.cta-sub { font-size: 17px; color: rgba(255,255,255,.8); max-width: 480px; margin: 0 auto 36px; line-height: 1.7; }
+.cta-btns { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.btn-white {
+  background: #fff;
+  color: var(--avito-blue);
+  padding: 16px 36px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 800;
+  font-family: var(--font);
+  cursor: pointer;
+  border: none;
+  transition: transform var(--transition), box-shadow var(--transition);
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+.btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+.btn-tg {
+  background: #229ED9;
+  color: #fff;
+  padding: 16px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  transition: transform var(--transition);
+}
+.btn-tg:hover { transform: translateY(-2px); }
+.cta-note { font-size: 13px; color: rgba(255,255,255,.6); }
+.cta-note b { color: rgba(255,255,255,.9); }
+
+/* ═══ FOOTER ════════════════════════════════════════════════ */
+footer {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 32px 0;
+}
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.footer-copy { font-size: 13px; color: var(--text-3); }
+.footer-links { display: flex; gap: 20px; list-style: none; }
+.footer-links a { font-size: 13px; color: var(--text-3); transition: color var(--transition); }
+.footer-links a:hover { color: var(--avito-blue); }
+
+/* ═══ CONTACTS ═════════════════════════════════════════════ */
+.contacts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+.contact-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+  color: var(--text);
+}
+.contact-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+.contact-tg:hover  { border-color: #229ED9; }
+.contact-max:hover { border-color: #5B5DEB; }
+.contact-phone:hover { border-color: var(--avito-blue); }
+.contact-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  font-size: 26px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px;
+}
+.contact-tg .contact-icon    { background: #E3F4FD; }
+.contact-max .contact-icon   { background: #EEEEFD; }
+.contact-phone .contact-icon { background: var(--avito-blue-bg); }
+.contact-name   { font-size: 18px; font-weight: 800; }
+.contact-val    { font-size: 14px; color: var(--text-3); }
+.contact-action {
+  font-size: 13px; font-weight: 700;
+  color: var(--text-3); margin-top: auto; padding-top: 10px;
+  transition: color var(--transition);
+}
+.contact-tg:hover    .contact-action { color: #229ED9; }
+.contact-max:hover   .contact-action { color: #5B5DEB; }
+.contact-phone:hover .contact-action { color: var(--avito-blue); }
+.contacts-trust { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+/* ═══ RESPONSIVE ════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-photo-wrap { justify-content: center; margin-top: 40px; }
+  .hero-photo-outer { width: 220px; height: 220px; }
+  .photo-badge { font-size: 11px; padding: 4px 10px; right: -2px; bottom: 16px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .stat-cell:nth-child(2) { border-right: none; }
+  .services-grid { grid-template-columns: 1fr; }
+  .case-featured { grid-template-columns: 1fr; }
+  .about-grid { grid-template-columns: 1fr; }
+  .process-steps { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .process-steps::after { display: none; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .reviews-grid { grid-template-columns: 1fr; }
+  .contacts-grid { grid-template-columns: 1fr; }
+  nav .nav-links { display: none; }
+}
+@media (max-width: 600px) {
+  section { padding: 48px 0; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .process-steps { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; }
+  .cta-btns { flex-direction: column; align-items: center; }
+  .footer-inner { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <div class="avito-dots">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        Иван Проценко
+      </div>
+      <ul class="nav-links">
+        <li><a href="#services">Услуги</a></li>
+        <li><a href="#about">Обо мне</a></li>
+        <li><a href="#case">Кейс</a></li>
+        <li><a href="#pricing">Цены</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#contacts">Контакты</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему" id="themeBtn">🌙</button>
+        <a href="#cta-final" class="btn-nav">Бесплатный аудит</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero" class="section-white">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-label">Беру новых клиентов в июне</div>
+        <h1 class="hero-title">
+          Помогу получать<br>
+          <mark>больше заявок с Авито</mark><br>
+          уже через 14 дней
+        </h1>
+        <p class="hero-sub">
+          Оформлю профиль, напишу объявления которые читают до конца 
+          и настрою воронку. Работаю один — вы всегда знаете с кем говорите.
+        </p>
+        <div class="hero-actions">
+          <a href="#cta-final" class="btn btn-primary">
+            Разобрать мой Авито — бесплатно
+          </a>
+          <a href="#case" class="btn btn-outline">
+            Посмотреть кейс
+          </a>
+        </div>
+        <div class="hero-trust">
+          <span class="trust-pill">🛡 Возврат если нет роста</span>
+          <span class="trust-pill">⚡ Отвечаю за 2 часа</span>
+          <span class="trust-pill">📋 Договор с ИП</span>
+        </div>
+      </div>
+      <div class="hero-photo-wrap">
+        <div class="hero-photo-outer">
+          <div class="deco-ring deco-ring-1"></div>
+          <div class="deco-ring deco-ring-2"></div>
+          <div class="deco-dot deco-dot-1"></div>
+          <div class="deco-dot deco-dot-2"></div>
+          <div class="deco-dot deco-dot-3"></div>
+          <div class="deco-dot deco-dot-4"></div>
+          <div class="hero-photo-inner">
+            <span class="photo-placeholder">🧑‍💻</span>
+            <span class="photo-placeholder-text">Ваше фото</span>
+          </div>
+          <div class="photo-badge">✓ Авитолог с 3-летним опытом</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div id="stats">
+  <div class="container">
+    <div class="stats-row">
+      <div class="stat-cell">
+        <span class="stat-num blue">147</span>
+        <span class="stat-desc">клиентов получили<br>результат</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num green">+54%</span>
+        <span class="stat-desc">средний рост заявок<br>за 2 недели</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num orange">870+</span>
+        <span class="stat-desc">объявлений<br>написано лично мной</span>
+      </div>
+      <div class="stat-cell">
+        <span class="stat-num">3 года</span>
+        <span class="stat-desc">работаю только<br>с Авито</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services" class="section-bg">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">Что я делаю</span>
+      <h2>Четыре услуги — конкретные результаты</h2>
+      <p>Каждая закрывает одну задачу: вы получаете больше заявок с Авито</p>
+    </div>
+    <div class="services-grid">
+      <div class="svc-card">
+        <span class="svc-price">от 4 900 ₽</span>
+        <div class="svc-icon">🎨</div>
+        <div class="svc-name">Оформление профиля</div>
+        <p class="svc-desc">Шапка, описание, фотографии. Создаю образ надёжного продавца — клиент видит и уже хочет написать.</p>
+        <span class="svc-result">→ CTR растёт в 1.5–2×</span>
+      </div>
+      <div class="svc-card">
+        <span class="svc-price">от 700 ₽/шт.</span>
+        <div class="svc-icon green">📝</div>
+        <div class="svc-name">Написание объявлений</div>
+        <p class="svc-desc">Заголовок, описание, фото с правильными ракурсами. Пишу на языке вашей аудитории — не рекламным текстом, а живо.</p>
+        <span class="svc-result">→ Читают в 3× чаще</span>
+      </div>
+      <div class="svc-card">
+        <span class="svc-price">от 9 900 ₽/мес</span>
+        <div class="svc-icon orange">📊</div>
+        <div class="svc-name">Ведение аккаунта</div>
+        <p class="svc-desc">Поднятие объявлений, A/B тесты заголовков, контроль позиций. Вы занимаетесь бизнесом — я Авито.</p>
+        <span class="svc-result">→ 50+ объявлений под контролем</span>
+      </div>
+      <div class="svc-card">
+        <span class="svc-price">2 900 ₽</span>
+        <div class="svc-icon red">🔍</div>
+        <div class="svc-name">Аудит и стратегия</div>
+        <p class="svc-desc">Смотрю ваш профиль, конкурентов, спрос. Даю пошаговый план — что сделать в первую очередь.</p>
+        <span class="svc-result">→ Plan на 30 дней с приоритетами</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED CASE -->
+<section id="case" class="section-white">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip green">Кейс</span>
+      <h2>Реальный результат клиента</h2>
+      <p>Один конкретный пример — с цифрами из кабинета Авито</p>
+    </div>
+    <div class="case-featured">
+      <div class="case-left">
+        <div>
+          <span class="case-niche-tag">Стройматериалы · Екатеринбург</span>
+          <h3>Профиль без заявок превратился в главный источник клиентов за 11 дней</h3>
+        </div>
+        <div>
+          <div class="case-big-stat">×7</div>
+          <div class="case-big-label">рост входящих звонков за 2 недели</div>
+        </div>
+      </div>
+      <div class="case-right">
+        <div class="case-metrics-grid">
+          <div class="case-m">
+            <span class="case-m-num was">8</span>
+            <span class="case-m-label">звонков/мес. было</span>
+          </div>
+          <div class="case-m">
+            <span class="case-m-num up">61</span>
+            <span class="case-m-label">звонков/мес. стало</span>
+          </div>
+          <div class="case-m">
+            <span class="case-m-num up">+340%</span>
+            <span class="case-m-label">рост просмотров</span>
+          </div>
+          <div class="case-m">
+            <span class="case-m-num">11 дн.</span>
+            <span class="case-m-label">срок выхода</span>
+          </div>
+        </div>
+        <div class="case-quote">
+          «Думал, что Авито — это доски объявлений для б/у вещей. Иван показал, как сделать из профиля полноценный продающий канал. Уже на второй неделе пришлось отказывать клиентам»
+        </div>
+        <div class="case-author">
+          <div class="case-ava">АК</div>
+          <div>
+            <div class="case-author-name">Алексей К.</div>
+            <div class="case-author-role">ИП, стройматериалы, бригада 8 человек</div>
+          </div>
+        </div>
+        <a href="#cta-final" class="more-cases-link">Хочу такой же результат →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT ME -->
+<section id="about" class="section-bg">
+  <div class="container">
+    <div class="about-grid">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+        <div class="about-photo-circle">
+          🧑‍💻
+          <div class="about-cert">✓</div>
+        </div>
+        <div style="display:flex; gap:6px; justify-content:center;">
+          <div class="avito-dots" style="width:auto; gap:5px;">
+            <span style="width:10px;height:10px;"></span>
+            <span style="width:10px;height:10px;"></span>
+            <span style="width:10px;height:10px;"></span>
+            <span style="width:10px;height:10px;"></span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <span class="chip">Обо мне</span>
+        <div class="about-name">Иван Проценко</div>
+        <div class="about-tagline">Авитолог · Сертифицированный специалист Avito</div>
+        <p class="about-text">
+          Я занимаюсь только Авито — три года, каждый день. Не «ещё одна услуга в прайсе», а единственный инструмент, который я знаю досконально.<br><br>
+          Работаю лично — без менеджеров и субподрядчиков. Когда вы пишете мне вопрос, отвечаю я сам. Когда подписываем договор — его выполняю я.
+        </p>
+        <div class="about-facts">
+          <span class="fact-chip">🎓 Сертификат Авито</span>
+          <span class="fact-chip">📍 Работаю по всей России</span>
+          <span class="fact-chip">📋 Договор с ИП</span>
+          <span class="fact-chip">🔄 Возврат гарантирован</span>
+          <span class="fact-chip">⚡ С 2022 года</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process" class="section-white">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">Как работаем</span>
+      <h2>4 шага от первого сообщения до результата</h2>
+    </div>
+    <div class="process-steps">
+      <div class="step">
+        <div class="step-circle">1</div>
+        <div class="step-title">Созвон 30 мин.</div>
+        <p class="step-desc">Рассказываете про бизнес, я задаю вопросы. Выясняем что мешает заявкам сейчас</p>
+        <span class="step-time">День 1</span>
+      </div>
+      <div class="step">
+        <div class="step-circle active">2</div>
+        <div class="step-title">Аудит и план</div>
+        <p class="step-desc">Анализирую конкурентов, спрос, профиль. Пишу конкретный план с приоритетами</p>
+        <span class="step-time">День 2–3</span>
+      </div>
+      <div class="step">
+        <div class="step-circle">3</div>
+        <div class="step-title">Делаю</div>
+        <p class="step-desc">Оформляю, пишу, публикую. Каждый день отчёт — что сделано и какой результат</p>
+        <span class="step-time">День 4–14</span>
+      </div>
+      <div class="step">
+        <div class="step-circle">4</div>
+        <div class="step-title">Результат + поддержка</div>
+        <p class="step-desc">Смотрим итоговую статистику. Первые 30 дней отвечаю и корректирую бесплатно</p>
+        <span class="step-time">День 15+</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="section-bg">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">Стоимость</span>
+      <h2>Прозрачные цены без сюрпризов</h2>
+      <p>Всё включено. Никаких «за дополнительную плату»</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="plan">
+        <div class="plan-top">
+          <div class="plan-name">Старт</div>
+        </div>
+        <div class="plan-price"><sup>от </sup>9 900 ₽</div>
+        <div class="plan-period">разово · один запуск</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-list">
+          <li><span class="plan-check">✓</span> Аудит профиля и конкурентов</li>
+          <li><span class="plan-check">✓</span> Оформление профиля</li>
+          <li><span class="plan-check">✓</span> 5 объявлений под ключ</li>
+          <li><span class="plan-check">✓</span> Рекомендации по фото</li>
+          <li><span class="plan-check">✓</span> Отчёт с планом на месяц</li>
+        </ul>
+        <button class="plan-btn ghost" onclick="location.href='#cta-final'">Выбрать Старт</button>
+      </div>
+      <div class="plan best">
+        <div class="plan-top">
+          <div class="plan-name">Рост</div>
+          <span class="plan-badge pop">Популярный</span>
+        </div>
+        <div class="plan-price"><sup>от </sup>18 900 ₽</div>
+        <div class="plan-period">разово · первый месяц</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-list">
+          <li><span class="plan-check">✓</span> Всё из пакета «Старт»</li>
+          <li><span class="plan-check">✓</span> До 20 объявлений под ключ</li>
+          <li><span class="plan-check">✓</span> A/B тест заголовков</li>
+          <li><span class="plan-check">✓</span> Ключевые слова категории</li>
+          <li><span class="plan-check">✓</span> Поддержка 30 дней</li>
+          <li><span class="plan-check">✓</span> Ежедневные отчёты</li>
+        </ul>
+        <button class="plan-btn" onclick="location.href='#cta-final'">Выбрать Рост</button>
+      </div>
+      <div class="plan">
+        <div class="plan-top">
+          <div class="plan-name">Ведение</div>
+          <span class="plan-badge">Подписка</span>
+        </div>
+        <div class="plan-price"><sup>от </sup>24 900 ₽</div>
+        <div class="plan-period">в месяц · без паузы</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-list">
+          <li><span class="plan-check">✓</span> Безлимит объявлений</li>
+          <li><span class="plan-check">✓</span> Поднятие по расписанию</li>
+          <li><span class="plan-check">✓</span> Сезонные обновления</li>
+          <li><span class="plan-check">✓</span> Мониторинг конкурентов</li>
+          <li><span class="plan-check">✓</span> Еженедельный отчёт</li>
+          <li><span class="plan-check">✓</span> Чат — ответ за 2 часа</li>
+        </ul>
+        <button class="plan-btn ghost" onclick="location.href='#cta-final'">Выбрать Ведение</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section id="reviews" class="section-white">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip green">Отзывы</span>
+      <h2>Что говорят клиенты</h2>
+    </div>
+    <div class="reviews-grid">
+      <div class="review">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">«Не верила, что Авито работает для клининга. Иван сделал профиль — через 10 дней получила <em>первый заказ на 12 000 ₽</em>. Сейчас Авито даёт 30% заявок ежемесячно»</p>
+        <div class="review-author">
+          <div class="review-ava" style="background: linear-gradient(135deg,#ec4899,#7c3aed)">ОЛ</div>
+          <div><div class="review-name">Ольга Л.</div><div class="review-city">Клининг · Новосибирск</div></div>
+        </div>
+      </div>
+      <div class="review">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">«Раньше получал отчёты где ничего не понятно. Иван сразу показал цифры: <em>было 4 просмотра в день, стало 38</em>. Понятно, прозрачно, честно»</p>
+        <div class="review-author">
+          <div class="review-ava" style="background: linear-gradient(135deg,#0077FF,#3846e7)">РМ</div>
+          <div><div class="review-name">Роман М.</div><div class="review-city">Мебель · Тюмень</div></div>
+        </div>
+      </div>
+      <div class="review">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">«Иван думает как маркетолог: зачем клиент открывает объявление, что его убеждает. <em>За 2 недели — очередь на 3 дня вперёд</em>. Такого не было за 5 лет»</p>
+        <div class="review-author">
+          <div class="review-ava" style="background: linear-gradient(135deg,#f59e0b,#ef4444)">АВ</div>
+          <div><div class="review-name">Андрей В.</div><div class="review-city">Ремонт телефонов · Самара</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="section-bg">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">FAQ</span>
+      <h2>Частые вопросы</h2>
+    </div>
+    <div class="faq-wrap">
+      <div class="faq-item open">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Когда будет результат?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">
+          Первые обращения обычно идут на 3–7 день после публикации. Устойчивый рост виден через 2–3 недели. Я фиксирую базовые метрики в день 1 и показываю динамику каждый день.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Гарантируете ли вы результат?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">
+          Гарантирую рост просмотров минимум на 20% за 14 дней — прописано в договоре. Если не произошло — полный возврат. За 3 года таких случаев не было ни разу.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Нужно ли давать доступ к аккаунту?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">
+          Для ведения — да, нужен доступ через доверенность. Для разовых услуг (тексты, аудит) — доступ не нужен, публикуете сами по моим материалам.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Что если не знаю какая услуга нужна?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">
+          Начните с бесплатного аудита: смотрю ваш профиль и через 24 часа даю честную оценку — что сделать в первую очередь и сколько стоит. Никакого давления.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          Работаете ли с любыми нишами?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-a">
+          Лучший результат — в услугах, торговле, ремонте, авто, недвижимости. Не работаю с MLM, финансовыми пирамидами и нишами запрещёнными правилами Авито.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTS -->
+<section id="contacts" class="section-bg">
+  <div class="container">
+    <div class="section-header">
+      <span class="chip">Контакты</span>
+      <h2>Свяжитесь удобным способом</h2>
+      <p>Telegram предпочтительнее — отвечаю там быстрее всего</p>
+    </div>
+    <div class="contacts-grid">
+      <a href="https://t.me/" class="contact-card contact-tg" target="_blank" rel="noopener">
+        <div class="contact-icon">✈</div>
+        <div class="contact-name">Telegram</div>
+        <div class="contact-val">@avitolog</div>
+        <span class="contact-action">Написать в Telegram →</span>
+      </a>
+      <a href="https://wa.me/" class="contact-card contact-max" target="_blank" rel="noopener">
+        <div class="contact-icon"><img src="https://maxicons.ru/icons/MAX.svg" alt="MAX" width="32" height="32"></div>
+        <div class="contact-name">MAX</div>
+        <div class="contact-val">+7 (___) ___-__-__</div>
+        <span class="contact-action">Написать в MAX →</span>
+      </a>
+      <a href="tel:" class="contact-card contact-phone">
+        <div class="contact-icon">📞</div>
+        <div class="contact-name">Звонок</div>
+        <div class="contact-val">+7 (___) ___-__-__</div>
+        <span class="contact-action">Позвонить →</span>
+      </a>
+    </div>
+    <div class="contacts-trust">
+      <span class="trust-pill">⚡ Отвечаю за 2 часа в рабочее время</span>
+      <span class="trust-pill">📍 Работаю удалённо по всей России</span>
+      <span class="trust-pill">📋 Договор с ИП · Закрывающие документы</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section id="cta-final">
+  <div class="container">
+    <span class="cta-chip">Следующий шаг</span>
+    <h2>Разберу ваш Авито<br>бесплатно — за 24 часа</h2>
+    <p class="cta-sub">
+      Присылаете ссылку на профиль — получаете конкретный разбор: 
+      что мешает заявкам и что сделать в первую очередь. Без обязательств.
+    </p>
+    <div class="cta-btns">
+      <a href="#" class="btn-white">Получить бесплатный аудит</a>
+      <a href="https://t.me/" class="btn-tg">✈ Telegram</a>
+    </div>
+    <p class="cta-note"><b>Отвечаю за 2 часа</b> · Беру 3–5 клиентов в месяц · Договор с ИП</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avito-dots">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <span class="footer-copy">© 2026 Иван Проценко · Авитолог · ИП · ОГРНИП 000000000000000</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="#">Договор оферты</a></li>
+        <li><a href="#">Конфиденциальность</a></li>
+        <li><a href="https://t.me/">Telegram</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ─── FAQ ─────────────────────────────────────────────────
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// ─── THEME TOGGLE ─────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+
+// Restore saved theme
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  }
+})();
+</script>
+</body>
+</html>

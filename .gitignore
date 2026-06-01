@@ -1,79 +1,42 @@
-node_modules/
-.next/
-out/
-dist/
-build/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Бэкапы и архивы
-avitoeditor-backup-*/
-avito-portfolio-backup-*/
-avito-portfolio-FRESH/
-avito-portfolio-v2/
-avito-portfolio-v2-upload/
-releases/
-releases-out/
-готовые плагины/
-*.zip
-*.rar
-*.7z
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Временные и рабочие файлы
-PHASE-*.md
-SESSION-*.md
-DEPLOYMENT-*.md
-TESTING-*.md
-FINAL-*.md
-555.txt
-*.jpg
-*.png
-*.jpeg
-*.gif
-!docs/DEPLOYMENT-STRATEGY.md
+# testing
+/coverage
 
-# Логи
-*.log
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# Переменные окружения
-.env
-.env.local
-.env.production
-.env.*.local
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
 
-# Редакторы
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.idea/
-*.swp
-*.swo
-*~
+# vercel
+.vercel
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Тесты
-coverage/
-.nyc_output/
-
-# Временные файлы
-*.tmp
-*.temp
-.cache/
-
-# Production файлы
-/public/uploads/*
-!/public/uploads/.gitkeep
-
-# Legacy-папки до санации перед публичным mirror
-_backups/
-avito-portfolio-production/
-avitoeditor/
-avitologi/
-html-enhancer/
-portfolio/
+# typescript
+*.tsbuildinfo
+next-env.d.ts
