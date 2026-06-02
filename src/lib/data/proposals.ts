@@ -6,7 +6,8 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
 import { getDbPool } from "@/lib/db";
 import { createDefaultProposalStructure } from "@/lib/proposal-builder";
-import type { DesignPreset, Proposal } from "@/types/domain";
+import { deleteUploadedFiles, extractUploadUrls } from "@/lib/storage";
+import type { DesignPreset, Proposal, ProposalBlock } from "@/types/domain";
 
 type ProposalRow = RowDataPacket & {
   id: string;
@@ -168,8 +169,16 @@ export async function updateProposal(proposalId: string, patch: UpdateProposalIn
 
 export async function deleteProposal(proposalId: string): Promise<void> {
   const pool = getDbPool();
+
+  // Перед удалением из БД — собрать пути файлов и удалить с диска
+  const proposal = await getProposal(proposalId);
+  if (proposal) {
+    const urls = extractUploadUrls(proposal.structure as ProposalBlock[]);
+    await deleteUploadedFiles(urls);
+  }
+
   // Удаляем feedback вручную (FK не гарантирован), остальное каскадно через БД
-  await pool.execute("delete from feedback where proposal_id = ?", [proposalId]);
+  await pool.execute("delete from proposal_feedback where proposal_id = ?", [proposalId]);
   await pool.execute("delete from proposals where id = ?", [proposalId]);
 }
 

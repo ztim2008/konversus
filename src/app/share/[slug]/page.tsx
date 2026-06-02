@@ -164,12 +164,8 @@ export default async function SharePage({ params }: SharePageProps) {
           {allBlocks.some((b) => b.type === "cta") && <a className="nav-link" href="#cta">Контакт</a>}
           <a className="nav-link" href="#feedback">Отзыв</a>
           <a className="topbar-pdf-btn" href={`/share/${slug}/pdf`} target="_blank" rel="noreferrer">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            PDF
+            <span className="pdf-label">↓ PDF</span>
+            <span className="pdf-sub">скачать</span>
           </a>
         </nav>
         <a className="studio-badge screen-only" href="https://konversus.ru" target="_blank" rel="noopener noreferrer">

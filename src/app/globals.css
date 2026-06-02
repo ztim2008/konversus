@@ -3659,7 +3659,8 @@ a {
      ══════════════════════════════════════════════════ */
 
   /* Floating «Оставить отзыв» кнопка */
-  .fpb-page .fpb-feedback-fab {
+  .fpb-page .fpb-feedback-fab,
+  .fpb-feedback-fab {
     position: fixed;
     bottom: 28px;
     right: 24px;
@@ -3669,9 +3670,9 @@ a {
     gap: 7px;
     padding: 10px 18px;
     background: rgba(12, 16, 24, 0.92);
-    border: 1px solid rgba(188,132,81,0.4);
+    border: 1px solid rgba(255,255,255,0.25);
     border-radius: 40px;
-    color: #c49a58;
+    color: rgba(247,245,240,0.9) !important;
     font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 600;
@@ -3683,15 +3684,17 @@ a {
     transition: all 180ms;
     white-space: nowrap;
   }
-  .fpb-page .fpb-feedback-fab:hover {
-    border-color: rgba(188,132,81,0.7);
-    background: rgba(188,132,81,0.12);
-    color: #dbb077;
+  .fpb-page .fpb-feedback-fab:hover,
+  .fpb-feedback-fab:hover {
+    border-color: rgba(255,255,255,0.45);
+    background: rgba(255,255,255,0.1);
+    color: rgba(247,245,240,1) !important;
     transform: translateY(-2px);
     box-shadow: 0 12px 40px rgba(0,0,0,0.6);
   }
   @media (max-width: 480px) {
-    .fpb-page .fpb-feedback-fab { bottom: 16px; right: 16px; padding: 9px 14px; font-size: 10px; }
+    .fpb-page .fpb-feedback-fab,
+    .fpb-feedback-fab { bottom: 16px; right: 16px; padding: 9px 14px; font-size: 10px; }
   }
   @media print {
     .fpb-page .fpb-feedback-fab { display: none !important; }
@@ -4063,9 +4066,9 @@ a {
     flex-wrap: wrap;
     gap: 12px;
     padding: 14px 20px;
-    background: rgba(15,20,25,0.82);
-    backdrop-filter: blur(14px);
-    border-bottom: 1px solid var(--line-soft);
+    background: rgba(10,14,18,0.94);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
   }
 
   .fpb-page .brand {
@@ -4079,12 +4082,13 @@ a {
     height: 38px;
     display: grid;
     place-items: center;
-    border: 1px solid var(--line-soft);
-    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08);
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.14em;
     flex-shrink: 0;
+    color: rgba(247,245,240,0.9) !important;
   }
 
   .fpb-page .brand-kicker {
@@ -4092,13 +4096,13 @@ a {
     font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgba(247,245,240,0.5);
+    color: rgba(247,245,240,0.9) !important;
   }
 
   .fpb-page .brand-title {
     font-size: 13px;
     font-weight: 600;
-    color: var(--white);
+    color: rgba(247,245,240,1) !important;
   }
 
   .fpb-page .toolbar {
@@ -4138,9 +4142,9 @@ a {
 
   .fpb-page .theme-button:hover,
   .fpb-page .theme-button.is-active {
-    border-color: rgba(188,132,81,0.55);
-    background: rgba(188,132,81,0.12);
-    color: #dbb077;
+    border-color: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.08);
+    color: rgba(247,245,240,0.95);
   }
 
   .fpb-page .nav {
@@ -4154,20 +4158,21 @@ a {
     align-items: center;
     min-height: 30px;
     padding: 0 10px;
-    border: 1px solid var(--line-soft);
-    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.04);
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(247,245,240,0.7);
+    color: rgba(247,245,240,1) !important;
     text-decoration: none;
     transition: background 120ms;
   }
 
   .fpb-page .nav-link:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.35);
+    color: #fff !important;
   }
 
   /* studio badge in topbar */
@@ -4176,45 +4181,60 @@ a {
     align-items: center;
     height: 30px;
     padding: 0 12px;
-    border: 1px solid rgba(188,132,81,0.35);
-    background: rgba(188,132,81,0.06);
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.04);
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #c49a58;
+    color: rgba(247,245,240,0.9) !important;
     text-decoration: none;
     transition: all 140ms;
     white-space: nowrap;
   }
   .fpb-page .studio-badge:hover {
-    border-color: rgba(188,132,81,0.6);
-    background: rgba(188,132,81,0.12);
-    color: #dbb077;
+    border-color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.08);
+    color: #fff !important;
   }
 
   /* PDF кнопка в топбаре */
   .fpb-page .topbar-pdf-btn {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    gap: 1px;
     height: 30px;
     padding: 0 12px;
-    border: 1px solid rgba(147,197,253,0.28);
-    background: rgba(147,197,253,0.06);
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.04);
     font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgba(147,197,253,0.8);
     text-decoration: none;
     transition: all 140ms;
     white-space: nowrap;
+    color: rgba(247,245,240,1) !important;
+  }
+  .fpb-page .topbar-pdf-btn .pdf-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .fpb-page .topbar-pdf-btn .pdf-sub {
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    line-height: 1;
   }
   .fpb-page .topbar-pdf-btn:hover {
-    border-color: rgba(147,197,253,0.55);
-    background: rgba(147,197,253,0.12);
-    color: #bfdbfe;
+    border-color: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.08);
+    color: #fff !important;
+  }
+  .fpb-page .topbar-pdf-btn:hover .pdf-sub {
+    opacity: 0.75;
   }
   @media print {
     .fpb-page .topbar-pdf-btn { display: none !important; }

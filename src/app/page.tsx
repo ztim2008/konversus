@@ -88,8 +88,8 @@ export default async function Home() {
             <a className="border border-white/10 px-4 py-2.5 transition-colors hover:border-amber-200/30 hover:bg-white/5" href="#contacts">
               Контакты
             </a>
-            <Link className="border border-white/10 px-4 py-2.5 transition-colors hover:border-amber-200/30 hover:bg-white/5" href="/works">
-              Работы
+            <Link className="border border-white/10 px-4 py-2.5 transition-colors hover:border-amber-200/30 hover:bg-white/5" href="/cases">
+              Кейсы
             </Link>
             <Link className="bg-[linear-gradient(135deg,#f6c47b,#ffe0b2)] px-5 py-2.5 font-semibold text-slate-950 transition-opacity hover:opacity-90" href="/dashboard">
               Открыть кабинет

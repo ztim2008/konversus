@@ -16,7 +16,8 @@ import {
 } from "@/types/domain";
 
 function buildRedirect(path: string, params: Record<string, string | undefined>) {
-  const searchParams = new URLSearchParams();
+  const [basePath, existingQuery] = path.split("?");
+  const searchParams = new URLSearchParams(existingQuery ?? "");
 
   for (const [key, value] of Object.entries(params)) {
     if (value) {
@@ -26,7 +27,7 @@ function buildRedirect(path: string, params: Record<string, string | undefined>)
 
   const query = searchParams.toString();
 
-  return query ? `${path}?${query}` : path;
+  return query ? `${basePath}?${query}` : basePath;
 }
 
 function getStringValue(formData: FormData, key: string) {

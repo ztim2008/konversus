@@ -5,7 +5,8 @@ import { randomUUID } from "node:crypto";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
 import { getDbPool } from "@/lib/db";
-import type { Company } from "@/types/domain";
+import { deleteUploadedFiles, extractUploadUrls } from "@/lib/storage";
+import type { Company, ProposalBlock } from "@/types/domain";
 
 type CompanyRow = RowDataPacket & {
   id: string;
@@ -150,15 +151,31 @@ export async function updateCompany(companyId: string, patch: UpdateCompanyInput
 
 export async function deleteCompany(companyId: string): Promise<void> {
   const pool = getDbPool();
-  // Каскадное удаление через FK: company → proposals → share_links, assets
-  // Feedback удаляем вручную через proposals
+
+  // Собрать все файлы прежде чем удалять записи из БД
   const [proposalRows] = await pool.query<import("mysql2").RowDataPacket[]>(
-    "select id from proposals where company_id = ?",
+    "select id, structure from proposals where company_id = ?",
     [companyId],
   );
+
+  // Удаляем файлы всех концептов компании
+  const fileUrls: string[] = [];
+  for (const row of proposalRows) {
+    let structure: ProposalBlock[] = [];
+    try { structure = JSON.parse(row.structure as string ?? "[]") as ProposalBlock[]; } catch { /* ignore */ }
+    fileUrls.push(...extractUploadUrls(structure));
+  }
+
+  // Фото компании
+  const company = await getCompany(companyId);
+  if (company?.previewImageUrl) fileUrls.push(company.previewImageUrl);
+
+  await deleteUploadedFiles(fileUrls);
+
+  // Каскадное удаление через БД
   if (proposalRows.length > 0) {
     const ids = proposalRows.map((r) => r.id as string);
-    await pool.query("delete from feedback where proposal_id in (?)", [ids]);
+    await pool.query("delete from proposal_feedback where proposal_id in (?)", [ids]);
   }
   await pool.execute("delete from companies where id = ?", [companyId]);
 }

@@ -8,7 +8,7 @@ import type { ProposalBlock, ProposalBlockPayload } from "@/types/domain";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Работы · Тимофеев Алексей",
+  title: "Кейсы · Тимофеев Алексей",
   description: "Концепты и digital-упаковка для производственных компаний.",
 };
 
@@ -68,8 +68,8 @@ export default async function WorksPage() {
 
       <div className="mt-10 mb-8 flex items-end justify-between">
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-500">Работы</div>
-          <h1 className="mt-1 text-3xl font-bold text-white sm:text-4xl">Проекты и концепты</h1>
+          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-500">Кейсы</div>
+          <h1 className="mt-1 text-3xl font-bold text-white sm:text-4xl">Кейсы и концепты</h1>
         </div>
         {total > 0 && (
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300/60">

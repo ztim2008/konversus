@@ -397,13 +397,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           </button>
                         </form>
                       )}
-                      {proposal.status !== "archived" ? (
-                        <form action={archiveProposalAction} className="contents">
-                          <input type="hidden" name="proposalId" value={proposal.id} />
-                          <input type="hidden" name="returnTo" value={returnTo} />
-                          <button className="db-action db-action--danger" type="submit" title="Архивировать">↓</button>
-                        </form>
-                      ) : (
+                      {proposal.status === "archived" || company.status === "archived" ? (
                         <DeleteConfirmButton
                           action={deleteProposalAction}
                           idName="proposalId"
@@ -413,6 +407,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                           confirmMessage={`Удалить концепт «${proposal.title}» навсегда?`}
                           className="db-action db-action--danger"
                         />
+                      ) : (
+                        <form action={archiveProposalAction} className="contents">
+                          <input type="hidden" name="proposalId" value={proposal.id} />
+                          <input type="hidden" name="returnTo" value={returnTo} />
+                          <button className="db-action db-action--danger" type="submit" title="Архивировать">↓</button>
+                        </form>
                       )}
                     </div>
                   </div>
