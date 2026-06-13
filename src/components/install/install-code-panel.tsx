@@ -12,20 +12,31 @@ const WIDTHS = [
   { id: "full", label: "На всю ширину" },
 ] as const;
 
+const MODES = [
+  { id: "inline", label: "В блоке", hint: "виджет встраивается в страницу" },
+  { id: "bubble", label: "Плавающая кнопка", hint: "кнопка снизу справа, раскрывается в попап" },
+] as const;
+
 type ThemeId = "dark" | "light";
 type WidthId = "narrow" | "full";
+type ModeId = "inline" | "bubble";
 
-function buildCode(theme: ThemeId, width: WidthId): string {
+function buildCode(theme: ThemeId, width: WidthId, mode: ModeId): string {
   const widthAttr = width === "full" ? '\n  data-width="full"' : "";
-  return `<div id="architect-widget"></div>\n<script\n  src="https://konversus.ru/architect-widget.js"\n  data-theme="${theme}"${widthAttr}\n><\/script>`;
+  const modeAttr = mode === "bubble" ? '\n  data-mode="bubble"' : "";
+  const containerLine = mode === "bubble"
+    ? ""
+    : '<div id="architect-widget"></div>\n';
+  return `${containerLine}<script\n  src="https://konversus.ru/architect-widget.js"\n  data-theme="${theme}"${widthAttr}${modeAttr}\n><\/script>`;
 }
 
 export function InstallCodePanel() {
   const [theme, setTheme] = useState<ThemeId>("dark");
   const [width, setWidth] = useState<WidthId>("narrow");
+  const [mode, setMode] = useState<ModeId>("inline");
   const [copied, setCopied] = useState(false);
 
-  const code = buildCode(theme, width);
+  const code = buildCode(theme, width, mode);
 
   function handleCopy() {
     navigator.clipboard.writeText(code).then(() => {
@@ -38,6 +49,21 @@ export function InstallCodePanel() {
     <div className="icp-root">
       {/* Controls */}
       <div className="icp-controls">
+        <div className="icp-control-group">
+          <span className="icp-control-label">Режим</span>
+          <div className="icp-tabs">
+            {MODES.map((m) => (
+              <button
+                key={m.id}
+                className={"icp-tab" + (mode === m.id ? " icp-tab--active" : "")}
+                onClick={() => setMode(m.id)}
+                title={m.hint}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="icp-control-group">
           <span className="icp-control-label">Тема</span>
           <div className="icp-tabs">
@@ -52,20 +78,22 @@ export function InstallCodePanel() {
             ))}
           </div>
         </div>
-        <div className="icp-control-group">
-          <span className="icp-control-label">Ширина</span>
-          <div className="icp-tabs">
-            {WIDTHS.map((w) => (
-              <button
-                key={w.id}
-                className={"icp-tab" + (width === w.id ? " icp-tab--active" : "")}
-                onClick={() => setWidth(w.id)}
-              >
-                {w.label}
-              </button>
-            ))}
+        {mode === "inline" && (
+          <div className="icp-control-group">
+            <span className="icp-control-label">Ширина</span>
+            <div className="icp-tabs">
+              {WIDTHS.map((w) => (
+                <button
+                  key={w.id}
+                  className={"icp-tab" + (width === w.id ? " icp-tab--active" : "")}
+                  onClick={() => setWidth(w.id)}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Code block */}

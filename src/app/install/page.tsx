@@ -89,6 +89,14 @@ export default function InstallPage() {
             </div>
           </div>
           <div className="inst-note">
+            <span className="inst-note-icon">🫧</span>
+            <div>
+              <strong>Плавающая кнопка</strong> — выберите режим «Плавающая кнопка», и виджет
+              появится как кнопка снизу справа (как онлайн-чат). Один скрипт, ничего не ломает,
+              можно убрать в любой момент.
+            </div>
+          </div>
+          <div className="inst-note">
             <span className="inst-note-icon">🔌</span>
             <div>
               <strong>Контейнер</strong> — хотите разместить в нестандартном месте? Используйте{" "}

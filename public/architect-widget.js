@@ -59,6 +59,18 @@
       ".kw-theme-btn:hover{" + (dark ? "background:rgba(255,255,255,0.1);" : "background:#e5e7eb;") + "}",
       ".kw-spinner{width:12px;height:12px;border:2px solid rgba(0,0,0,.2);border-top-color:#0d1216;border-radius:50%;animation:kw-spin .7s linear infinite;display:inline-block;}",
       "@keyframes kw-spin{to{transform:rotate(360deg);}}",
+      /* Bubble mode */
+      ".kw-bubble-btn{position:fixed;bottom:22px;right:22px;z-index:999998;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 26px rgba(0,0,0,.32);transition:transform .2s;" + (dark ? "background:#f6c47b;color:#0d1216;" : "background:#4f46e5;color:#fff;") + "}",
+      ".kw-bubble-btn:hover{transform:scale(1.07);}",
+      ".kw-bubble-btn.kw-bubble-pulse{animation:kw-bubble-pulse 2.6s ease-out infinite;}",
+      ".kw-bubble-btn.kw-bubble-pulse::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid " + (dark ? "rgba(246,196,123,.55)" : "rgba(79,70,229,.5)") + ";animation:kw-bubble-ring 2.6s ease-out infinite;}",
+      "@keyframes kw-bubble-pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}",
+      "@keyframes kw-bubble-ring{0%{opacity:.85;transform:scale(.92)}100%{opacity:0;transform:scale(1.45)}}",
+      ".kw-bubble-panel{position:fixed;bottom:94px;right:22px;z-index:999999;width:360px;max-width:calc(100vw - 32px);display:none;}",
+      ".kw-bubble-panel.kw-open{display:block;animation:kw-bubble-in .22s ease;}",
+      "@keyframes kw-bubble-in{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}",
+      ".kw-bubble-close{position:absolute;top:10px;right:10px;width:28px;height:28px;border:none;cursor:pointer;border-radius:3px;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;" + (dark ? "background:rgba(255,255,255,0.06);color:#8d99a6;" : "background:#f3f4f6;color:#6b7280;") + "}",
+      "@media (max-width:420px){.kw-bubble-panel{right:10px;left:10px;width:auto;}}",
       /* Modal */
       ".kw-modal-overlay{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);animation:kw-fade-in .15s ease;}",
       ".kw-modal{border-radius:8px;padding:28px;width:100%;max-width:540px;position:relative;animation:kw-slide-up .2s ease;" + (dark ? "background:#0d1216;border:1px solid rgba(255,255,255,0.12);color:#edf1f4;" : "background:#fff;border:1px solid #e5e7eb;color:#111827;") + "}",
@@ -229,44 +241,33 @@
     });
   }
 
-  // ── Init ──────────────────────────────────────────────────────────────
-  function init() {
-    var scripts = document.querySelectorAll("script[src*='architect-widget']");
-    var scriptTag = scripts[scripts.length - 1];
-    var theme = (scriptTag && scriptTag.getAttribute("data-theme")) || "dark";
-    var containerId = (scriptTag && scriptTag.getAttribute("data-container")) || "architect-widget";
+  // ── Build widget wrap (inline + bubble) ──────────────────────────────
+  function buildWrap(theme, width, opts) {
+    opts = opts || {};
+    var currentTheme = theme;
 
-    var container = document.getElementById(containerId);
-    if (!container) return;
-
-    // Inject styles
-    var styleEl = document.createElement("style");
-    styleEl.textContent = getStyles(theme);
-    document.head.appendChild(styleEl);
-
-    // Build markup
     var wrap = document.createElement("div");
     wrap.className = "kw-wrap";
 
-    // Theme toggle button
-    var themeBtn = document.createElement("button");
-    themeBtn.className = "kw-theme-btn";
-    themeBtn.title = theme === "dark" ? "Светлая тема" : "Тёмная тема";
-    themeBtn.textContent = theme === "dark" ? "☀️" : "🌙";
-    themeBtn.addEventListener("click", function () {
-      theme = theme === "dark" ? "light" : "dark";
-      themeBtn.textContent = theme === "dark" ? "☀️" : "🌙";
-      themeBtn.title = theme === "dark" ? "Светлая тема" : "Тёмная тема";
-      styleEl.textContent = getStyles(theme);
-    });
-    wrap.appendChild(themeBtn);
+    if (opts.themeToggle) {
+      var themeBtn = document.createElement("button");
+      themeBtn.className = "kw-theme-btn";
+      themeBtn.title = currentTheme === "dark" ? "Светлая тема" : "Тёмная тема";
+      themeBtn.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+      themeBtn.addEventListener("click", function () {
+        currentTheme = currentTheme === "dark" ? "light" : "dark";
+        themeBtn.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+        themeBtn.title = currentTheme === "dark" ? "Светлая тема" : "Тёмная тема";
+        styleEl.textContent = getStyles(currentTheme, width);
+      });
+      wrap.appendChild(themeBtn);
+    }
 
     var title = document.createElement("p");
     title.className = "kw-title";
     title.textContent = "Карта роста вашего бизнеса";
     wrap.appendChild(title);
 
-    // Печатающий подзаголовок
     var sub = document.createElement("p");
     sub.className = "kw-typing";
     var cursor = document.createElement("span");
@@ -344,7 +345,6 @@
     hint.textContent = "Анализ занимает 15–40 секунд. Результат откроется в новой вкладке.";
     wrap.appendChild(hint);
 
-    // Footer: powered + install btn
     var footer = document.createElement("div");
     footer.className = "kw-footer";
 
@@ -362,10 +362,13 @@
     footer.appendChild(installBtn);
 
     wrap.appendChild(footer);
-    container.appendChild(wrap);
+
+    // Стили (нужны внутри для theme-toggle)
+    var styleEl = document.createElement("style");
+    styleEl.textContent = getStyles(currentTheme, width);
+    document.head.appendChild(styleEl);
 
     // ── Logic ─────────────────────────────────────────────────────────
-
     function normalizeUrl(val) {
       val = val.trim();
       return (val.startsWith("http://") || val.startsWith("https://")) ? val : "https://" + val;
@@ -390,6 +393,10 @@
       }
     });
 
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !btn.disabled) btn.click();
+    });
+
     btn.addEventListener("click", function () {
       var val = normalizeUrl(input.value);
       if (!isValidUrl(val)) {
@@ -410,7 +417,6 @@
         .then(function (res) { return res.json(); })
         .then(function (data) {
           if (data.id) {
-            // cached=true — более ранний анализ, уведомляем пользователя
             if (data.cached) {
               btn.textContent = "Готово — открываем";
             }
@@ -428,6 +434,79 @@
           btn.textContent = "Анализировать";
         });
     });
+
+    return { wrap: wrap, focus: function () { input.focus(); } };
+  }
+
+  // ── Bubble mode ──────────────────────────────────────────────────────
+  function mountBubble(theme, width) {
+    var bubbleBtn = document.createElement("button");
+    bubbleBtn.className = "kw-bubble-btn kw-bubble-pulse";
+    bubbleBtn.type = "button";
+    bubbleBtn.setAttribute("aria-label", "Открыть AI-анализ сайта");
+    bubbleBtn.title = "Карта роста бизнеса — бесплатно";
+    bubbleBtn.textContent = "📊";
+
+    var panel = document.createElement("div");
+    panel.className = "kw-bubble-panel";
+
+    var closeBtn = document.createElement("button");
+    closeBtn.className = "kw-bubble-close";
+    closeBtn.type = "button";
+    closeBtn.innerHTML = "×";
+    closeBtn.setAttribute("aria-label", "Закрыть");
+    panel.appendChild(closeBtn);
+
+    var built = buildWrap(theme, width, { themeToggle: false });
+    panel.appendChild(built.wrap);
+
+    document.body.appendChild(panel);
+    document.body.appendChild(bubbleBtn);
+
+    var open = false;
+    function setOpen(v) {
+      open = v;
+      panel.classList.toggle("kw-open", v);
+      bubbleBtn.classList.toggle("kw-bubble-pulse", !v);
+      if (v) {
+        bubbleBtn.textContent = "✕";
+        setTimeout(built.focus, 60);
+      } else {
+        bubbleBtn.textContent = "📊";
+      }
+    }
+
+    bubbleBtn.addEventListener("click", function () { setOpen(!open); });
+    closeBtn.addEventListener("click", function () { setOpen(false); });
+    document.addEventListener("click", function (e) {
+      if (open && !panel.contains(e.target) && !bubbleBtn.contains(e.target)) {
+        setOpen(false);
+      }
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && open) setOpen(false);
+    });
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────
+  function init() {
+    var scripts = document.querySelectorAll("script[src*='architect-widget']");
+    var scriptTag = scripts[scripts.length - 1];
+    var theme = (scriptTag && scriptTag.getAttribute("data-theme")) || "dark";
+    var containerId = (scriptTag && scriptTag.getAttribute("data-container")) || "architect-widget";
+    var mode = (scriptTag && scriptTag.getAttribute("data-mode")) || "inline";
+    var width = (scriptTag && scriptTag.getAttribute("data-width")) || "narrow";
+
+    // Bubble mode — плавающая кнопка, контейнер не нужен
+    if (mode === "bubble") {
+      mountBubble(theme, width);
+      return;
+    }
+
+    var container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.appendChild(buildWrap(theme, width, { themeToggle: true }).wrap);
   }
 
   if (document.readyState === "loading") {
