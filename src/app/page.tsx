@@ -185,6 +185,54 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── AI Architect Widget ── */}
+      <section className="mt-0 border border-white/10 bg-black/20">
+        <div className="grid gap-0 lg:grid-cols-[1fr_1.1fr]">
+          <div className="border-b border-white/10 p-7 sm:p-10 lg:border-b-0 lg:border-r">
+            <div className="inline-flex items-center gap-2 border border-amber-200/20 bg-amber-200/[0.08] px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.28em] text-amber-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-300/70" />
+              AI Бесплатный сервис
+            </div>
+            <h2 className="mt-5 text-2xl font-bold leading-tight tracking-[-0.03em] text-white sm:text-3xl">
+              Карта роста<br />вашего бизнеса
+            </h2>
+            <p className="mt-4 max-w-md text-sm leading-7 text-slate-300">
+              Вставьте ссылку на сайт, Авито, Ozon или Wildberries — за 30 секунд получите AI-анализ: где теряете клиентов, что мешает продажам и конкретный план роста.
+            </p>
+            <div className="mt-6 grid grid-cols-3 gap-0">
+              {[
+                { icon: "📍", title: "Карта потерь", desc: "Где теряет деньги прямо сейчас" },
+                { icon: "🚀", title: "План роста", desc: "Конкретные шаги с эффектом" },
+                { icon: "🔍", title: "SEO-аудит", desc: "18 проверок за секунды" },
+              ].map((b) => (
+                <div key={b.title} className="border border-white/[0.06] bg-black/20 p-4">
+                  <div className="text-xl">{b.icon}</div>
+                  <div className="mt-2 text-xs font-semibold text-slate-100">{b.title}</div>
+                  <div className="mt-1 text-[11px] leading-4 text-slate-500">{b.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-center p-7 sm:p-10">
+            <div id="architect-widget-home" style={{ width: "100%", maxWidth: "520px" }} />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `(function(){
+  var el=document.getElementById('architect-widget-home');
+  if(!el||el.dataset.kwInit)return;
+  el.dataset.kwInit='1';
+  var s=document.createElement('script');
+  s.src='https://konversus.ru/architect-widget.js';
+  s.setAttribute('data-theme','dark');
+  s.setAttribute('data-container','architect-widget-home');
+  document.head.appendChild(s);
+})();`,
+              }}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ── Знакомство ── */}
       <section className="mt-0 grid gap-0 border border-white/10 lg:grid-cols-[300px_1fr]">
         <div className="relative overflow-hidden border-r border-white/10">

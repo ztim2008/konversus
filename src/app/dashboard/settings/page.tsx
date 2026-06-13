@@ -2,6 +2,13 @@ import Link from "next/link";
 
 import { requireCurrentAdmin } from "@/lib/auth/session";
 import { getAllSettings } from "@/lib/data/settings";
+import {
+  OPENROUTER_MODELS,
+  TIER_LABELS,
+  TIER_COLORS,
+  STRENGTH_LABELS,
+  STRENGTH_ICONS,
+} from "@/lib/architect/models";
 import { saveSettingsAction } from "./actions";
 
 export const metadata = {
@@ -36,6 +43,78 @@ function SectionHeader({ title }: { title: string }) {
     <div className="mb-5 flex items-center gap-3">
       <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-[var(--builder-muted)]">{title}</div>
       <div className="h-px flex-1 bg-[var(--builder-line)]" />
+    </div>
+  );
+}
+
+function ModelSelectField({
+  name,
+  label,
+  hint,
+  value,
+}: {
+  name: string;
+  label: string;
+  hint?: string;
+  value: string;
+}) {
+  const tierOrder = { free: 0, cheap: 1, mid: 2, premium: 3 };
+  const sorted = [...OPENROUTER_MODELS].sort(
+    (a, b) => tierOrder[a.tier] - tierOrder[b.tier]
+  );
+
+  return (
+    <div className="grid gap-1.5">
+      <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--builder-muted)]">
+        {label}
+      </label>
+      <select
+        name={name}
+        defaultValue={value}
+        className="w-full border border-[var(--builder-line)] bg-[var(--builder-bg)] px-3 py-2.5 text-sm text-[var(--builder-text)] focus:border-amber-300/40 focus:outline-none transition-colors"
+      >
+        {sorted.map((m) => (
+          <option key={m.id} value={m.id}>
+            {STRENGTH_ICONS[m.strength]} {m.provider} — {m.name} · {TIER_LABELS[m.tier]} ({m.inputPricePerM}/M) · {STRENGTH_LABELS[m.strength]}
+          </option>
+        ))}
+      </select>
+      {/* Карточка выбранной модели */}
+      {(() => {
+        const selected = OPENROUTER_MODELS.find((m) => m.id === value);
+        if (!selected) return null;
+        return (
+          <div
+            className="flex flex-wrap items-start gap-3 border border-[var(--builder-line)] bg-[var(--builder-surface)] p-3 mt-1"
+            style={{ borderLeftColor: TIER_COLORS[selected.tier], borderLeftWidth: 3 }}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="font-semibold text-xs text-[var(--builder-text)]">
+                  {STRENGTH_ICONS[selected.strength]} {selected.provider} / {selected.name}
+                </span>
+                <span
+                  className="font-mono text-[10px] px-1.5 py-0.5 rounded-sm font-semibold"
+                  style={{
+                    color: TIER_COLORS[selected.tier],
+                    background: `${TIER_COLORS[selected.tier]}18`,
+                  }}
+                >
+                  {TIER_LABELS[selected.tier]}
+                </span>
+                <span className="font-mono text-[10px] text-[var(--builder-muted)]">
+                  {selected.inputPricePerM}/M вх. токенов · ctx {selected.context}
+                </span>
+              </div>
+              {selected.note && (
+                <p className="text-[11px] text-[var(--builder-muted)]">{selected.note}</p>
+              )}
+              <p className="text-[10px] font-mono text-[var(--builder-muted)] mt-1 opacity-60">{selected.id}</p>
+            </div>
+          </div>
+        );
+      })()}
+      {hint && <p className="text-[11px] text-[var(--builder-muted)] leading-5">{hint}</p>}
     </div>
   );
 }
@@ -201,6 +280,212 @@ export default async function SettingsPage() {
                         className="shrink-0 border border-[var(--builder-line)] px-3 py-1.5 text-xs text-[var(--builder-muted)] transition-colors hover:border-amber-300/30 hover:text-amber-300">
                         ↗
                       </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* ── AI Architect ── */}
+            <section>
+              <SectionHeader title="AI Business Growth Architect" />
+              <div className="mb-4 border border-amber-300/20 bg-amber-300/[0.04] p-4">
+                <p className="text-xs leading-6 text-amber-200/80">
+                  <strong className="text-amber-300">Модуль анализа бизнеса.</strong>{" "}
+                  Публичная страница{" "}
+                  <a href="/architect" target="_blank" className="text-amber-300 underline">/architect</a>{" "}
+                  и виджет для встраивания на внешние сайты.
+                  Используется{" "}
+                  <a href="https://openrouter.ai" target="_blank" rel="noreferrer" className="text-amber-300 underline">OpenRouter</a>{" "}
+                  — один ключ даёт доступ ко всем моделям.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <Field
+                  name="openrouter_api_key"
+                  label="OpenRouter API Key"
+                  value={s.openrouter_api_key}
+                  placeholder="sk-or-v1-..."
+                  mono
+                  hint="Получить на openrouter.ai. Без ключа модуль Architect недоступен."
+                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <ModelSelectField
+                    name="architect_fast_model"
+                    label="Быстрая модель (Stage 1 — extraction)"
+                    value={s.architect_fast_model}
+                    hint="Дешёвая и быстрая. Для парсинга структуры данных."
+                  />
+                  <ModelSelectField
+                    name="architect_strong_model"
+                    label="Сильная модель (Stage 2 — strategy)"
+                    value={s.architect_strong_model}
+                    hint="Думающая модель. Строит стратегию роста."
+                  />
+                </div>
+                <Field
+                  name="architect_daily_limit"
+                  label="Лимит анализов с одного IP в сутки"
+                  value={s.architect_daily_limit}
+                  placeholder="10"
+                  hint="Защита от злоупотреблений. Значение по умолчанию: 10."
+                />
+              </div>
+
+              {/* Widget embed snippet */}
+              <div className="mt-6 border border-[var(--builder-line)]">
+                <div className="flex items-center gap-3 border-b border-[var(--builder-line)] px-4 py-2.5">
+                  <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--builder-muted)]">
+                    Код виджета для вставки на сайт
+                  </div>
+                </div>
+                <pre className="overflow-x-auto p-4 font-mono text-xs text-emerald-300 leading-6 bg-[var(--builder-surface-alt)]">{`<div id="architect-widget"></div>\n<script src="https://konversus.ru/architect-widget.js" data-theme="dark"></script>`}</pre>
+                <div className="px-4 py-2.5 border-t border-[var(--builder-line)]">
+                  <p className="text-xs text-[var(--builder-muted)]">
+                    Атрибуты: <code className="text-amber-300">data-theme=&quot;dark|light&quot;</code>,{" "}
+                    <code className="text-amber-300">data-container=&quot;my-div-id&quot;</code>
+                  </p>
+                </div>
+              </div>
+
+              {/* Status row */}
+              <div className="mt-4 divide-y divide-[var(--builder-line)] border border-[var(--builder-line)]">
+                {([
+                  { label: "API Key", value: s.openrouter_api_key ? "Задан ✓" : "Не задан", ok: !!s.openrouter_api_key, url: "https://openrouter.ai/keys" },
+                  { label: "Fast model", value: s.architect_fast_model || "—", ok: !!s.architect_fast_model, url: "https://openrouter.ai/models" },
+                  { label: "Strong model", value: s.architect_strong_model || "—", ok: !!s.architect_strong_model, url: "https://openrouter.ai/models" },
+                  { label: "Публичная страница", value: "/architect", ok: true, url: "https://konversus.ru/architect" },
+                  { label: "Дневной лимит", value: `${s.architect_daily_limit || "10"} анализов / IP`, ok: true, url: null },
+                ] as const).map((i) => (
+                  <div key={i.label} className="flex items-center gap-4 p-4">
+                    <div className={`h-2 w-2 shrink-0 rounded-full ${i.ok ? "bg-emerald-400/70" : "bg-slate-600"}`} />
+                    <div className="w-40 shrink-0 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--builder-muted)]">{i.label}</div>
+                    <div className="flex-1 font-mono text-xs text-[var(--builder-text)] break-all">{i.value}</div>
+                    {i.url && (
+                      <a href={i.url} target="_blank" rel="noreferrer"
+                        className="shrink-0 border border-[var(--builder-line)] px-3 py-1.5 text-xs text-[var(--builder-muted)] transition-colors hover:border-amber-300/30 hover:text-amber-300">
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* ── Avito API ─────────────────────────────────────────── */}
+            <section>
+              <SectionHeader title="Авито API (Собственная разработка)" />
+              <div className="mb-4 border border-sky-400/20 bg-sky-400/[0.04] p-4">
+                <p className="text-xs leading-6 text-sky-200/80">
+                  <strong className="text-sky-300">Client Credentials — только ваш аккаунт.</strong>{" "}
+                  Когда пользователь вводит свою страницу на Авито, модуль Architect получит через API реальные данные:
+                  рейтинг, количество отзывов, число активных объявлений, имя профиля и телефон.
+                  Для чужих профилей API недоступен — используется HTML-парсинг.{" "}
+                  <a href="https://www.avito.ru/professionals/api" target="_blank" rel="noreferrer" className="text-sky-300 underline">
+                    Получить credentials ↗
+                  </a>
+                </p>
+              </div>
+              <div className="space-y-4">
+                <Field
+                  name="avito_client_id"
+                  label="Avito Client ID"
+                  value={s.avito_client_id ?? ""}
+                  placeholder="client_id из личного кабинета Авито"
+                  mono
+                  hint="Из раздела «Профессиональные инструменты» → API."
+                />
+                <Field
+                  name="avito_client_secret"
+                  label="Avito Client Secret"
+                  value={s.avito_client_secret ?? ""}
+                  placeholder="client_secret из личного кабинета Авито"
+                  mono
+                  hint="Хранится в зашифрованном виде. Не передаётся клиенту."
+                />
+              </div>
+
+              <div className="mt-4 divide-y divide-[var(--builder-line)] border border-[var(--builder-line)]">
+                {[
+                  {
+                    label: "Client ID",
+                    value: s.avito_client_id ? "Задан ✓" : "Не задан",
+                    ok: !!(s.avito_client_id),
+                    url: "https://www.avito.ru/professionals/api",
+                  },
+                  {
+                    label: "Client Secret",
+                    value: s.avito_client_secret ? "Задан ✓" : "Не задан",
+                    ok: !!(s.avito_client_secret),
+                    url: null,
+                  },
+                  {
+                    label: "Режим",
+                    value: (s.avito_client_id && s.avito_client_secret)
+                      ? "API активен — для собственного профиля"
+                      : "Только HTML-парсинг",
+                    ok: !!(s.avito_client_id && s.avito_client_secret),
+                    url: null,
+                  },
+                ].map((i) => (
+                  <div key={i.label} className="flex items-center gap-4 p-4">
+                    <div className={`h-2 w-2 shrink-0 rounded-full ${i.ok ? "bg-sky-400/70" : "bg-slate-600"}`} />
+                    <div className="w-40 shrink-0 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--builder-muted)]">{i.label}</div>
+                    <div className="flex-1 font-mono text-xs text-[var(--builder-text)] break-all">{i.value}</div>
+                    {i.url && (
+                      <a href={i.url} target="_blank" rel="noreferrer"
+                        className="shrink-0 border border-[var(--builder-line)] px-3 py-1.5 text-xs text-[var(--builder-muted)] transition-colors hover:border-sky-400/30 hover:text-sky-300">
+                        ↗
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* ── Lead Hunter / Telegram ── */}
+            <section className="space-y-6 border border-white/[0.06] bg-white/[0.02] p-6">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-500">Lead Hunter</div>
+                <h2 className="mt-1 text-base font-bold text-white">Telegram-бот уведомления</h2>
+                <p className="mt-2 text-xs leading-6 text-slate-500">
+                  При добавлении нового лида система отправит уведомление в Telegram с кнопками.{" "}
+                  Создайте бота через{" "}
+                  <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" className="text-sky-300 underline">@BotFather</a>{" "}
+                  и получите свой chat_id через{" "}
+                  <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-sky-300 underline">@userinfobot</a>.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <Field
+                  name="telegram_bot_token"
+                  label="Bot Token"
+                  value={s.telegram_bot_token ?? ""}
+                  placeholder="1234567890:AAF..."
+                  mono
+                  hint="Токен от @BotFather. Выглядит как 1234567890:AAFxxx..."
+                />
+                <Field
+                  name="telegram_chat_id"
+                  label="Chat ID"
+                  value={s.telegram_chat_id ?? ""}
+                  placeholder="-100123456789 или 123456789"
+                  mono
+                  hint="Ваш личный chat_id или ID группы. Узнать: @userinfobot"
+                />
+              </div>
+              <div className="divide-y divide-white/[0.04] rounded border border-white/[0.06]">
+                {[
+                  { label: "Bot Token", value: s.telegram_bot_token ? "Задан ✓" : "Не задан", ok: !!s.telegram_bot_token, url: "https://t.me/BotFather" },
+                  { label: "Chat ID", value: s.telegram_chat_id || "—", ok: !!s.telegram_chat_id, url: "https://t.me/userinfobot" },
+                  { label: "Статус", value: (s.telegram_bot_token && s.telegram_chat_id) ? "Активен ✓" : "Не настроен", ok: !!(s.telegram_bot_token && s.telegram_chat_id), url: null },
+                ].map((i, idx) => (
+                  <div key={idx} className="flex items-center gap-4 p-4">
+                    <div className={`h-2 w-2 shrink-0 rounded-full ${i.ok ? "bg-emerald-400" : "bg-slate-600"}`} />
+                    <div className="w-40 shrink-0 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--builder-muted)]">{i.label}</div>
+                    <div className="flex-1 font-mono text-xs text-[var(--builder-text)] break-all">{i.value}</div>
+                    {i.url && (
+                      <a href={i.url} target="_blank" rel="noreferrer" className="shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-sky-400 hover:underline">открыть ↗</a>
                     )}
                   </div>
                 ))}

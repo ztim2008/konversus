@@ -47,6 +47,24 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   contact_telegram_href: "https://t.me/bilarius",
   contact_max_href:
     "https://max.ru/join/EmVxaadn5GxQNTErVmbyRKcQAZDNHjEhxcPQqSTR9wA",
+
+  // ── AI Architect ──
+  openrouter_api_key: "",
+  architect_fast_model: "google/gemini-2.5-flash-lite",
+  architect_strong_model: "google/gemini-2.5-flash",
+  architect_daily_limit: "10",
+  architect_global_per_minute: "20",
+
+  // ── PageSpeed Insights API (опционально, без ключа — бесплатно до 25k/день) ──
+  pagespeed_api_key: "",
+
+  // ── Avito API ──
+  avito_client_id: "",
+  avito_client_secret: "",
+
+  // ── Lead Hunter / Telegram ──
+  telegram_bot_token: "",
+  telegram_chat_id: "",
 };
 
 export async function getAllSettings(): Promise<Record<string, string>> {
