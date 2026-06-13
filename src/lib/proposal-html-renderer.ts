@@ -780,9 +780,9 @@ export function renderProposalHtml(blocks: ProposalBlock[], options?: { mobile?:
       margin: 0 0 16px;
     }
 
-    .fpb-rich-text-content h1 { font-size: 2.4em; font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin: 0 0 0.5em; color: var(--block-ink); }
-    .fpb-rich-text-content h2 { font-size: 1.75em; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin: 0.8em 0 0.4em; color: var(--block-ink); }
-    .fpb-rich-text-content h3 { font-size: 1.25em; font-weight: 600; line-height: 1.3; margin: 0.7em 0 0.3em; color: var(--block-ink); }
+    .fpb-rich-text-content h1 { font-size: 2.4em; font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin: 0 0 0.5em; color: #e53e3e; text-shadow: 0 0 2px rgba(229, 62, 62, 0.3); }
+    .fpb-rich-text-content h2 { font-size: 1.75em; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin: 0.8em 0 0.4em; color: #dd6b20; text-shadow: 0 0 2px rgba(221, 107, 32, 0.3); }
+    .fpb-rich-text-content h3 { font-size: 1.25em; font-weight: 600; line-height: 1.3; margin: 0.7em 0 0.3em; color: #3182ce; text-shadow: 0 0 2px rgba(49, 130, 206, 0.3); }
     .fpb-rich-text-content p { font-size: 1em; line-height: 1.75; margin: 0 0 1em; color: color-mix(in srgb, var(--block-ink) 80%, transparent); }
     .fpb-rich-text-content p:last-child { margin-bottom: 0; }
     .fpb-rich-text-content strong { color: var(--block-ink); font-weight: 700; }
