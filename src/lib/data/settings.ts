@@ -50,8 +50,8 @@ export const SETTING_DEFAULTS: Record<string, string> = {
 
   // ── AI Architect ──
   openrouter_api_key: "",
-  architect_fast_model: "google/gemini-2.5-flash-lite",
-  architect_strong_model: "google/gemini-2.5-flash",
+  architect_fast_model: "deepseek/deepseek-v4-flash",
+  architect_strong_model: "qwen/qwen3-235b-a22b-2507",
   architect_daily_limit: "10",
   architect_global_per_minute: "20",
 

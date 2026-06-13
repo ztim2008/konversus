@@ -9420,6 +9420,219 @@ a.dv3-contacts__value:hover { color: #f6c47b; }
   border-radius: 6px;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   HERO EXTENDED — CMS badge, title row
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.arc-hero-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.arc-cms-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(152,209,255,.12);
+  color: #98d1ff;
+  border: 1px solid rgba(152,209,255,.2);
+}
+.arc-hero-title-text {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font-plex-mono), monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   POSITIONING — perceived audience
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.arc-pos-audience {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 16px;
+  background: rgba(246,196,123,.08);
+  border: 1px solid rgba(246,196,123,.15);
+  border-radius: 10px;
+}
+.arc-pos-audience-icon { font-size: 16px; }
+.arc-pos-audience-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f6c47b;
+}
+.arc-pos-audience-text {
+  font-size: 13px;
+  color: var(--foreground);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HEADING TREE — visual hierarchy
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.arc-section-headings { border-color: rgba(245,158,11,.2); }
+.arc-section-headings .arc-section-num { color: #f59e0b; background: rgba(245,158,11,.1); }
+
+.arc-heading-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.arc-heading-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  animation: arcFadeInLeft .5s ease both;
+}
+@keyframes arcFadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.arc-heading-h1 {
+  background: rgba(152,209,255,.08);
+  border-left: 3px solid #98d1ff;
+  font-weight: 700;
+  font-size: 14px;
+}
+.arc-heading-h2 {
+  background: rgba(255,255,255,.04);
+  border-left: 3px solid rgba(255,255,255,.2);
+  padding-left: 28px;
+  font-size: 13px;
+}
+.arc-heading-h3 {
+  background: rgba(255,255,255,.02);
+  border-left: 2px solid rgba(255,255,255,.1);
+  padding-left: 42px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.arc-heading-level {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 24px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+}
+.arc-heading-h1 .arc-heading-level { background: rgba(152,209,255,.2); color: #98d1ff; }
+.arc-heading-h2 .arc-heading-level { background: rgba(255,255,255,.1); color: var(--muted); }
+.arc-heading-h3 .arc-heading-level { background: rgba(255,255,255,.05); color: rgba(255,255,255,.4); }
+.arc-heading-text { color: var(--foreground); }
+.arc-heading-h3 .arc-heading-text { color: var(--muted); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TECH METRICS — extended (content, description, resources)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.arc-tech-desc {
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  max-width: 200px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AI SUMMARY — final call from AI
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.arc-ai-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 22px;
+  background: rgba(152,209,255,.06);
+  border: 1px solid rgba(152,209,255,.12);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  animation: arcFadeInLeft .6s ease both;
+}
+.arc-ai-summary-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.arc-ai-summary-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SHARE BLOCK — social sharing with viral CTA
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.arc-share-block {
+  text-align: center;
+  padding: 20px 0;
+}
+.arc-share-headline {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f6c47b;
+  margin-bottom: 6px;
+  animation: arcPulseGlow 3s ease-in-out infinite;
+}
+@keyframes arcPulseGlow {
+  0%, 100% { color: #f6c47b; }
+  50% { color: #fbbf24; }
+}
+.arc-share-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.arc-share-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.arc-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: transform .15s, opacity .15s;
+  text-decoration: none;
+}
+.arc-share-btn:hover { transform: scale(1.04); }
+.arc-share-btn:active { transform: scale(0.97); }
+
+.arc-share-btn-tg {
+  background: rgba(0,136,204,.15);
+  color: #2AABEE;
+  border: 1px solid rgba(0,136,204,.25);
+}
+.arc-share-btn-vk {
+  background: rgba(0,85,170,.15);
+  color: #4a76a8;
+  border: 1px solid rgba(0,85,170,.25);
+}
+.arc-share-btn-copy {
+  background: rgba(255,255,255,.06);
+  color: var(--foreground);
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+@media (max-width: 600px) {
+  .arc-share-buttons { flex-direction: column; }
+  .arc-share-btn { justify-content: center; }
+}
+
 /* ── Architect History table (.arc-hist-*) ─────────────────────────── */
 .arc-hist-table {
   border-collapse: collapse;

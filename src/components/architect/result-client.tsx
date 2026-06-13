@@ -128,9 +128,15 @@ interface SnapshotMeta {
   title?: string | null;
   cms?: string | null;
   h1?: string | null;
+  description?: string | null;
   word_count?: number | null;
   image_count?: number | null;
+  link_count?: number | null;
+  external_scripts_count?: number | null;
+  inline_styles_bytes?: number | null;
+  has_resource_hints?: boolean | null;
   has_schema_org?: boolean;
+  headings?: string[] | null;
   phones_count?: number;
   emails_count?: number;
   socials_count?: number;
@@ -330,9 +336,17 @@ export default function ArchitectResultClient({
       {/* ── Hero ──────────────────────────────────────────────────── */}
       <section className="arc-result-hero arc-reveal" ref={heroRef}>
         <div className="arc-result-url">{url}</div>
-        <a href={`/api/architect/${id}/pdf`} className="arc-pdf-btn" title="Скачать PDF-отчёт">
-          ↓ PDF
-        </a>
+        <div className="arc-hero-meta-row">
+          {snapshotMeta?.cms && (
+            <span className="arc-cms-badge">{snapshotMeta.cms}</span>
+          )}
+          {snapshotMeta?.title && (
+            <span className="arc-hero-title-text">{snapshotMeta.title.length > 60 ? snapshotMeta.title.slice(0, 57) + "..." : snapshotMeta.title}</span>
+          )}
+          <a href={`/api/architect/${id}/pdf`} className="arc-pdf-btn" title="Скачать PDF-отчёт">
+            ↓ PDF
+          </a>
+        </div>
         <div className="arc-result-growth">
           <span className="arc-growth-num">+{growthNum}%</span>
           <span className="arc-growth-label">потенциал роста</span>
@@ -375,6 +389,13 @@ export default function ArchitectResultClient({
       <section className="arc-section arc-reveal" style={{ animationDelay: "0.05s" }}>
         <div className="arc-section-num">01</div>
         <h2 className="arc-section-title">Позиционирование</h2>
+        {result.positioning_map.perceived_audience && (
+          <div className="arc-pos-audience">
+            <span className="arc-pos-audience-icon">👥</span>
+            <span className="arc-pos-audience-label">Кто реально приходит:</span>
+            <span className="arc-pos-audience-text">{result.positioning_map.perceived_audience}</span>
+          </div>
+        )}
         <div className="arc-positioning-grid">
           <div className="arc-pos-card arc-pos-current">
             <div className="arc-pos-label">Сейчас</div>
@@ -692,6 +713,7 @@ export default function ArchitectResultClient({
                   { label: "robots.txt", ok: snapshotMeta.tech_metrics.has_robots_txt },
                   { label: "Meta viewport", ok: snapshotMeta.tech_metrics.has_viewport_meta },
                   { label: "Адаптивный CSS", ok: snapshotMeta.tech_metrics.has_responsive_css },
+                  { label: "Resource hints", ok: snapshotMeta.has_resource_hints },
                 ].map((item) => (
                   <div key={item.label} className="arc-tech-check-row">
                     <span className={`arc-tech-check-dot ${item.ok ? "arc-tech-ok" : "arc-tech-fail"}`}>
@@ -700,6 +722,65 @@ export default function ArchitectResultClient({
                     <span className={item.ok ? "arc-tech-check-ok" : "arc-tech-check-fail"}>{item.label}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Контент и ресурсы */}
+            <div className="arc-tech-card">
+              <div className="arc-tech-card-title">Контент и ресурсы</div>
+              <div className="arc-tech-metrics-list">
+                {snapshotMeta.description && (
+                  <div className="arc-tech-metric">
+                    <span className="arc-tech-metric-label">Meta description</span>
+                    <span className="arc-tech-metric-val arc-tech-neutral arc-tech-desc">
+                      «{snapshotMeta.description.length > 80 ? snapshotMeta.description.slice(0, 77) + "..." : snapshotMeta.description}»
+                    </span>
+                  </div>
+                )}
+                {snapshotMeta.link_count != null && (
+                  <div className="arc-tech-metric">
+                    <span className="arc-tech-metric-label">Ссылок на странице</span>
+                    <span className={`arc-tech-metric-val ${
+                      snapshotMeta.link_count < 100 ? "arc-tech-ok" :
+                      snapshotMeta.link_count < 300 ? "arc-tech-warn" : "arc-tech-fail"
+                    }`}>
+                      {snapshotMeta.link_count}
+                    </span>
+                  </div>
+                )}
+                {snapshotMeta.external_scripts_count != null && (
+                  <div className="arc-tech-metric">
+                    <span className="arc-tech-metric-label">Внешних скриптов</span>
+                    <span className={`arc-tech-metric-val ${
+                      snapshotMeta.external_scripts_count < 5 ? "arc-tech-ok" :
+                      snapshotMeta.external_scripts_count < 15 ? "arc-tech-warn" : "arc-tech-fail"
+                    }`}>
+                      {snapshotMeta.external_scripts_count}
+                    </span>
+                  </div>
+                )}
+                {snapshotMeta.inline_styles_bytes != null && snapshotMeta.inline_styles_bytes > 0 && (
+                  <div className="arc-tech-metric">
+                    <span className="arc-tech-metric-label">Inline-стили</span>
+                    <span className={`arc-tech-metric-val ${
+                      snapshotMeta.inline_styles_bytes < 2000 ? "arc-tech-ok" :
+                      snapshotMeta.inline_styles_bytes < 10000 ? "arc-tech-warn" : "arc-tech-fail"
+                    }`}>
+                      {(snapshotMeta.inline_styles_bytes / 1024).toFixed(1)} KB
+                    </span>
+                  </div>
+                )}
+                {snapshotMeta.word_count != null && (
+                  <div className="arc-tech-metric">
+                    <span className="arc-tech-metric-label">Слов в тексте</span>
+                    <span className={`arc-tech-metric-val ${
+                      snapshotMeta.word_count > 300 ? "arc-tech-ok" :
+                      snapshotMeta.word_count > 100 ? "arc-tech-warn" : "arc-tech-fail"
+                    }`}>
+                      {snapshotMeta.word_count}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -841,6 +922,33 @@ export default function ArchitectResultClient({
                 </ul>
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* ── Структура заголовков ─────────────────────────────────────── */}
+      {snapshotMeta?.headings && snapshotMeta.headings.length > 0 && (
+        <section className="arc-section arc-section-headings arc-reveal" style={{ animationDelay: "0.33s" }}>
+          <div className="arc-section-num">H</div>
+          <h2 className="arc-section-title">Структура заголовков</h2>
+          <p className="arc-contacts-subtitle">
+            Иерархия H1–H3 — показывает, как сайт объясняет своё предложение
+          </p>
+          <div className="arc-heading-tree">
+            {snapshotMeta.headings.map((h, i) => {
+              const level = h.startsWith("###") ? 3 : h.startsWith("##") ? 2 : 1;
+              const text = h.replace(/^#{1,3}\s*/, "");
+              return (
+                <div
+                  key={i}
+                  className={`arc-heading-item arc-heading-h${level}`}
+                  style={{ animationDelay: `${0.34 + i * 0.04}s` }}
+                >
+                  <span className="arc-heading-level">H{level}</span>
+                  <span className="arc-heading-text">{text}</span>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -1132,6 +1240,14 @@ export default function ArchitectResultClient({
 
       {/* ── CTA ───────────────────────────────────────────────────── */}
       <section className="arc-cta-section arc-reveal" style={{ animationDelay: "0.35s" }}>
+        {/* AI Summary */}
+        {result.summary && (
+          <div className="arc-ai-summary">
+            <div className="arc-ai-summary-icon">💡</div>
+            <div className="arc-ai-summary-text">{result.summary}</div>
+          </div>
+        )}
+
         {/* Прогноз конверсии */}
         <div className="arc-conversion-forecast">
           <div className="arc-conversion-forecast-label">Прогноз роста конверсии</div>
@@ -1202,6 +1318,45 @@ export default function ArchitectResultClient({
           <Link href="/architect" className="arc-cta-btn arc-cta-btn-secondary">
             Новый анализ
           </Link>
+        </div>
+
+        {/* ── Поделиться ──────────────────────────────────────────────── */}
+        <div className="arc-cta-divider" />
+        <div className="arc-share-block">
+          <div className="arc-share-headline">
+            📣 Покажите друзьям и коллегам — пусть проверят свой бизнес!
+          </div>
+          <div className="arc-share-sub">
+            У каждого сайта есть скрытые проблемы. Отправьте ссылку на анализ — это бесплатно и полезно.
+          </div>
+          <div className="arc-share-buttons">
+            <a
+              href={`https://t.me/share/url?url=${encodeURIComponent(`https://konversus.ru/architect/${id}`)}&text=${encodeURIComponent(`Я проанализировал сайт ${url} — потенциал роста +${result.growth_potential_pct}%. Проверь свой бизнес бесплатно →`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="arc-share-btn arc-share-btn-tg"
+            >
+              ✈ Telegram
+            </a>
+            <a
+              href={`https://vk.com/share.php?url=${encodeURIComponent(`https://konversus.ru/architect/${id}`)}&title=${encodeURIComponent(`Анализ бизнеса: ${url}`)}&description=${encodeURIComponent(`Потенциал роста +${result.growth_potential_pct}%. Проверь свой сайт бесплатно на konversus.ru/architect`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="arc-share-btn arc-share-btn-vk"
+            >
+              🅰 ВКонтакте
+            </a>
+            <button
+              type="button"
+              className="arc-share-btn arc-share-btn-copy"
+              onClick={() => {
+                const text = `Я проанализировал сайт ${url} — потенциал роста +${result.growth_potential_pct}%. Проверь свой бизнес: https://konversus.ru/architect`;
+                navigator.clipboard.writeText(text).catch(() => {});
+              }}
+            >
+              📋 Скопировать текст
+            </button>
+          </div>
         </div>
 
         <div className="arc-powered-footer">
