@@ -45,7 +45,7 @@ export async function callOpenRouter(
       max_tokens: maxTokens,
       messages,
     }),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(180_000),
   });
 
   if (!response.ok) {

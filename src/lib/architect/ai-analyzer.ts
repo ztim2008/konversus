@@ -165,6 +165,27 @@ JSON-схема ответа (без пояснений, только JSON):
     }
   ],
   "summary": "2-3 предложения финального призыва к действию"
+,
+  "legal_compliance": {
+    "overall_status": "compliant|partial|violation|unknown",
+    "overall_label": "Соответствует|Частично соответствует|Есть нарушения|Не определено",
+    "risk_level": "low|medium|high|critical",
+    "risk_label": "Низкий риск|Средний риск|Высокий риск|Критический",
+    "has_privacy_policy": true/false,
+    "has_cookie_notice": true/false,
+    "has_personal_data_agreement": true/false,
+    "has_cookie_banner": true/false,
+    "issues": [
+      {
+        "type": "critical|warning|info",
+        "title": "название проблемы",
+        "description": "описание",
+        "law_reference": "152-ФЗ ст. 18.1 / Закон о куки / ст. 13.11 КоАП",
+        "recommendation": "что делать"
+      }
+    ],
+    "summary": "краткое резюме по законодательству РФ"
+  }
 }
 
 ВАЖНО для top_actions: ровно 3 действия, строго по убыванию ROI. Это не повторение roadmap — это ГЛАВНЫЙ ВЫВОД всего анализа. Учитывай SEO fails, отсутствие аналитики, слабый дизайн, потери дохода — и выбирай то, что быстрее всего изменит ситуацию. Первое действие должно быть самым срочным.

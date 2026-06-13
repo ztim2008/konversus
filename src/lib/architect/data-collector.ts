@@ -555,12 +555,15 @@ function getH1(html: string): string {
 }
 
 function getHeadings(html: string): string[] {
-  const re = /<h[1-3][^>]*>([\s\S]{0,200}?)<\/h[1-3]>/gi;
+  const re = /<(h[1-3])[^>]*>([\s\S]{0,200}?)<\/\1>/gi;
   const result: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = re.exec(html)) !== null) {
-    const text = stripTags(match[1]).trim();
-    if (text) result.push(text);
+    const tag = match[1].toLowerCase();
+    const level = parseInt(tag[1], 10);
+    const prefix = "#".repeat(level);
+    const text = stripTags(match[2]).trim();
+    if (text) result.push(`${prefix} ${text}`);
     if (result.length >= 20) break;
   }
   return result;
@@ -912,7 +915,7 @@ async function collectWebsiteSnapshot(url: string): Promise<ArchitectSnapshot> {
   const t0 = Date.now();
   const res = await fetch(url, {
     headers: FETCH_HEADERS,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(30_000),
     redirect: "follow",
   });
   const responseTimeMs = Date.now() - t0;
@@ -966,7 +969,7 @@ async function collectWebsiteSnapshot(url: string): Promise<ArchitectSnapshot> {
 async function collectOzonSnapshot(url: string): Promise<ArchitectSnapshot> {
   const res = await fetch(url, {
     headers: FETCH_HEADERS,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(30_000),
     redirect: "follow",
   });
   const html = await res.text();
@@ -1009,7 +1012,7 @@ async function collectOzonSnapshot(url: string): Promise<ArchitectSnapshot> {
 async function collectWbSnapshot(url: string): Promise<ArchitectSnapshot> {
   const res = await fetch(url, {
     headers: FETCH_HEADERS,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(30_000),
     redirect: "follow",
   });
   const html = await res.text();
@@ -1037,7 +1040,7 @@ async function collectAvitoSnapshot(
 ): Promise<ArchitectSnapshot> {
   const res = await fetch(url, {
     headers: FETCH_HEADERS,
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(30_000),
     redirect: "follow",
   });
   const html = await res.text();

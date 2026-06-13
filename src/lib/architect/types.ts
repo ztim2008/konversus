@@ -205,6 +205,7 @@ export interface ArchitectReport {
   roadmap: RoadmapItem[];
   digital_assets: DigitalAsset[];
   top_actions?: TopAction[];
+  legal_compliance?: LegalCompliance;
 
   summary: string;
   model_used?: string;
@@ -274,4 +275,29 @@ export interface ArchitectProject {
   error_message: string | null;
   created_at: Date;
   updated_at: Date;
+}
+
+// ── Compliance (152-ФЗ, куки, политика конфиденциальности) ────────────────
+
+export type ComplianceStatus = "compliant" | "partial" | "violation" | "unknown";
+
+export interface ComplianceIssue {
+  type: "critical" | "warning" | "info";
+  title: string;
+  description: string;
+  law_reference?: string;
+  recommendation: string;
+}
+
+export interface LegalCompliance {
+  overall_status: ComplianceStatus;
+  overall_label: string;
+  risk_level: "low" | "medium" | "high" | "critical";
+  risk_label: string;
+  has_privacy_policy: boolean;
+  has_cookie_notice: boolean;
+  has_personal_data_agreement: boolean;
+  has_cookie_banner: boolean;
+  issues: ComplianceIssue[];
+  summary: string;
 }

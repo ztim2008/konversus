@@ -75,7 +75,7 @@ async function fetchPageSpeedInsights(
     if (apiKey) params.set("key", apiKey);
 
     const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params}`;
-    const res = await fetch(apiUrl, { signal: AbortSignal.timeout(35_000) });
+    const res = await fetch(apiUrl, { signal: AbortSignal.timeout(60_000) });
     if (!res.ok) return null;
 
     const data = (await res.json()) as { lighthouseResult?: PsResult };

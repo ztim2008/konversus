@@ -65,7 +65,7 @@ async function callVisionApi(
         },
       ],
     }),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(120_000),
   });
 
   if (!response.ok) {
@@ -118,7 +118,7 @@ export async function analyzeVisual(
       return route.continue();
     });
 
-    await page.goto(url, { waitUntil: "networkidle", timeout: 25_000 });
+    await page.goto(url, { waitUntil: "networkidle", timeout: 45_000 });
     // Небольшая пауза для финальных CSS-анимаций
     await page.waitForTimeout(500);
 

@@ -1,6 +1,8 @@
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 300;
+
 import { getAllSettings } from "@/lib/data/settings";
 import {
   countTodayProjectsByIp,

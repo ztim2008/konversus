@@ -1238,6 +1238,73 @@ export default function ArchitectResultClient({
         </section>
       )}
 
+      {/* ── Legal Compliance (152-ФЗ, куки, политика конфиденциальности) ─── */}
+      {result.legal_compliance && (
+        <section className="arc-section arc-section-legal arc-reveal" style={{ animationDelay: "0.36s" }}>
+          <div className="arc-section-num">⚖️</div>
+          <h2 className="arc-section-title">Соответствие законодательству РФ</h2>
+          <p className="arc-contacts-subtitle">
+            152-ФЗ, уведомление о куки, согласие на обработку персональных данных
+          </p>
+
+          {/* Сводный статус и уровень риска */}
+          <div className="arc-legal-status">
+            <span className={`arc-legal-badge arc-legal-badge--${result.legal_compliance.risk_level}`}>
+              {result.legal_compliance.risk_label}
+            </span>
+            {result.legal_compliance.overall_label && (
+              <span className="arc-legal-overall">{result.legal_compliance.overall_label}</span>
+            )}
+          </div>
+
+          {/* Чек-лист наличия документов */}
+          <div className="arc-legal-checks">
+            {[
+              { label: "Политика конфиденциальности", ok: result.legal_compliance.has_privacy_policy },
+              { label: "Уведомление о cookie", ok: result.legal_compliance.has_cookie_notice },
+              { label: "Согласие на обработку ПД", ok: result.legal_compliance.has_personal_data_agreement },
+              { label: "Cookie-баннер", ok: result.legal_compliance.has_cookie_banner },
+            ].map((item) => (
+              <div key={item.label} className="arc-legal-check-row">
+                <span className={`arc-legal-check-dot ${item.ok ? "arc-tech-ok" : "arc-tech-fail"}`}>
+                  {item.ok ? "✓" : "✗"}
+                </span>
+                <span className="arc-legal-check-label">{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Выявленные проблемы */}
+          {result.legal_compliance.issues.length > 0 && (
+            <div className="arc-legal-issues">
+              <div className="arc-legal-issues-title">Выявленные проблемы</div>
+              {result.legal_compliance.issues.map((issue, i) => (
+                <div key={i} className={`arc-legal-issue arc-legal-issue--${issue.type}`}>
+                  <div className="arc-legal-issue-header">
+                    <span className="arc-legal-issue-type">
+                      {issue.type === "critical" ? "🔴 Критично"
+                        : issue.type === "warning" ? "🟡 Предупреждение"
+                        : "ℹ️ Информация"}
+                    </span>
+                    <span className="arc-legal-issue-title">{issue.title}</span>
+                  </div>
+                  <p className="arc-legal-issue-desc">{issue.description}</p>
+                  {issue.law_reference && (
+                    <div className="arc-legal-issue-law">⚖️ {issue.law_reference}</div>
+                  )}
+                  <div className="arc-legal-issue-rec">→ {issue.recommendation}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Резюме */}
+          {result.legal_compliance.summary && (
+            <p className="arc-legal-summary">{result.legal_compliance.summary}</p>
+          )}
+        </section>
+      )}
+
       {/* ── CTA ───────────────────────────────────────────────────── */}
       <section className="arc-cta-section arc-reveal" style={{ animationDelay: "0.35s" }}>
         {/* AI Summary */}
