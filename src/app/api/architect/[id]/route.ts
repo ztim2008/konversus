@@ -59,6 +59,7 @@ export async function GET(
             visual_analysis: project.snapshot_json.visual_analysis ?? null,
             ru_blocking: project.snapshot_json.ru_blocking ?? null,
             speed_audit: project.snapshot_json.speed_audit ?? null,
+            forms: project.snapshot_json.forms ?? null,
           }
         : null,
     },

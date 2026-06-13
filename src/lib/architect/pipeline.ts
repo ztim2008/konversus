@@ -13,6 +13,7 @@ import {
 import { collectSnapshot } from "@/lib/architect/data-collector";
 import { analyzeWithAI } from "@/lib/architect/ai-analyzer";
 import { analyzeVisual } from "@/lib/architect/visual-analyzer";
+import { calcHealthScore } from "@/lib/architect/health-score";
 import { getAllSettings } from "@/lib/data/settings";
 import type { SourceType, SpeedAudit } from "@/lib/architect/types";
 import { readdir, unlink, stat } from "fs/promises";
@@ -201,6 +202,11 @@ export async function runArchitectPipeline(params: {
       strongModel,
       apiKey,
     });
+
+    // 2b. Сводный Health Score (детерминированно, не от AI)
+    const health = calcHealthScore(snapshot, report);
+    report.health_score = health.score;
+    report.health_breakdown = health;
 
     // 3. Done
     await updateArchitectResult(id, report, model_used);

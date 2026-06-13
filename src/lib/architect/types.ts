@@ -121,6 +121,9 @@ export interface ArchitectSnapshot {
     address?: string;
   };
 
+  // Детекция форм сбора данных (триггер для 152-ФЗ)
+  forms?: FormsDetection;
+
   // Данные Avito API (только для собственного профиля)
   avito_api?: {
     is_own_profile: boolean;
@@ -206,6 +209,8 @@ export interface ArchitectReport {
   digital_assets: DigitalAsset[];
   top_actions?: TopAction[];
   legal_compliance?: LegalCompliance;
+  health_score?: number;             // 0–100 сводная оценка здоровья сайта
+  health_breakdown?: HealthBreakdown;
 
   summary: string;
   model_used?: string;
@@ -279,6 +284,13 @@ export interface ArchitectProject {
 
 // ── Compliance (152-ФЗ, куки, политика конфиденциальности) ────────────────
 
+export interface FormsDetection {
+  has_forms: boolean;                // есть ли <form> на странице
+  forms_count: number;               // количество форм
+  collects_personal_data: boolean;   // формы/чаты собирают ПД (email, тел, имя)
+  form_types: string[];              // найденные сигналы: ["form", "email", "tel", "chat"]
+}
+
 export type ComplianceStatus = "compliant" | "partial" | "violation" | "unknown";
 
 export interface ComplianceIssue {
@@ -286,6 +298,7 @@ export interface ComplianceIssue {
   title: string;
   description: string;
   law_reference?: string;
+  fine?: string;                     // ориентировочный штраф, напр. "до 300 000 ₽"
   recommendation: string;
 }
 
@@ -300,4 +313,22 @@ export interface LegalCompliance {
   has_cookie_banner: boolean;
   issues: ComplianceIssue[];
   summary: string;
+}
+
+// ── Health Score (сводная оценка 0–100) ───────────────────────────────────
+
+export interface HealthBreakdownItem {
+  key: "seo" | "visual" | "speed" | "tech" | "legal" | "ru";
+  label: string;        // "SEO-видимость"
+  score: number;        // 0–100 — оценка блока
+  weight: number;       // вес в общей сумме (сумма весов = 100)
+  contribution: number; // вклад в итог (score/100 * weight)
+}
+
+export interface HealthBreakdown {
+  score: number;                  // финальный 0–100 (после legal-капа)
+  base_score: number;             // до применения legal-капа
+  legal_capped: boolean;          // был ли снижен из-за юр. нарушений
+  cap_reason?: string;            // почему снижен ("Формы без политики → критично")
+  items: HealthBreakdownItem[];
 }

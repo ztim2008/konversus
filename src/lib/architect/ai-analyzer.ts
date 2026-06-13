@@ -78,6 +78,7 @@ async function runStage1(
     raw_text: snapshot.raw_text?.slice(0, 2000),
     seller_name: snapshot.seller_name,
     products: snapshot.products?.slice(0, 3),
+    forms: snapshot.forms ?? null,
   });
 
   const result = await callOpenRouter(
@@ -181,12 +182,21 @@ JSON-схема ответа (без пояснений, только JSON):
         "title": "название проблемы",
         "description": "описание",
         "law_reference": "152-ФЗ ст. 18.1 / Закон о куки / ст. 13.11 КоАП",
+        "fine": "ориентировочный штраф для юрлица, напр. 'до 300 000 ₽' или null",
         "recommendation": "что делать"
       }
     ],
     "summary": "краткое резюме по законодательству РФ"
   }
 }
+
+═══ ПРАВИЛА ДЛЯ legal_compliance (152-ФЗ — критично важно!) ═══
+Поле forms из данных показывает, есть ли на сайте формы/чаты сбора данных.
+- Если forms.collects_personal_data = true (есть формы, поля email/телефон/имя или чат-виджеты) И при этом нет политики конфиденциальности (has_privacy_policy=false) или нет согласия на обработку ПД (has_personal_data_agreement=false) — это ОБЯЗАТЕЛЬНО проблема с type="critical", risk_level="critical", overall_status="violation". Закон: 152-ФЗ ст. 6, ст. 9, ст. 18. Укажи fine="до 300 000 ₽" (ч. 2 ст. 13.11 КоАП РФ, повторно — до 500 000 ₽).
+- Нет куки-баннера при наличии счётчиков аналитики — type="warning", fine="до 100 000 ₽".
+- Формы сбора есть, но согласие оформлено — overall_status="partial", risk_level="low".
+- Форм сбора нет — risk_level не выше "low", нарушения не выдумывай.
+Сумма штрафа обязательна для critical и warning (поле fine), критичным — реальные суммы КоАП.
 
 ВАЖНО для top_actions: ровно 3 действия, строго по убыванию ROI. Это не повторение roadmap — это ГЛАВНЫЙ ВЫВОД всего анализа. Учитывай SEO fails, отсутствие аналитики, слабый дизайн, потери дохода — и выбирай то, что быстрее всего изменит ситуацию. Первое действие должно быть самым срочным.
 
@@ -217,6 +227,7 @@ async function runStage2(
     url: snapshot.url,
     source_type: snapshot.source_type,
     seo_score: snapshot.seo_metrics?.score ?? null,
+    forms: snapshot.forms ?? null,
     ...stage1,
   });
 

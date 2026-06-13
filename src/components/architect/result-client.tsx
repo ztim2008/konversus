@@ -75,6 +75,13 @@ interface TechMetricsData {
   server_header: string | null;
 }
 
+interface FormsData {
+  has_forms: boolean;
+  forms_count: number;
+  collects_personal_data: boolean;
+  form_types: string[];
+}
+
 // ── RU Blocking Audit ─────────────────────────────────────────────────────
 
 interface RuDependencyData {
@@ -147,6 +154,7 @@ interface SnapshotMeta {
   visual_analysis?: VisualAnalysisData | null;
   ru_blocking?: RuBlockingData | null;
   speed_audit?: SpeedAuditData | null;
+  forms?: FormsData | null;
 }
 
 interface PollData {
@@ -354,6 +362,77 @@ export default function ArchitectResultClient({
         <h1 className="arc-result-niche">{result.niche}</h1>
         <p className="arc-result-verdict">{result.verdict}</p>
       </section>
+
+      {/* ── Health Score (сводная оценка 0–100) ───────────────────── */}
+      {typeof result.health_score === "number" && result.health_breakdown && (() => {
+        const hs = result.health_score;
+        const hb = result.health_breakdown;
+        const zone = hs >= 75 ? "good" : hs >= 50 ? "medium" : "poor";
+        const zoneLabel = hs >= 75 ? "Здоров" : hs >= 50 ? "Средне" : "Проблемы";
+        const zoneText = hs >= 75
+          ? "Сайт в хорошем состоянии — есть что улучшить, но фундамент крепкий"
+          : hs >= 50
+          ? "Среднее состояние — есть заметные слабые места, требующие внимания"
+          : "Сайт требует серьёзной доработки — много критичных проблем";
+        const R = 52;
+        const CIRC = 2 * Math.PI * R;
+        const dash = (hs / 100) * CIRC;
+        return (
+          <section className="arc-health-section arc-reveal" style={{ animationDelay: "0.03s" }}>
+            <div className="arc-health-top">
+              <div className={`arc-health-gauge arc-health-gauge--${zone}`}>
+                <svg viewBox="0 0 120 120" className="arc-health-ring">
+                  <circle cx="60" cy="60" r={R} className="arc-health-ring-bg" />
+                  <circle
+                    cx="60" cy="60" r={R}
+                    className="arc-health-ring-fg"
+                    style={{ strokeDasharray: `${dash} ${CIRC}` }}
+                  />
+                </svg>
+                <div className="arc-health-gauge-center">
+                  <span className="arc-health-gauge-num">{hs}</span>
+                  <span className="arc-health-gauge-max">/ 100</span>
+                </div>
+              </div>
+              <div className="arc-health-summary">
+                <div className="arc-health-zone-row">
+                  <span className={`arc-health-zone arc-health-zone--${zone}`}>{zoneLabel}</span>
+                  {hb.legal_capped && (
+                    <span className="arc-health-capped">снижено из-за 152-ФЗ</span>
+                  )}
+                </div>
+                <p className="arc-health-zone-text">{zoneText}</p>
+                {hb.legal_capped && hb.cap_reason && (
+                  <p className="arc-health-cap-reason">⚠️ {hb.cap_reason}</p>
+                )}
+                <div className="arc-health-potential">
+                  <span className="arc-health-potential-num">+{result.growth_potential_pct}%</span>
+                  <span className="arc-health-potential-label">потенциал роста дохода</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="arc-health-bars">
+              {hb.items.map((item) => (
+                <div key={item.key} className="arc-health-bar-item">
+                  <div className="arc-health-bar-head">
+                    <span className="arc-health-bar-label">{item.label}</span>
+                    <span className="arc-health-bar-val">{item.score}</span>
+                  </div>
+                  <div className="arc-health-bar-track">
+                    <div
+                      className={`arc-health-bar-fill arc-health-bar-fill--${
+                        item.score >= 75 ? "good" : item.score >= 50 ? "medium" : "poor"
+                      }`}
+                      style={{ width: `${item.score}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── TOP-3 Priority Actions ────────────────────────────────── */}
       {result.top_actions && result.top_actions.length > 0 && (
@@ -1239,71 +1318,143 @@ export default function ArchitectResultClient({
       )}
 
       {/* ── Legal Compliance (152-ФЗ, куки, политика конфиденциальности) ─── */}
-      {result.legal_compliance && (
-        <section className="arc-section arc-section-legal arc-reveal" style={{ animationDelay: "0.36s" }}>
-          <div className="arc-section-num">⚖️</div>
-          <h2 className="arc-section-title">Соответствие законодательству РФ</h2>
-          <p className="arc-contacts-subtitle">
-            152-ФЗ, уведомление о куки, согласие на обработку персональных данных
-          </p>
+      {result.legal_compliance && (() => {
+        const lc = result.legal_compliance;
+        const forms = snapshotMeta?.forms;
+        const hasForms = forms?.collects_personal_data ?? false;
+        const missingMandatory =
+          (hasForms && (!lc.has_privacy_policy || !lc.has_personal_data_agreement)) ||
+          lc.risk_level === "critical" ||
+          lc.risk_level === "high";
 
-          {/* Сводный статус и уровень риска */}
-          <div className="arc-legal-status">
-            <span className={`arc-legal-badge arc-legal-badge--${result.legal_compliance.risk_level}`}>
-              {result.legal_compliance.risk_label}
-            </span>
-            {result.legal_compliance.overall_label && (
-              <span className="arc-legal-overall">{result.legal_compliance.overall_label}</span>
-            )}
-          </div>
+        const mandatoryChecks = [
+          { label: "Политика конфиденциальности", ok: lc.has_privacy_policy, note: hasForms ? "обязательно при формах" : "" },
+          { label: "Согласие на обработку ПД", ok: lc.has_personal_data_agreement, note: hasForms ? "обязательно при формах" : "" },
+        ];
+        const recommendedChecks = [
+          { label: "Уведомление о cookie", ok: lc.has_cookie_notice },
+          { label: "Cookie-баннер", ok: lc.has_cookie_banner },
+        ];
 
-          {/* Чек-лист наличия документов */}
-          <div className="arc-legal-checks">
-            {[
-              { label: "Политика конфиденциальности", ok: result.legal_compliance.has_privacy_policy },
-              { label: "Уведомление о cookie", ok: result.legal_compliance.has_cookie_notice },
-              { label: "Согласие на обработку ПД", ok: result.legal_compliance.has_personal_data_agreement },
-              { label: "Cookie-баннер", ok: result.legal_compliance.has_cookie_banner },
-            ].map((item) => (
-              <div key={item.label} className="arc-legal-check-row">
-                <span className={`arc-legal-check-dot ${item.ok ? "arc-tech-ok" : "arc-tech-fail"}`}>
-                  {item.ok ? "✓" : "✗"}
-                </span>
-                <span className="arc-legal-check-label">{item.label}</span>
-              </div>
-            ))}
-          </div>
+        return (
+          <section className="arc-section arc-section-legal arc-reveal" style={{ animationDelay: "0.36s" }}>
+            <div className="arc-section-num">⚖️</div>
+            <h2 className="arc-section-title">Соответствие законодательству РФ</h2>
+            <p className="arc-contacts-subtitle">
+              152-ФЗ, уведомление о куки, согласие на обработку персональных данных
+            </p>
 
-          {/* Выявленные проблемы */}
-          {result.legal_compliance.issues.length > 0 && (
-            <div className="arc-legal-issues">
-              <div className="arc-legal-issues-title">Выявленные проблемы</div>
-              {result.legal_compliance.issues.map((issue, i) => (
-                <div key={i} className={`arc-legal-issue arc-legal-issue--${issue.type}`}>
-                  <div className="arc-legal-issue-header">
-                    <span className="arc-legal-issue-type">
-                      {issue.type === "critical" ? "🔴 Критично"
-                        : issue.type === "warning" ? "🟡 Предупреждение"
-                        : "ℹ️ Информация"}
-                    </span>
-                    <span className="arc-legal-issue-title">{issue.title}</span>
+            {/* Пульсирующий баннер-предупреждение: формы без документов */}
+            {hasForms && missingMandatory && (
+              <div className="arc-legal-alert arc-legal-alert--pulse">
+                <div className="arc-legal-alert-icon">🚨</div>
+                <div className="arc-legal-alert-body">
+                  <div className="arc-legal-alert-title">
+                    На сайте есть формы сбора данных — это строго регулируется 152-ФЗ
                   </div>
-                  <p className="arc-legal-issue-desc">{issue.description}</p>
-                  {issue.law_reference && (
-                    <div className="arc-legal-issue-law">⚖️ {issue.law_reference}</div>
-                  )}
-                  <div className="arc-legal-issue-rec">→ {issue.recommendation}</div>
+                  <div className="arc-legal-alert-text">
+                    {forms?.forms_count ? `Найдено форм: ${forms.forms_count}. ` : ""}
+                    Без политики конфиденциальности и согласия на обработку ПД — нарушение.
+                    Штраф для юрлица: <strong>до 300 000 ₽</strong> (ч. 2 ст. 13.11 КоАП РФ).
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Резюме */}
-          {result.legal_compliance.summary && (
-            <p className="arc-legal-summary">{result.legal_compliance.summary}</p>
-          )}
-        </section>
-      )}
+            {/* Тихая плашка «всё ок» */}
+            {!missingMandatory && lc.risk_level === "low" && (
+              <div className="arc-legal-alert arc-legal-alert--ok">
+                <span className="arc-legal-alert-icon">✅</span>
+                <span className="arc-legal-alert-text">
+                  Существенных нарушений не выявлено — базовые требования 152-ФЗ соблюдены.
+                </span>
+              </div>
+            )}
+
+            {/* Сводный статус и уровень риска */}
+            <div className="arc-legal-status">
+              <span className={`arc-legal-badge arc-legal-badge--${lc.risk_level}`}>
+                {lc.risk_label}
+              </span>
+              {lc.overall_label && (
+                <span className="arc-legal-overall">{lc.overall_label}</span>
+              )}
+              {hasForms && (
+                <span className="arc-legal-forms-tag">
+                  📋 {forms?.forms_count ?? 0} {forms?.forms_count === 1 ? "форма" : "форм"} на сайте
+                </span>
+              )}
+            </div>
+
+            {/* Обязательно (152-ФЗ) */}
+            <div className="arc-legal-checks-group">
+              <div className="arc-legal-checks-group-title arc-legal-checks-group-title--required">
+                Обязательно по закону
+              </div>
+              <div className="arc-legal-checks">
+                {mandatoryChecks.map((item) => (
+                  <div key={item.label} className={`arc-legal-check-row ${item.ok ? "" : "arc-legal-check-row--fail"}`}>
+                    <span className={`arc-legal-check-dot ${item.ok ? "arc-tech-ok" : "arc-tech-fail"}`}>
+                      {item.ok ? "✓" : "✗"}
+                    </span>
+                    <span className="arc-legal-check-label">{item.label}</span>
+                    {!item.ok && (
+                      <span className="arc-legal-check-tag arc-legal-check-tag--required">нарушение</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Рекомендуется */}
+            <div className="arc-legal-checks-group">
+              <div className="arc-legal-checks-group-title">Рекомендуется</div>
+              <div className="arc-legal-checks">
+                {recommendedChecks.map((item) => (
+                  <div key={item.label} className="arc-legal-check-row">
+                    <span className={`arc-legal-check-dot ${item.ok ? "arc-tech-ok" : "arc-tech-fail"}`}>
+                      {item.ok ? "✓" : "✗"}
+                    </span>
+                    <span className="arc-legal-check-label">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Выявленные проблемы */}
+            {lc.issues.length > 0 && (
+              <div className="arc-legal-issues">
+                <div className="arc-legal-issues-title">Выявленные проблемы</div>
+                {lc.issues.map((issue, i) => (
+                  <div key={i} className={`arc-legal-issue arc-legal-issue--${issue.type}`}>
+                    <div className="arc-legal-issue-header">
+                      <span className="arc-legal-issue-type">
+                        {issue.type === "critical" ? "🔴 Критично"
+                          : issue.type === "warning" ? "🟡 Предупреждение"
+                          : "ℹ️ Информация"}
+                      </span>
+                      <span className="arc-legal-issue-title">{issue.title}</span>
+                      {issue.fine && (
+                        <span className="arc-legal-issue-fine">💸 {issue.fine}</span>
+                      )}
+                    </div>
+                    <p className="arc-legal-issue-desc">{issue.description}</p>
+                    {issue.law_reference && (
+                      <div className="arc-legal-issue-law">⚖️ {issue.law_reference}</div>
+                    )}
+                    <div className="arc-legal-issue-rec">→ {issue.recommendation}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Резюме */}
+            {lc.summary && (
+              <p className="arc-legal-summary">{lc.summary}</p>
+            )}
+          </section>
+        );
+      })()}
 
       {/* ── CTA ───────────────────────────────────────────────────── */}
       <section className="arc-cta-section arc-reveal" style={{ animationDelay: "0.35s" }}>

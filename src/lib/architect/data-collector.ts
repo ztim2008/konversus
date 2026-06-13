@@ -6,6 +6,7 @@
 
 import type {
   ArchitectSnapshot,
+  FormsDetection,
   SeoCheck,
   SeoMetrics,
   TechMetrics,
@@ -854,6 +855,46 @@ function extractAddress(html: string): string | undefined {
   return undefined;
 }
 
+/**
+ * Детекция форм и элементов сбора персональных данных.
+ * Наличие форм = триггер обязательности политики конфиденциальности и
+ * согласия на обработку ПД по 152-ФЗ.
+ */
+function detectForms(html: string, tech: TechMetrics): FormsDetection {
+  const formsCount = (html.match(/<form[\s>]/gi) ?? []).length;
+
+  const hasEmailInput = /<input[^>]+type=["']email["']/i.test(html);
+  const hasTelInput = /<input[^>]+type=["']tel["']/i.test(html);
+  const hasNameInput =
+    /<input[^>]+(?:name|placeholder|id)=["'](?:[^"']*\b(?:name|имя|фио|телефон|phone|email|почта|e-mail)\b[^"']*)["']/i.test(html);
+  const hasTextarea = /<textarea[\s>]/i.test(html);
+
+  const hasChat =
+    tech.chat_widgets.jivo ||
+    tech.chat_widgets.calltouch ||
+    tech.chat_widgets.bitrix_chat ||
+    tech.chat_widgets.carrot_quest ||
+    tech.chat_widgets.talk_me;
+
+  const signals: string[] = [];
+  if (formsCount > 0) signals.push("form");
+  if (hasEmailInput) signals.push("email");
+  if (hasTelInput) signals.push("tel");
+  if (hasNameInput) signals.push("name");
+  if (hasTextarea) signals.push("textarea");
+  if (hasChat) signals.push("chat");
+
+  const collectsPersonalData =
+    formsCount > 0 || hasEmailInput || hasTelInput || hasNameInput || hasTextarea || hasChat;
+
+  return {
+    has_forms: formsCount > 0,
+    forms_count: formsCount,
+    collects_personal_data: collectsPersonalData,
+    form_types: signals,
+  };
+}
+
 function extractContacts(html: string): ArchitectSnapshot["contacts_found"] {
   const phones = extractPhones(html);
   const emails = extractEmails(html);
@@ -930,39 +971,42 @@ async function collectWebsiteSnapshot(url: string): Promise<ArchitectSnapshot> {
   const headings = getHeadings(html);
   const rawText = extractRawText(html);
 
-  const techMetrics = await collectTechMetrics(url, html, responseTimeMs, pageSizeBytes);
-  techMetrics.server_header = serverHeader;
+    const techMetrics = await collectTechMetrics(url, html, responseTimeMs, pageSizeBytes);
+    techMetrics.server_header = serverHeader;
 
-  return {
-    url,
-    source_type: "website",
-    collected_at: new Date().toISOString(),
-    title,
-    description,
-    h1,
-    headings,
-    word_count: rawText.split(/\s+/).filter(Boolean).length,
-    image_count: countImages(html),
-    link_count: countLinks(html),
-    cms: detectCMS(html),
-    has_og_tags: hasOgTags(html),
-    has_schema_org: hasSchemaOrg(html),
-    seo_title_length: title.length,
-    seo_description_length: description.length,
-    h1_count: (html.match(/<h1[\s>]/gi) ?? []).length,
-    external_scripts_count: countExternalScripts(html),
-    inline_styles_bytes: (html.match(/style=["'][^"']{0,5000}["']/gi) ?? [])
-      .join("")
-      .length,
-    has_resource_hints: hasResourceHints(html),
-    raw_text: rawText,
-    seo_metrics: extractSeoMetrics(html, url),
-    tech_metrics: techMetrics,
-    contacts_found: extractContacts(html),
-    ru_blocking: analyzeRuBlocking(html),
-    speed_audit: buildSpeedAudit(responseTimeMs),
-  };
-}
+    const forms = detectForms(html, techMetrics);
+
+    return {
+      url,
+      source_type: "website",
+      collected_at: new Date().toISOString(),
+      title,
+      description,
+      h1,
+      headings,
+      word_count: rawText.split(/\s+/).filter(Boolean).length,
+      image_count: countImages(html),
+      link_count: countLinks(html),
+      cms: detectCMS(html),
+      has_og_tags: hasOgTags(html),
+      has_schema_org: hasSchemaOrg(html),
+      seo_title_length: title.length,
+      seo_description_length: description.length,
+      h1_count: (html.match(/<h1[\s>]/gi) ?? []).length,
+      external_scripts_count: countExternalScripts(html),
+      inline_styles_bytes: (html.match(/style=["'][^"']{0,5000}["']/gi) ?? [])
+        .join("")
+        .length,
+      has_resource_hints: hasResourceHints(html),
+      raw_text: rawText,
+      seo_metrics: extractSeoMetrics(html, url),
+      tech_metrics: techMetrics,
+      contacts_found: extractContacts(html),
+      ru_blocking: analyzeRuBlocking(html),
+      speed_audit: buildSpeedAudit(responseTimeMs),
+      forms,
+    };
+  }
 
 // ── Ozon collector (soft fetch) ───────────────────────────────────────────
 
