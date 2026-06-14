@@ -68,6 +68,8 @@
       "@keyframes kw-bubble-ring{0%{opacity:.85;transform:scale(.92)}100%{opacity:0;transform:scale(1.45)}}",
       ".kw-bubble-panel{position:fixed;bottom:94px;right:22px;z-index:999999;width:360px;max-width:calc(100vw - 32px);display:none;}",
       ".kw-bubble-panel.kw-open{display:block;animation:kw-bubble-in .22s ease;}",
+      ".kw-bubble-btn.kw-pos-left{left:22px;right:auto;}",
+      ".kw-bubble-panel.kw-pos-left{left:22px;right:auto;}",
       "@keyframes kw-bubble-in{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}",
       ".kw-bubble-close{position:absolute;top:10px;right:10px;width:28px;height:28px;border:none;cursor:pointer;border-radius:3px;font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;" + (dark ? "background:rgba(255,255,255,0.06);color:#8d99a6;" : "background:#f3f4f6;color:#6b7280;") + "}",
       "@media (max-width:420px){.kw-bubble-panel{right:10px;left:10px;width:auto;}}",
@@ -439,16 +441,23 @@
   }
 
   // ── Bubble mode ──────────────────────────────────────────────────────
-  function mountBubble(theme, width) {
+  function mountBubble(theme, width, opts) {
+    opts = opts || {};
+    var position = opts.position === "left" ? "left" : "right";
+    var trigger = opts.openTrigger || "click";
+    var delay = opts.openDelay > 0 ? opts.openDelay : 6000;
+    var scrollPct = opts.openScroll > 0 ? opts.openScroll : 50;
+    var posClass = position === "left" ? " kw-pos-left" : "";
+
     var bubbleBtn = document.createElement("button");
-    bubbleBtn.className = "kw-bubble-btn kw-bubble-pulse";
+    bubbleBtn.className = "kw-bubble-btn kw-bubble-pulse" + posClass;
     bubbleBtn.type = "button";
     bubbleBtn.setAttribute("aria-label", "Открыть AI-анализ сайта");
     bubbleBtn.title = "Карта роста бизнеса — бесплатно";
     bubbleBtn.textContent = "📊";
 
     var panel = document.createElement("div");
-    panel.className = "kw-bubble-panel";
+    panel.className = "kw-bubble-panel" + posClass;
 
     var closeBtn = document.createElement("button");
     closeBtn.className = "kw-bubble-close";
@@ -464,6 +473,9 @@
     document.body.appendChild(bubbleBtn);
 
     var open = false;
+    var dismissed = false;       // пользователь закрыл — больше не дёргаем авто-открытие
+    var autoOpened = false;      // авто-открытие сработало (один раз)
+
     function setOpen(v) {
       open = v;
       panel.classList.toggle("kw-open", v);
@@ -473,7 +485,15 @@
         setTimeout(built.focus, 60);
       } else {
         bubbleBtn.textContent = "📊";
+        dismissed = true;        // закрыли — уважаем выбор, не открываем снова автоматически
       }
+    }
+
+    // Авто-открытие срабатывает один раз и не раньше ручного закрытия
+    function tryAutoOpen() {
+      if (open || dismissed || autoOpened) return;
+      autoOpened = true;
+      setOpen(true);
     }
 
     bubbleBtn.addEventListener("click", function () { setOpen(!open); });
@@ -486,20 +506,54 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && open) setOpen(false);
     });
+
+    // ── Триггеры авто-открытия ────────────────────────────────────────
+    if (trigger === "time") {
+      setTimeout(tryAutoOpen, delay);
+    } else if (trigger === "scroll") {
+      var onScroll = function () {
+        var h = document.documentElement;
+        var max = h.scrollHeight - h.clientHeight;
+        var pct = max > 0 ? Math.round((h.scrollTop || document.body.scrollTop) / max * 100) : 0;
+        if (pct >= scrollPct) {
+          tryAutoOpen();
+          window.removeEventListener("scroll", onScroll, { passive: true });
+        }
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+    } else if (trigger === "exit") {
+      var onExit = function (e) {
+        // Курсор ушёл из окна вверх — намерение закрыть вкладку
+        if (e.relatedTarget === null && e.clientY <= 0) {
+          tryAutoOpen();
+          document.removeEventListener("mouseout", onExit);
+        }
+      };
+      document.addEventListener("mouseout", onExit);
+    }
+    // trigger === "click" → только ручное открытие
   }
 
   // ── Init ──────────────────────────────────────────────────────────────
   function init() {
     var scripts = document.querySelectorAll("script[src*='architect-widget']");
     var scriptTag = scripts[scripts.length - 1];
-    var theme = (scriptTag && scriptTag.getAttribute("data-theme")) || "dark";
-    var containerId = (scriptTag && scriptTag.getAttribute("data-container")) || "architect-widget";
-    var mode = (scriptTag && scriptTag.getAttribute("data-mode")) || "inline";
-    var width = (scriptTag && scriptTag.getAttribute("data-width")) || "narrow";
+    var attr = function (name) { return scriptTag && scriptTag.getAttribute(name); };
+    var theme = attr("data-theme") || "dark";
+    var containerId = attr("data-container") || "architect-widget";
+    var mode = attr("data-mode") || "inline";
+    var width = attr("data-width") || "narrow";
 
     // Bubble mode — плавающая кнопка, контейнер не нужен
     if (mode === "bubble") {
-      mountBubble(theme, width);
+      var delayNum = parseInt(attr("data-open-delay"), 10);
+      var scrollNum = parseInt(attr("data-open-scroll"), 10);
+      mountBubble(theme, width, {
+        position: attr("data-position") || "right",
+        openTrigger: attr("data-open-trigger") || "click",
+        openDelay: isNaN(delayNum) ? 6000 : delayNum,
+        openScroll: isNaN(scrollNum) ? 50 : scrollNum,
+      });
       return;
     }
 

@@ -14,29 +14,73 @@ const WIDTHS = [
 
 const MODES = [
   { id: "inline", label: "В блоке", hint: "виджет встраивается в страницу" },
-  { id: "bubble", label: "Плавающая кнопка", hint: "кнопка снизу справа, раскрывается в попап" },
+  { id: "bubble", label: "Плавающая кнопка", hint: "кнопка снизу, раскрывается в попап" },
+] as const;
+
+const POSITIONS = [
+  { id: "right", label: "Справа" },
+  { id: "left", label: "Слева" },
+] as const;
+
+const TRIGGERS = [
+  { id: "click", label: "По клику", hint: "только ручное открытие" },
+  { id: "time", label: "По таймеру", hint: "открыть через N секунд" },
+  { id: "scroll", label: "При прокрутке", hint: "открыть при прокрутке на N%" },
+  { id: "exit", label: "При уходе", hint: "когда курсор уходит к вкладке" },
 ] as const;
 
 type ThemeId = "dark" | "light";
 type WidthId = "narrow" | "full";
 type ModeId = "inline" | "bubble";
+type PositionId = "right" | "left";
+type TriggerId = "click" | "time" | "scroll" | "exit";
 
-function buildCode(theme: ThemeId, width: WidthId, mode: ModeId): string {
+interface BubbleOpts {
+  position: PositionId;
+  trigger: TriggerId;
+  delay: number;
+  scroll: number;
+}
+
+function buildCode(
+  theme: ThemeId,
+  width: WidthId,
+  mode: ModeId,
+  bubble: BubbleOpts
+): string {
   const widthAttr = width === "full" ? '\n  data-width="full"' : "";
   const modeAttr = mode === "bubble" ? '\n  data-mode="bubble"' : "";
-  const containerLine = mode === "bubble"
-    ? ""
-    : '<div id="architect-widget"></div>\n';
-  return `${containerLine}<script\n  src="https://konversus.ru/architect-widget.js"\n  data-theme="${theme}"${widthAttr}${modeAttr}\n><\/script>`;
+  const containerLine = mode === "bubble" ? "" : '<div id="architect-widget"></div>\n';
+
+  let bubbleAttrs = "";
+  if (mode === "bubble") {
+    if (bubble.position === "left") bubbleAttrs += '\n  data-position="left"';
+    if (bubble.trigger !== "click") {
+      bubbleAttrs += `\n  data-open-trigger="${bubble.trigger}"`;
+      if (bubble.trigger === "time") bubbleAttrs += `\n  data-open-delay="${bubble.delay}"`;
+      if (bubble.trigger === "scroll") bubbleAttrs += `\n  data-open-scroll="${bubble.scroll}"`;
+    }
+  }
+
+  return `${containerLine}<script\n  src="https://konversus.ru/architect-widget.js"\n  data-theme="${theme}"${widthAttr}${modeAttr}${bubbleAttrs}\n><\/script>`;
 }
 
 export function InstallCodePanel() {
   const [theme, setTheme] = useState<ThemeId>("dark");
   const [width, setWidth] = useState<WidthId>("narrow");
-  const [mode, setMode] = useState<ModeId>("inline");
+  const [mode, setMode] = useState<ModeId>("bubble");
+  const [position, setPosition] = useState<PositionId>("right");
+  const [trigger, setTrigger] = useState<TriggerId>("click");
+  const [delay, setDelay] = useState(6);
+  const [scroll, setScroll] = useState(50);
   const [copied, setCopied] = useState(false);
 
-  const code = buildCode(theme, width, mode);
+  const code = buildCode(theme, width, mode, {
+    position,
+    trigger,
+    delay: delay * 1000,
+    scroll,
+  });
 
   function handleCopy() {
     navigator.clipboard.writeText(code).then(() => {
@@ -93,6 +137,61 @@ export function InstallCodePanel() {
               ))}
             </div>
           </div>
+        )}
+        {mode === "bubble" && (
+          <>
+            <div className="icp-control-group">
+              <span className="icp-control-label">Сторона</span>
+              <div className="icp-tabs">
+                {POSITIONS.map((p) => (
+                  <button
+                    key={p.id}
+                    className={"icp-tab" + (position === p.id ? " icp-tab--active" : "")}
+                    onClick={() => setPosition(p.id)}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="icp-control-group">
+              <span className="icp-control-label">Открытие</span>
+              <div className="icp-tabs">
+                {TRIGGERS.map((t) => (
+                  <button
+                    key={t.id}
+                    className={"icp-tab" + (trigger === t.id ? " icp-tab--active" : "")}
+                    onClick={() => setTrigger(t.id)}
+                    title={t.hint}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {trigger === "time" && (
+              <div className="icp-control-group icp-control-group--inline">
+                <span className="icp-control-label">Через</span>
+                <input
+                  type="number" min={1} max={120} value={delay}
+                  onChange={(e) => setDelay(Math.max(1, Math.min(120, Number(e.target.value) || 6)))}
+                  className="icp-num-input"
+                />
+                <span className="icp-control-suffix">сек</span>
+              </div>
+            )}
+            {trigger === "scroll" && (
+              <div className="icp-control-group icp-control-group--inline">
+                <span className="icp-control-label">Прокрутка</span>
+                <input
+                  type="number" min={5} max={95} value={scroll}
+                  onChange={(e) => setScroll(Math.max(5, Math.min(95, Number(e.target.value) || 50)))}
+                  className="icp-num-input"
+                />
+                <span className="icp-control-suffix">%</span>
+              </div>
+            )}
+          </>
         )}
       </div>
 
