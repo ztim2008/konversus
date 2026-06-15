@@ -332,7 +332,7 @@ function parseJsonSafe<T>(raw: string, fallback: T): T {
     return JSON.parse(cleaned) as T;
   } catch {
     // Попробуем найти JSON внутри текста
-    const match = cleaned.match(/\{[\s\S]*\}/);
+    const match = cleaned.match(/\{[\s\S]*?\}/);
     if (match) {
       try {
         return JSON.parse(match[0]) as T;

@@ -251,27 +251,28 @@ export async function getViewEventsForProposals(
   const pool = getDbPool();
   const placeholders = proposalIds.map(() => "?").join(", ");
   const [rows] = await pool.query<ViewEventRow[]>(
-    `SELECT e.share_link_id, sl.proposal_id, e.device_type, e.viewed_at
-     FROM share_link_view_events e
-     JOIN share_links sl ON sl.id = e.share_link_id
-     WHERE sl.proposal_id IN (${placeholders})
-     ORDER BY e.viewed_at DESC
-     LIMIT ?`,
-    [...proposalIds, limitPerProposal * proposalIds.length],
+    `SELECT share_link_id, proposal_id, device_type, viewed_at
+     FROM (
+       SELECT e.share_link_id, sl.proposal_id, e.device_type, e.viewed_at,
+              ROW_NUMBER() OVER (PARTITION BY sl.proposal_id ORDER BY e.viewed_at DESC) AS rn
+       FROM share_link_view_events e
+       JOIN share_links sl ON sl.id = e.share_link_id
+       WHERE sl.proposal_id IN (${placeholders})
+     ) ranked
+     WHERE rn <= ?`,
+    [...proposalIds, limitPerProposal],
   );
 
   const result: Record<string, ViewEvent[]> = {};
   for (const row of rows) {
     const pid = row.proposal_id;
     if (!result[pid]) result[pid] = [];
-    if (result[pid].length < limitPerProposal) {
-      result[pid].push({
-        shareLinkId: row.share_link_id,
-        proposalId: pid,
-        deviceType: row.device_type,
-        viewedAt: row.viewed_at instanceof Date ? row.viewed_at.toISOString() : String(row.viewed_at),
-      });
-    }
+    result[pid].push({
+      shareLinkId: row.share_link_id,
+      proposalId: pid,
+      deviceType: row.device_type,
+      viewedAt: row.viewed_at instanceof Date ? row.viewed_at.toISOString() : String(row.viewed_at),
+    });
   }
   return result;
 }

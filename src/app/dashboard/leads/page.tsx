@@ -152,7 +152,7 @@ export default async function LeadsPage({
         </div>
       )}
 
-      <script dangerouslySetInnerHTML={{ __html: "document.querySelectorAll(\".lh-select\").forEach(function(sel) { sel.addEventListener(\"change\", function() { this.form.requestSubmit(); }); });" }} />
+      <script dangerouslySetInnerHTML={{ __html: "document.querySelectorAll(\".lh-select\").forEach(function(sel) { sel.addEventListener(\"change\", function() { var btn = this.form.querySelector('button[type=submit]'); if (btn) { try { btn.click(); } catch(e) { window.location.reload(); } } }); });" }} />
     </main>
   );
 }

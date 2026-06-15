@@ -1,13 +1,14 @@
-import { readdirSync } from "node:fs";
+import { readdir } from "node:fs/promises";
 
 import { NextResponse } from "next/server";
 
 const PORTFOLIO_DIR = "/var/www/www-root/data/www/konversus.ru/portfolio";
 const COUNT = 8;
 
-export function GET() {
+export async function GET() {
   try {
-    const files = readdirSync(PORTFOLIO_DIR).filter((f) =>
+    const allFiles = await readdir(PORTFOLIO_DIR);
+    const files = allFiles.filter((f) =>
       /\.(jpg|jpeg|png|webp)$/i.test(f)
     );
     for (let i = files.length - 1; i > 0; i--) {

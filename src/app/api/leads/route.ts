@@ -102,12 +102,20 @@ async function runLeadPipeline(params: {
 
     const siteScore = report
       ? Math.round(
-          ((report.growth_potential_pct ?? 50) <= 25
+          ((report.growth_potential_pct ?? 50) <= 15
+            ? 9
+            : report.growth_potential_pct <= 25
             ? 8
-            : report.growth_potential_pct <= 40
+            : report.growth_potential_pct <= 35
+            ? 7
+            : report.growth_potential_pct <= 45
             ? 6
-            : report.growth_potential_pct <= 60
+            : report.growth_potential_pct <= 55
+            ? 5
+            : report.growth_potential_pct <= 65
             ? 4
+            : report.growth_potential_pct <= 80
+            ? 3
             : 2)
         )
       : null;

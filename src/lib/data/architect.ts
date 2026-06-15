@@ -1,6 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import type { RowDataPacket } from "mysql2";
 
 import { getDbPool } from "@/lib/db";

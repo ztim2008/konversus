@@ -177,9 +177,7 @@ export async function deleteProposal(proposalId: string): Promise<void> {
     await deleteUploadedFiles(urls);
   }
 
-  // Удаляем share_links, feedback вручную (FK не гарантирован), остальное каскадно через БД
-  await pool.execute("delete from share_links where proposal_id = ?", [proposalId]);
-  await pool.execute("delete from proposal_feedback where proposal_id = ?", [proposalId]);
+  // CASCADE удалит share_links, feedback, assets автоматически
   await pool.execute("delete from proposals where id = ?", [proposalId]);
 }
 

@@ -172,11 +172,10 @@ export async function deleteCompany(companyId: string): Promise<void> {
 
   await deleteUploadedFiles(fileUrls);
 
-  // Каскадное удаление через БД
+  // CASCADE удалит proposals, а от них share_links/feedback/assets автоматически
   if (proposalRows.length > 0) {
     const ids = proposalRows.map((r) => r.id as string);
-    await pool.query("delete from share_links where proposal_id in (?)", [ids]);
-    await pool.query("delete from proposal_feedback where proposal_id in (?)", [ids]);
+    await pool.query("delete from proposals where id in (?)", [ids]);
   }
   await pool.execute("delete from companies where id = ?", [companyId]);
 }

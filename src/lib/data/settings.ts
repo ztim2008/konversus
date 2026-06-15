@@ -95,10 +95,20 @@ export async function setManySetting(
   const db = getDbPool();
   const entries = Object.entries(data);
   if (entries.length === 0) return;
-  for (const [key, value] of entries) {
-    await db.execute(
-      "INSERT INTO site_settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), updated_at = NOW()",
-      [key, value]
-    );
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    for (const [key, value] of entries) {
+      await conn.execute(
+        "INSERT INTO site_settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), updated_at = NOW()",
+        [key, value]
+      );
+    }
+    await conn.commit();
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
   }
 }

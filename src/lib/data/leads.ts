@@ -1,5 +1,6 @@
 import "server-only";
 import type { RowDataPacket, ResultSetHeader } from "mysql2";
+import { randomUUID } from "node:crypto";
 import { getDbPool } from "@/lib/db";
 
 export type LeadStatus =
@@ -38,7 +39,7 @@ export async function createLead(data: {
   source?: string;
 }): Promise<string> {
   const db = getDbPool();
-  const id = crypto.randomUUID();
+  const id = randomUUID();
   await db.query<ResultSetHeader>(
     `INSERT INTO leads (id, url, company_name, phone, email, source)
      VALUES (?, ?, ?, ?, ?, ?)`,
