@@ -96,25 +96,22 @@ export default async function SharePage({ params }: SharePageProps) {
   const proposal = await getProposal(shareLink.proposalId);
   if (!proposal) notFound();
 
-  await Promise.all([
-    getCompany(proposal.companyId),
-    (async () => {
-      // Не считаем просмотр если открывает сам администратор
-      const admin = await getCurrentAdmin();
-      if (admin) return;
-
-      const headersList = await headers();
-      const rawIp =
-        headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        headersList.get("x-real-ip") ??
-        "unknown";
-      const ipHash = createHash("sha256").update(rawIp).digest("hex");
-      const userAgent = headersList.get("user-agent") ?? "";
-      await incrementShareLinkView(shareLink.id, ipHash, userAgent);
-    })(),
-  ]);
-
   const company = await getCompany(proposal.companyId);
+
+  await (async () => {
+    // Не считаем просмотр если открывает сам администратор
+    const admin = await getCurrentAdmin();
+    if (admin) return;
+
+    const headersList = await headers();
+    const rawIp =
+      headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      headersList.get("x-real-ip") ??
+      "unknown";
+    const ipHash = createHash("sha256").update(rawIp).digest("hex");
+    const userAgent = headersList.get("user-agent") ?? "";
+    await incrementShareLinkView(shareLink.id, ipHash, userAgent);
+  })();
   if (!company) notFound();
 
   const allBlocks = normalizeProposalBlocks(proposal.structure).filter((b) => b.visible);

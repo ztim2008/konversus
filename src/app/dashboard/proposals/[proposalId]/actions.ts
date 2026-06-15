@@ -296,15 +296,20 @@ export async function updateProposalBlockAction(formData: FormData) {
   // doc-agency-pitch
   const agencyName = getStringValue(formData, "agencyName") || undefined;
   const pitchSectionsRaw = getStringValue(formData, "pitchSections");
-  const pitchSections = pitchSectionsRaw ? JSON.parse(pitchSectionsRaw) as string[] : undefined;
+  let pitchSections: string[] | undefined;
+  try { pitchSections = pitchSectionsRaw ? JSON.parse(pitchSectionsRaw) as string[] : undefined; } catch { pitchSections = undefined; }
   const pitchStatsRaw = getStringValue(formData, "pitchStats");
-  const pitchStats = pitchStatsRaw ? JSON.parse(pitchStatsRaw) : undefined;
+  let pitchStats: import("@/types/domain").PitchStat[] | undefined;
+  try { pitchStats = pitchStatsRaw ? JSON.parse(pitchStatsRaw) : undefined; } catch { pitchStats = undefined; }
   const pitchItemsRaw = getStringValue(formData, "pitchItems");
-  const pitchItems = pitchItemsRaw ? JSON.parse(pitchItemsRaw) : undefined;
+  let pitchItems: import("@/types/domain").PitchItem[] | undefined;
+  try { pitchItems = pitchItemsRaw ? JSON.parse(pitchItemsRaw) : undefined; } catch { pitchItems = undefined; }
   const pitchBulletsRaw = getStringValue(formData, "pitchBullets");
-  const pitchBullets = pitchBulletsRaw ? JSON.parse(pitchBulletsRaw) : undefined;
+  let pitchBullets: string[] | undefined;
+  try { pitchBullets = pitchBulletsRaw ? JSON.parse(pitchBulletsRaw) : undefined; } catch { pitchBullets = undefined; }
   const faqItemsRaw = getStringValue(formData, "faqItems");
-  const faqItems = faqItemsRaw ? JSON.parse(faqItemsRaw) : undefined;
+  let faqItems: import("@/types/domain").FaqItem[] | undefined;
+  try { faqItems = faqItemsRaw ? JSON.parse(faqItemsRaw) : undefined; } catch { faqItems = undefined; }
   const pitchCtaUrl = getStringValue(formData, "pitchCtaUrl") || undefined;
   const pitchCtaContact = getStringValue(formData, "pitchCtaContact") || undefined;
   const pitchBrandColor = getStringValue(formData, "pitchBrandColor") || undefined;
@@ -598,13 +603,13 @@ export async function publishShareLinkAction(formData: FormData) {
   const proposal = await getProposal(proposalId);
 
   if (!proposal) {
-    throw new Error("Концепт не найден.");
+    redirect(buildRedirect(getEditorPath(proposalId), { error: "Концепт не найден." }));
   }
 
   const company = await getCompany(proposal.companyId);
 
   if (!company) {
-    throw new Error("Компания для этого концепта не найдена.");
+    redirect(buildRedirect(getEditorPath(proposalId), { error: "Компания для этого концепта не найдена." }));
   }
 
   const shareLink = await publishShareLink(proposalId, company.name, proposal.title);

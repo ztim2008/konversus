@@ -32,36 +32,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "OpenRouter API key не настроен" }, { status: 500 });
   }
 
-  // 1. Создаём лид
-  const leadId = await createLead({
-    url: rawUrl,
-    company_name: body.company_name?.trim() || undefined,
-    phone: body.phone?.trim() || undefined,
-    email: body.email?.trim() || undefined,
-    source: "manual",
-  });
+  try {
+    // 1. Создаём лид
+    const leadId = await createLead({
+      url: rawUrl,
+      company_name: body.company_name?.trim() || undefined,
+      phone: body.phone?.trim() || undefined,
+      email: body.email?.trim() || undefined,
+      source: "manual",
+    });
 
-  // 2. Запускаем Architect анализ
-  const source_type = detectSourceType(rawUrl);
-  const architectId = await createArchitectProject({
-    url: rawUrl,
-    source_type,
-    ip_hash: "lead_hunter",
-  });
+    // 2. Запускаем Architect анализ
+    const source_type = detectSourceType(rawUrl);
+    const architectId = await createArchitectProject({
+      url: rawUrl,
+      source_type,
+      ip_hash: "lead_hunter",
+    });
 
-  await updateLead(leadId, { architect_id: architectId });
+    await updateLead(leadId, { architect_id: architectId });
 
-  // 3. Pipeline без await — сразу возвращаем ответ
-  void runLeadPipeline({
-    leadId,
-    architectId,
-    url: rawUrl,
-    source_type,
-    s,
-    apiKey,
-  });
+    // 3. Pipeline без await — сразу возвращаем ответ
+    void runLeadPipeline({
+      leadId,
+      architectId,
+      url: rawUrl,
+      source_type,
+      s,
+      apiKey,
+    });
 
-  return NextResponse.json({ id: leadId, architect_id: architectId });
+    return NextResponse.json({ id: leadId, architect_id: architectId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("[api/leads] error:", error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 async function runLeadPipeline(params: {

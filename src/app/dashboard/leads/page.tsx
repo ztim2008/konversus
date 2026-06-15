@@ -105,7 +105,7 @@ export default async function LeadsPage({
                         <option value="">—</option>
                         {Object.entries(LEAD_PRIORITY_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
                       </select>
-                      <button type="submit" style={{display:"none"}} formAction={async (fd: FormData) => {
+                      <button type="submit" formAction={async (fd: FormData) => {
                         "use server";
                         const p = fd.get("priority") as string;
                         if (p) await updateLeadPriorityAction(fd.get("id") as string, p as "high"|"medium"|"low");
@@ -118,7 +118,7 @@ export default async function LeadsPage({
                       <select name="status" defaultValue={lead.status} className="lh-select">
                         {STATUS_ORDER.map((s) => <option key={s} value={s}>{LEAD_STATUS_LABELS[s]}</option>)}
                       </select>
-                      <button type="submit" style={{display:"none"}} formAction={async (fd: FormData) => {
+                      <button type="submit" formAction={async (fd: FormData) => {
                         "use server";
                         await updateLeadStatusAction(fd.get("id") as string, fd.get("status") as LeadStatus);
                       }} />
@@ -151,6 +151,8 @@ export default async function LeadsPage({
           {page < totalPages && <Link href={`/dashboard/leads?${statusFilter?`status=${statusFilter}&`:""}page=${page+1}`} className="lh-page-btn">Вперёд →</Link>}
         </div>
       )}
+
+      <script dangerouslySetInnerHTML={{ __html: "document.querySelectorAll(\".lh-select\").forEach(function(sel) { sel.addEventListener(\"change\", function() { this.form.requestSubmit(); }); });" }} />
     </main>
   );
 }

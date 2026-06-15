@@ -374,12 +374,17 @@ export async function duplicateProposalAction(formData: FormData) {
     redirect("/dashboard");
   }
 
-  const newProposal = await duplicateProposal(proposalId, {
-    companyId: targetCompanyId,
-    title: newTitle,
-  });
+  try {
+    const newProposal = await duplicateProposal(proposalId, {
+      companyId: targetCompanyId,
+      title: newTitle,
+    });
 
-  redirect(`/dashboard/proposals/${newProposal.id}`);
+    redirect(`/dashboard/proposals/${newProposal.id}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Не удалось дублировать концепт.";
+    redirect(buildRedirect("/dashboard", { error: message }));
+  }
 }
 
 export async function archiveProposalAction(formData: FormData) {

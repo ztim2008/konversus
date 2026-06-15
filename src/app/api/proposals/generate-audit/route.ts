@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateAuditBlocks } from "@/lib/ai/audit-generator";
 import { requireCurrentAdmin } from "@/lib/auth/session";
+import { getAllSettings } from "@/lib/data/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY ?? "";
+  const s = await getAllSettings();
+  const apiKey = s.openrouter_api_key ?? "";
   if (!apiKey) {
     return NextResponse.json(
       { error: "OPENROUTER_API_KEY не настроен на сервере" },

@@ -150,8 +150,8 @@ export async function getAllFeedback(limit = 200): Promise<FeedbackWithContext[]
      JOIN proposals p ON p.id = pf.proposal_id
      JOIN companies c ON c.id = p.company_id
      ORDER BY pf.created_at DESC
-     LIMIT ${Number(limit)}`,
-    [],
+     LIMIT ?`,
+    [Number(limit)],
   );
   return rows.map((row) => ({
     id: row.id,

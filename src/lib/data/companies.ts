@@ -175,6 +175,7 @@ export async function deleteCompany(companyId: string): Promise<void> {
   // Каскадное удаление через БД
   if (proposalRows.length > 0) {
     const ids = proposalRows.map((r) => r.id as string);
+    await pool.query("delete from share_links where proposal_id in (?)", [ids]);
     await pool.query("delete from proposal_feedback where proposal_id in (?)", [ids]);
   }
   await pool.execute("delete from companies where id = ?", [companyId]);
