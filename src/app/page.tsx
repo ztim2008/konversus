@@ -415,6 +415,54 @@ export default async function Home() {
         </div>
       </section>
 
+      
+      {/* ── Экосистема Konversus ── */}
+      <section style={{
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+        padding: "60px 0", marginTop: 0,
+      }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 24px" }}>
+          <h2 style={{
+            fontSize: "clamp(1.5rem, 3vw, 2.5rem)", fontWeight: 800,
+            color: "#fff", textAlign: "center", marginBottom: 8,
+          }}>
+            Экосистема Konversus
+          </h2>
+          <p style={{
+            textAlign: "center", color: "rgba(255,255,255,0.5)",
+            fontSize: "1rem", marginBottom: 40,
+          }}>
+            Три сервиса для роста вашего бизнеса
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+            <a href="https://ssl.konversus.ru" target="_blank" rel="noopener" style={{
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12, padding: "28px 24px", textDecoration: "none", display: "block",
+              transition: "border-color 0.15s",
+            }}>
+              <div style={{ fontSize: "2rem", marginBottom: 12 }}>🛡️</div>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff", marginBottom: 6 }}>SSL Doctor</h3>
+              <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                Проверка безопасности сайта за 3 секунды. Узнайте всё о SSL, HTTPS и DNS вашего домена.
+              </p>
+              <span style={{ display: "inline-block", marginTop: 12, color: "#10b981", fontWeight: 600, fontSize: "0.85rem" }}>ssl.konversus.ru →</span>
+            </a>
+            <a href="https://leads.konversus.ru" target="_blank" rel="noopener" style={{
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12, padding: "28px 24px", textDecoration: "none", display: "block",
+              transition: "border-color 0.15s",
+            }}>
+              <div style={{ fontSize: "2rem", marginBottom: 12 }}>🎯</div>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fff", marginBottom: 6 }}>Leads AI</h3>
+              <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                Автоматический поиск заказов с Profi.ru. AI-анализ, готовые отклики, уведомления в Telegram.
+              </p>
+              <span style={{ display: "inline-block", marginTop: 12, color: "#6366f1", fontWeight: 600, fontSize: "0.85rem" }}>leads.konversus.ru →</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer className="mt-0 border border-white/[0.06] px-7 py-5 text-center">
         <div className="text-xs font-mono uppercase tracking-[0.22em] text-slate-600">
