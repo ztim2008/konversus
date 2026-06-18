@@ -350,6 +350,71 @@ export default async function Home() {
       {/* ── Портфолио ── */}
       <PortfolioBlock initialImages={portfolioImages} />
 
+      
+      {/* ── Konversus Leads AI ── */}
+      <section style={{
+        background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+        padding: "80px 0", marginTop: 0,
+      }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: "rgba(255,255,255,0.15)", color: "#fff",
+            borderRadius: 8, padding: "6px 16px",
+            fontSize: "0.8rem", fontWeight: 600, marginBottom: 24,
+          }}>
+            🆕 Новый сервис
+          </div>
+          <h2 style={{
+            fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 800,
+            color: "#fff", lineHeight: 1.1, marginBottom: 16,
+          }}>
+            Автоматический поиск заказов
+          </h2>
+          <p style={{
+            fontSize: "1.1rem", color: "rgba(255,255,255,0.75)",
+            maxWidth: 600, margin: "0 auto 36px", lineHeight: 1.6,
+          }}>
+            Konversus Leads AI мониторит Profi.ru и другие площадки,
+            анализирует заявки через ИИ, пишет отклики и присылает
+            лучшие в Telegram. Больше не нужно сидеть и обновлять страницу.
+          </p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <a href="https://leads.konversus.ru" style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "#fff", color: "#4f46e5",
+              borderRadius: 8, padding: "14px 28px",
+              fontWeight: 700, fontSize: "1rem", textDecoration: "none",
+              transition: "transform 0.15s",
+            }}>
+              Попробовать бесплатно →
+            </a>
+            <a href="https://leads.konversus.ru/docs" style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "rgba(255,255,255,0.1)", color: "#fff",
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: 8, padding: "14px 28px",
+              fontWeight: 600, fontSize: "1rem", textDecoration: "none",
+            }}>
+              Документация
+            </a>
+          </div>
+          <div style={{ display: "flex", gap: 32, justifyContent: "center", marginTop: 40, flexWrap: "wrap" }}>
+            {[
+              { num: "🧠", label: "AI-анализ заявок" },
+              { num: "📝", label: "Готовые отклики" },
+              { num: "📱", label: "Уведомления в Telegram" },
+              { num: "⚡", label: "Проверка каждые 1-15 мин" },
+            ].map(f => (
+              <div key={f.label} style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", fontWeight: 500 }}>
+                <span style={{ fontSize: "1.3rem", marginRight: 6 }}>{f.num}</span>
+                {f.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer className="mt-0 border border-white/[0.06] px-7 py-5 text-center">
         <div className="text-xs font-mono uppercase tracking-[0.22em] text-slate-600">
