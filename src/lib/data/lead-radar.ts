@@ -39,7 +39,7 @@ export async function deleteRadar(id: string): Promise<void> {
 export async function saveRadarSites(radarId: string, sites: Array<{
   domain: string; name: string; url: string;
   ssl_status?: string; ssl_days?: number; ssl_grade?: string;
-  score?: number; phone?: string; email?: string; problems?: string[];
+  score?: number; phone?: string; email?: string; problems?: string[]; h1_text?: string | null;
 }>): Promise<number> {
   const db = getDbPool();
   let count = 0;
@@ -48,12 +48,12 @@ export async function saveRadarSites(radarId: string, sites: Array<{
     try {
       const id = randomUUID();
       await db.query(
-        `INSERT INTO lead_radar_sites (id, radar_id, domain, name, url, ssl_status, ssl_days, ssl_grade, score, phone, email, problems)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO lead_radar_sites (id, radar_id, domain, name, url, ssl_status, ssl_days, ssl_grade, score, phone, email, problems, h1_text)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [id, radarId, site.domain, site.name, site.url,
          site.ssl_status || "unknown", site.ssl_days || null, site.ssl_grade || null,
          site.score || 0, site.phone || null, site.email || null,
-         JSON.stringify(site.problems || [])]
+         JSON.stringify(site.problems || []), site.h1_text || null]
       );
       count++;
     } catch {}
