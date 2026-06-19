@@ -154,6 +154,11 @@ export async function markReplied(siteId: string): Promise<void> {
   await db.query("UPDATE lead_follow_ups SET replied_at = NOW() WHERE site_id = ? ORDER BY sent_at DESC LIMIT 1", [siteId]);
 }
 
+export async function deleteSite(id: string): Promise<void> {
+  const db = getDbPool();
+  await db.query("DELETE FROM lead_radar_sites WHERE id = ?", [id]);
+}
+
 export async function deleteRadarSites(radarId: string): Promise<void> {
   const db = getDbPool();
   await db.query("DELETE FROM lead_radar_sites WHERE radar_id = ?", [radarId]);

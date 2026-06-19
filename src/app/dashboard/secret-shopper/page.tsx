@@ -314,7 +314,10 @@ function generateKP(lead: Lead) {
                 <div key={r.id} onClick={() => loadRadarSites(r.id)} className={`border cursor-pointer p-5 rounded-xl transition-colors ${selectedRadarId === r.id ? "border-indigo-500/30 bg-indigo-500/5" : "border-white/[0.06] bg-[#0f172a] hover:border-white/10"}`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-white font-semibold text-sm">{r.niche}</span>
+                    <div className="flex gap-1">
+                    <button onClick={async (e) => { e.stopPropagation(); setSelectedRadarId(r.id); setLoading(true); setAuditProgress("🔍 Обновляем..."); try { const searchRes = await fetch("/api/secret-shopper/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({city:r.city,niche:r.niche})}); const data = await searchRes.json(); const auditRes = await fetch("/api/secret-shopper/audit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites})}); const auditData = await auditRes.json(); const newLeads = (auditData.results||[]).map((rr:any)=>({id:"",domain:rr.domain,name:rr.name,url:`https://${rr.domain}`,ssl:{valid:rr.audit?.ssl,daysRemaining:rr.audit?.ssl?90:0,grade:rr.audit?.grade||"?"},score:rr.audit?.score||0,scorePercent:rr.audit?.scorePercent||50,problems:rr.audit?.issues||[],h1:rr.audit?.h1,cms:rr.audit?.cms,hotScore:rr.audit?.hotScore||50,gradeColor:rr.audit?.gradeColor||"#10b981",contactName:rr.audit?.contactName})); await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save-sites",radarId:r.id,sites:newLeads.map(l=>({domain:l.domain,name:l.name,url:l.url,ssl_status:l.ssl?.valid?"ok":"error",ssl_days:l.ssl?.daysRemaining,ssl_grade:l.ssl?.grade,score:l.score,phone:l.phone,email:l.email,problems:l.problems}))})}); r.leadCount += newLeads.length; setRadars(prev=>prev.map(rr=>rr.id===r.id?r:rr)); loadRadarSites(r.id); } catch{} setLoading(false); setAuditProgress(""); }} title="Обновить радар" className="text-gray-600 hover:text-indigo-400"><RefreshCw size={14} /></button>
                     <button onClick={(e) => { e.stopPropagation(); deleteRadar(r.id); }} className="text-gray-600 hover:text-red-400"><Trash2 size={14} /></button>
+                  </div>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                     <span>{r.city}</span>
@@ -364,7 +367,12 @@ function generateKP(lead: Lead) {
                       </div>
                     </td>
                     <td className="p-4"><div className="flex flex-col gap-1 text-xs text-gray-400">{lead.phone && <span><Phone size={10} className="inline mr-1"/>{lead.phone}</span>}{lead.email && <span><Mail size={10} className="inline mr-1"/>{lead.email}</span>}</div></td>
-                      <td className="p-4"><button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП →</button></td>
+                      <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП →</button>
+                        <button onClick={async () => { if(!confirm("Удалить сайт?"))return; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})}); setLeads(prev=>prev.filter(l=>l.domain!==lead.domain)); }} className="text-gray-700 hover:text-red-400" title="Удалить"><Trash2 size={12} /></button>
+                      </div>
+                    </td>
                     </tr>
                   ))}
                 </tbody>
