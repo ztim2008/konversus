@@ -32,9 +32,9 @@ const KP_TEMPLATE = `Здравствуйте!
 
 [ПРОБЛЕМЫ]
 
-Я могу это исправить за 2-3 дня. Портфолио: konversus.ru/about
+Я могу это исправить за 2-3 дня. Портфолио: <a href="https://konversus.ru/about" style="color:#6366f1;">konversus.ru/about</a>
 
-Если интересно — напишите в Telegram @bilarius или позвоните +7 921 201-32-52.
+Если интересно — напишите в <a href="https://t.me/bilarius" style="color:#6366f1;">Telegram @bilarius</a> или позвоните <a href="tel:+79212013252" style="color:#6366f1;">+7 921 201-32-52</a>.
 
 Алексей Тимофеев
 Konversus · 17 лет в digital`;
@@ -249,7 +249,7 @@ function buildEmailHtml(lead: any, kpText: string) {
           <div style="color:#94a3b8;font-size:12px;margin-top:2px;">17 лет в digital · 120+ проектов</div>
           <div style="margin-top:8px;font-size:12px;">
             <a href="https://t.me/bilarius" style="color:#6366f1;text-decoration:none;margin-right:16px;">📱 @bilarius</a>
-            <a href="tel:+79212013252" style="color:#6366f1;text-decoration:none;margin-right:16px;">📞 +7 921 201-32-52</a>
+            <a href="tel:+79212013252" style="color:#6366f1;text-decoration:none;margin-right:16px;">📞 <a href="tel:+79212013252" style="color:#6366f1;">+7 921 201-32-52</a></a>
             <a href="https://konversus.ru" style="color:#6366f1;text-decoration:none;">🌐 konversus.ru</a>
           </div>
           <div style="margin-top:6px;font-size:11px;color:#64748b;">
@@ -460,7 +460,7 @@ function generateKP(lead: Lead) {
               </div>
               <textarea value={generateKP(previewLead)} onChange={e => setKpText(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-4 text-sm text-gray-300 min-h-[200px] resize-y mb-4" />
                 <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-                  <div className="text-xs text-gray-500">📱 @bilarius · 📞 +7 921 201-32-52</div>
+                  <div className="text-xs text-gray-500">📱 @bilarius · 📞 <a href="tel:+79212013252" style="color:#6366f1;">+7 921 201-32-52</a></div>
                   <div className="flex gap-2">
                     <div className="space-y-3">
                     <div className="flex gap-2">
