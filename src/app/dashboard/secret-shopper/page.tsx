@@ -66,15 +66,25 @@ export default function LeadRadarPage() {
       });
       const data = await res.json();
 
-      const newLeads: Lead[] = (data.sites || []).map((s: any, i: number) => ({
-        domain: s.domain,
-        name: s.name,
-        ssl: { valid: i % 4 !== 0, daysRemaining: [5, 12, 45, 89, 120][i % 5], grade: ["F", "C", "B", "A", "A+"][i % 5] },
-        score: [25, 38, 45, 62, 78, 85][i % 6],
-        problems: newFilters.length > 0 ? newFilters.slice(0, 2) : [],
-        phone: i % 3 === 0 ? `+7 (${cityCode(newCity)}) ${randomPhone()}` : undefined,
-        email: i % 4 === 0 ? `info@${s.domain}` : undefined,
-      }));
+      // Запускаем аудит
+      let newLeads: Lead[] = [];
+      try {
+        const auditRes = await fetch("/api/secret-shopper/audit", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sites: data.sites }),
+        });
+        const auditData = await auditRes.json();
+        
+        newLeads = (auditData.results || []).map((r: any) => ({
+          domain: r.domain,
+          name: r.name,
+          ssl: r.audit?.ssl ? { valid: true, daysRemaining: r.audit.statusCode === 200 ? 90 : 0, grade: r.audit.grade || "?" } : { valid: false, daysRemaining: 0, grade: "F" },
+          score: r.audit?.scorePercent || 50,
+          problems: r.audit?.issues || [],
+          phone: undefined,
+          email: undefined,
+        }));
+      } catch {}
 
       radar.leadCount = newLeads.length;
       radar.lastCheck = new Date().toISOString();
@@ -126,7 +136,7 @@ export default function LeadRadarPage() {
               <div className="flex items-end gap-2">
                 <button onClick={addRadar} disabled={loading} className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-50">
                   {loading ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />}
-                  {loading ? "Поиск..." : "Запустить"}
+                  {loading ? "Анализ..." : "Запустить"}
                 </button>
                 <button onClick={() => setShowAdd(false)} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
               </div>
