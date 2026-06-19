@@ -14,6 +14,7 @@ interface Lead {
   cms?: string | null;
   hotScore: number;
   contactName?: string | null;
+  sent?: boolean;
   ssl?: { valid: boolean; daysRemaining: number; grade: string };
   score: number; scorePercent: number;
   phone?: string; email?: string;
@@ -30,9 +31,9 @@ const KP_TEMPLATE = `Здравствуйте!
 
 [ПРОБЛЕМЫ]
 
-Я могу это исправить за 2-3 дня. Портфолио: konversus.ru/about
+Я могу это исправить за 2-3 дня. Портфолио: <a href="https://konversus.ru/about" style="color:#6366f1;">konversus.ru/about</a>
 
-Если интересно — напишите в Telegram @bilarius или позвоните +7 921 201-32-52.
+Если интересно — напишите в <a href="https://t.me/bilarius" style="color:#6366f1;">Telegram @bilarius</a> или позвоните <a href="tel:+79212013252" style="color:#6366f1;">+7 921 201-32-52</a>.
 
 Алексей Тимофеев
 Konversus · 17 лет в digital`;
@@ -169,6 +170,7 @@ export default function LeadRadarPage() {
       ssl: { valid: s.ssl_status === "ok", daysRemaining: s.ssl_days || 0, grade: s.ssl_grade || "?" },
       score: s.score || 0, scorePercent: Math.max(0, 100 - (s.score || 0) * 12),
       problems: typeof s.problems === "string" ? JSON.parse(s.problems) : (s.problems || []),
+      sent: s.status === "contacted" || s.status === "replied",
       h1: null, cms: null, hotScore: s.hotScore || 50, contactName: null, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
       phone: s.phone, email: s.email,
     })));
@@ -375,7 +377,7 @@ function generateKP(lead: Lead) {
                       <td className="p-4"><div className="flex flex-col gap-1">{lead.problems.slice(0, 2).map(p => <span key={p} className="text-xs text-gray-400">{p}</span>)}</div></td>
                       <td className="p-4">
                       <div className="flex flex-col gap-1 text-xs">
-                        {lead.problems.includes("📩 отправлено") ? (
+                        {lead.sent || lead.problems.includes("📩 отправлено") ? (
                           <span className="text-green-400">📩 Отправлено</span>
                         ) : lead.problems.includes("📞 позвонить") ? (
                           <span className="text-amber-400">⏳ Ждёт 3+ дня</span>
@@ -444,8 +446,9 @@ function generateKP(lead: Lead) {
                       if (d.ok) {
                         setEmailStatus("sent");
                         setEmailSent(true);
+                        // Confirmation shown via status change
                         // Обновить статус в таблице
-                        setLeads(prev => prev.map(l => l.domain === previewLead.domain ? {...l, problems: [...l.problems, "📩 отправлено"]} : l));
+                        setLeads(prev => prev.map((l: any) => l.domain === previewLead.domain ? {...l, sent: true, problems: [...l.problems.filter((p: string) => !p.includes("📩")), "📩 отправлено"]} : l));
                         if (previewLead.id) {
                           await fetch("/api/lead-radar", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"update-status", siteId: previewLead.id, status: "contacted" }) });
                         }
