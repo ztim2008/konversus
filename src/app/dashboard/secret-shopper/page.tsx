@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Trash2, ExternalLink, Phone, Mail, Send, FileText, RefreshCw, Radar, Zap, Clock, CheckCircle, XCircle, ArrowUpRight } from "lucide-react";
 
 interface Radar {
@@ -14,28 +14,11 @@ interface Lead {
   cms?: string | null;
   hotScore: number;
   contactName?: string | null;
-  sent?: boolean;
   ssl?: { valid: boolean; daysRemaining: number; grade: string };
   score: number; scorePercent: number;
   phone?: string; email?: string;
   problems: string[];
   gradeColor: string;
-}
-
-interface SourceStatus {
-  status: "pending" | "running" | "done" | "error";
-  count: number;
-  error?: string;
-}
-
-interface ScanProgress {
-  stage: string;
-  sources: { twogis: SourceStatus; google: SourceStatus };
-  current: number;
-  total: number;
-  message: string;
-  error?: string;
-  sites?: any[];
 }
 
 const NICHES = ["Стоматологии","Строительство","Кафе и рестораны","Автосервисы","Юристы","Клиники","Салоны красоты","Фитнес-клубы","Отели","Грузоперевозки","Интернет-магазины","Недвижимость","Бухгалтерия","Рекламные агентства","Туризм","Образование","Производство","IT-компании"];
@@ -47,9 +30,9 @@ const KP_TEMPLATE = `Здравствуйте!
 
 [ПРОБЛЕМЫ]
 
-Я могу это исправить за 2-3 дня. Портфолио: <a href="https://konversus.ru/about" style="color:#6366f1;">konversus.ru/about</a>
+Я могу это исправить за 2-3 дня. Портфолио: konversus.ru/about
 
-Если интересно — напишите в <a href="https://t.me/bilarius" style="color:#6366f1;">Telegram @bilarius</a> или позвоните <a href="tel:+79212013252" style="color:#6366f1;">+7 921 201-32-52</a>.
+Если интересно — напишите в Telegram @bilarius или позвоните +7 921 201-32-52.
 
 Алексей Тимофеев
 Konversus · 17 лет в digital`;
@@ -72,78 +55,18 @@ export default function LeadRadarPage() {
   const [architectLoading, setArchitectLoading] = useState(false);
   const [architectLink, setArchitectLink] = useState<string | null>(null);
   const [testMode, setTestMode] = useState(true);
-  const [sendToClient, setSendToClient] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("radars");
-  const [pipelineLeads, setPipelineLeads] = useState<any[]>([]);
   const [followUpStats, setFollowUpStats] = useState({ sent: 0, opened: 0, replied: 0, won: 0 });
   const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
-  const [progressStep, setProgressStep] = useState(0);
-  const [progressTotal, setProgressTotal] = useState(0);
-
-  // SSE прогресс
-  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
-  const [scanError, setScanError] = useState<string | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const currentScanIdRef = useRef<string | null>(null);
 
   // Загружаем радары из БД
   useEffect(() => {
     fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars((d.radars||[]).map((r:any)=>({...r,leadCount:r.lead_count||0})))).catch(() => {});
   }, []);
 
-  // Cleanup SSE on unmount
-  useEffect(() => {
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, []);
-
-  function connectSSE(scanId: string) {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-
-    const es = new EventSource(`/api/secret-shopper/progress?radarId=${scanId}`);
-    eventSourceRef.current = es;
-    currentScanIdRef.current = scanId;
-
-    es.onmessage = (event) => {
-      try {
-        const data: ScanProgress = JSON.parse(event.data);
-        setScanProgress(data);
-
-        if (data.stage === "error") {
-          setScanError(data.error || data.message);
-          setLoading(false);
-          es.close();
-        }
-
-        if (data.stage === "done") {
-          setLoading(false);
-          es.close();
-          // Через 3 секунды скрыть прогресс
-          setTimeout(() => {
-            setScanProgress(null);
-            setScanError(null);
-          }, 3000);
-        }
-      } catch {}
-    };
-
-    es.onerror = () => {
-      es.close();
-    };
-  }
-
   async function addRadar() {
-    setShowAdd(false);
-    setLoading(true);
-    setScanError(null);
-    setScanProgress(null);
+    setShowAdd(false); setLoading(true);
 
     // Сохраняем радар в БД
     const res = await fetch("/api/lead-radar", {
@@ -153,100 +76,72 @@ export default function LeadRadarPage() {
     const { id } = await res.json();
     setSelectedRadarId(id);
 
-    // Подключаем SSE для прогресса
-    connectSSE(id);
+    // Поиск сайтов
+    setAuditProgress("🔍 Ищем компании...");
+    const searchRes = await fetch("/api/secret-shopper/search", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city: newCity, niche: newNiche }),
+    });
+    const data = await searchRes.json();
 
-    // Запускаем поиск
+    // Аудит
+    setAuditProgress("🧠 Проверяем сайты...");
+    const auditRes = await fetch("/api/secret-shopper/audit", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sites: data.sites }),
+    });
+    const auditData = await auditRes.json();
+
+    // Контакты
+    setAuditProgress("📞 Ищем контакты...");
+    let contacts: any[] = [];
     try {
-      const searchRes = await fetch("/api/secret-shopper/search", {
+      const cRes = await fetch("/api/secret-shopper/contacts", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city: newCity, niche: newNiche, radarId: id }),
+        body: JSON.stringify({ sites: data.sites.slice(0, 10) }),
       });
-      const data = await searchRes.json();
+      const cData = await cRes.json();
+      contacts = cData.contacts || [];
+    } catch {}
 
-      if (data.error) {
-        setScanError(data.error);
-        setLoading(false);
-        return;
-      }
+    // Формируем лиды
+    const newLeads: Lead[] = (auditData.results || []).map((r: any, i: number) => {
+      const contact = contacts.find((c: any) => c.domain === r.domain);
+      return {
+        id: "",
+        domain: r.domain,
+        name: r.name,
+        url: `https://${r.domain}`,
+        ssl: { valid: r.audit?.ssl, daysRemaining: r.audit?.ssl ? 90 : 0, grade: r.audit?.grade || "?" },
+        score: r.audit?.score || 0,
+        scorePercent: r.audit?.scorePercent || 50,
+        problems: r.audit?.issues || [],
+        h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50, contactName: r.audit?.contactName, gradeColor: r.audit?.gradeColor || "#10b981",
+        phone: contact?.phone,
+        email: contact?.email,
+      };
+    });
 
-      // Аудит
-      setScanProgress(prev => prev ? { ...prev, stage: "audit", message: `Аудит ${data.sites.length} сайтов...` } : null);
-      const auditRes = await fetch("/api/secret-shopper/audit", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sites: data.sites }),
-      });
-      const auditData = await auditRes.json();
+    // Сохраняем сайты в БД
+    await fetch("/api/lead-radar", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save-sites", radarId: id,
+        sites: newLeads.map(l => ({
+          domain: l.domain, name: l.name, url: l.url,
+          ssl_status: l.ssl?.valid ? "ok" : "error", ssl_days: l.ssl?.daysRemaining,
+          ssl_grade: l.ssl?.grade, score: l.score, phone: l.phone, email: l.email,
+          problems: l.problems,
+        })),
+      }),
+    });
 
-      // Контакты (уже есть из 2GIS)
-      let contacts: any[] = [];
-      try { const cRes = await fetch("/api/secret-shopper/contacts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites.slice(0,10)})}); const cData = await cRes.json(); contacts = cData.contacts || []; } catch {}
-
-      // Формируем лиды
-      const newLeads: Lead[] = (auditData.results || []).map((r: any, i: number) => {
-        const contact = contacts.find((c: any) => c.domain === r.domain);
-        return {
-          id: "",
-          domain: r.domain,
-          name: r.name,
-          url: `https://${r.domain}`,
-          ssl: { valid: r.audit?.ssl, daysRemaining: r.audit?.ssl ? 90 : 0, grade: r.audit?.grade || "?" },
-          score: r.audit?.score || 0,
-          scorePercent: r.audit?.scorePercent || 50,
-          problems: r.audit?.issues || [],
-          h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50, contactName: r.audit?.contactName, gradeColor: r.audit?.gradeColor || "#10b981",
-          phone: contact?.phone,
-          email: contact?.email,
-        };
-      });
-
-      // Сохраняем сайты в БД
-      await fetch("/api/lead-radar", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "save-sites", radarId: id,
-          sites: newLeads.map(l => ({
-            domain: l.domain, name: l.name, url: l.url,
-            ssl_status: l.ssl?.valid ? "ok" : "error", ssl_days: l.ssl?.daysRemaining,
-            ssl_grade: l.ssl?.grade, score: l.score, phone: l.phone, email: l.email,
-            problems: l.problems,
-          })),
-        }),
-      });
-
-      // Обновляем список
-      const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
-      setRadars(prev => [radar, ...prev]);
-      setLeads(newLeads);
-      setLoading(false);
-
-    } catch (err: any) {
-      setScanError(err.message || "Неизвестная ошибка");
-      setLoading(false);
-    }
-  }
-
-  async function retrySearch() {
-    if (currentScanIdRef.current) {
-      setScanError(null);
-      setLoading(true);
-      connectSSE(currentScanIdRef.current);
-      
-      try {
-        const searchRes = await fetch("/api/secret-shopper/search", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ city: newCity, niche: newNiche, radarId: currentScanIdRef.current }),
-        });
-        const data = await searchRes.json();
-        
-        if (data.error) {
-          setScanError(data.error);
-        }
-      } catch (err: any) {
-        setScanError(err.message);
-      }
-      setLoading(false);
-    }
+    // Обновляем список
+    const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
+    setRadars(prev => [radar, ...prev]);
+    setLeads(newLeads);
+    setAuditProgress("");
+    setLoading(false);
   }
 
   async function deleteRadar(id: string) {
@@ -267,7 +162,6 @@ export default function LeadRadarPage() {
       ssl: { valid: s.ssl_status === "ok", daysRemaining: s.ssl_days || 0, grade: s.ssl_grade || "?" },
       score: s.score || 0, scorePercent: Math.max(0, 100 - (s.score || 0) * 12),
       problems: typeof s.problems === "string" ? JSON.parse(s.problems) : (s.problems || []),
-      sent: s.status === "contacted" || s.status === "replied",
       h1: null, cms: null, hotScore: s.hotScore || 50, contactName: null, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
       phone: s.phone, email: s.email,
     })));
@@ -282,6 +176,7 @@ export default function LeadRadarPage() {
       });
       const data = await res.json();
       if (data.id) {
+        // Ждём результат
         let result = null;
         for (let i = 0; i < 15; i++) {
           await new Promise(r => setTimeout(r, 2000));
@@ -324,6 +219,7 @@ function buildEmailHtml(lead: any, kpText: string) {
   </td></tr>
 
   <!-- Problems -->
+      setScanProgress(null);
   <tr><td style="padding:0 40px 24px;">
     <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:12px;">Обнаруженные проблемы:</div>
     ${problems.map((p: string, i: number) => `
@@ -381,59 +277,20 @@ function generateKP(lead: Lead) {
   }
   const criticalCount = leads.filter(l => l.score >= 5).length;
 
-  function SourceProgressRow({ name, status }: { name: string; status: SourceStatus }) {
-    const icons: Record<string, React.ReactNode> = {
-      pending: <Clock size={14} className="text-gray-600" />,
-      running: <RefreshCw size={14} className="text-indigo-400 animate-spin" />,
-      done: <CheckCircle size={14} className="text-green-400" />,
-      error: <XCircle size={14} className="text-red-400" />,
-    };
-
-    return (
-      <div className="flex items-center gap-3 text-sm">
-        {icons[status.status]}
-        <span className="text-gray-400 w-28">{name}</span>
-        <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
-          <div 
-            className={`h-full rounded-full transition-all duration-300 ${
-              status.status === "done" ? "bg-green-500" : 
-              status.status === "error" ? "bg-red-500" : 
-              status.status === "running" ? "bg-indigo-500 animate-pulse" : "bg-white/10"
-            }`}
-            style={{ width: status.status === "done" ? "100%" : status.status === "running" ? "60%" : "0%" }}
-          />
-        </div>
-        <span className={`text-xs font-mono ${
-          status.status === "done" ? "text-green-400" : 
-          status.status === "error" ? "text-red-400" : 
-          status.status === "running" ? "text-indigo-400" : "text-gray-600"
-        }`}>
-          {status.status === "done" ? `${status.count} найдено` : 
-           status.status === "error" ? "ошибка" :
-           status.status === "running" ? "поиск..." : "ожидание"}
-        </span>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#0a0e13] text-gray-300">
       <div className="max-w-6xl mx-auto p-6 sm:p-10">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-3"><Radar size={28} className="text-indigo-400" /> Лид-радар</h1>
-            <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. 2GIS + Google Maps. Сохранение в БД.</p>
-          </div>
-          <div className="flex gap-2 mb-4">
-            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📡 Радары</button>
-            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,phone:s.phone,email:s.email,status:s.status,sent:s.status==="contacted"||s.status==="replied",opened:!!s.opened_at}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📋 Лиды в работе</button>
+            <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. Google Maps + 2GIS. Сохранение в БД.</p>
           </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
           </button>
         </div>
 
-        {activeTab === "radars" && showAdd && (
+        {showAdd && (
           <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
             <h3 className="font-bold text-white mb-4">Новый радар</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -442,64 +299,15 @@ function generateKP(lead: Lead) {
               <div className="flex items-end gap-2">
                 <button onClick={addRadar} disabled={loading} className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">
                   {loading ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />}
-                  {loading ? "Поиск..." : "Запустить"}
+                  {loading ? (auditProgress || "Поиск...") : "Запустить"}
                 </button>
-                <button onClick={() => { setShowAdd(false); setScanProgress(null); setScanError(null); }} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
+                <button onClick={() => setShowAdd(false)} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Прогресс-бар */}
-        {(scanProgress || scanError) && (
-          <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                {scanError ? <XCircle size={18} className="text-red-400" /> : <Zap size={18} className="text-indigo-400" />}
-                {scanError ? "Ошибка сканирования" : "Сканирование"}
-              </h3>
-              {scanProgress && scanProgress.stage !== "done" && scanProgress.stage !== "error" && (
-                <span className="text-xs text-gray-500">{scanProgress.message}</span>
-              )}
-            </div>
-
-            {scanError ? (
-              <div>
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
-                  <p className="text-red-400 text-sm">{scanError}</p>
-                </div>
-                <button 
-                  onClick={retrySearch}
-                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
-                >
-                  <RefreshCw size={14} /> Перезапустить
-                </button>
-              </div>
-            ) : scanProgress ? (
-              <div className="space-y-3">
-                <SourceProgressRow name="2GIS" status={scanProgress.sources.twogis} />
-                <SourceProgressRow name="Google Maps" status={scanProgress.sources.google} />
-                
-                {scanProgress.stage === "done" && (
-                  <div className="pt-3 border-t border-white/[0.06] flex items-center gap-2">
-                    <CheckCircle size={16} className="text-green-400" />
-                    <span className="text-green-400 text-sm font-semibold">
-                      Найдено {scanProgress.sources.twogis.count + scanProgress.sources.google.count} лидов
-                    </span>
-                    {scanProgress.sources.twogis.status === "error" && (
-                      <span className="text-xs text-gray-500">(2GIS недоступен)</span>
-                    )}
-                    {scanProgress.sources.google.status === "error" && (
-                      <span className="text-xs text-gray-500">(Google Maps недоступен)</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {activeTab === "radars" && radars.length > 0 && (
+        {radars.length > 0 && (
           <div className="mb-8">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Мои радары ({radars.length})</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -507,10 +315,7 @@ function generateKP(lead: Lead) {
                 <div key={r.id} onClick={() => loadRadarSites(r.id)} className={`border cursor-pointer p-5 rounded-xl transition-colors ${selectedRadarId === r.id ? "border-indigo-500/30 bg-indigo-500/5" : "border-white/[0.06] bg-[#0f172a] hover:border-white/10"}`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-white font-semibold text-sm">{r.niche}</span>
-                    <div className="flex gap-1">
-                    <button onClick={async (e) => { e.stopPropagation(); setSelectedRadarId(r.id); setLoading(true); setAuditProgress("🔍 Обновляем..."); try { const searchRes = await fetch("/api/secret-shopper/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({city:r.city,niche:r.niche})}); const data = await searchRes.json(); const auditRes = await fetch("/api/secret-shopper/audit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites})}); const auditData = await auditRes.json(); const newLeads = (auditData.results||[]).map((rr:any)=>({id:"",domain:rr.domain,name:rr.name,url:`https://${rr.domain}`,ssl:{valid:rr.audit?.ssl,daysRemaining:rr.audit?.ssl?90:0,grade:rr.audit?.grade||"?"},score:rr.audit?.score||0,scorePercent:rr.audit?.scorePercent||50,problems:rr.audit?.issues||[],h1:rr.audit?.h1,cms:rr.audit?.cms,hotScore:rr.audit?.hotScore||50,gradeColor:rr.audit?.gradeColor||"#10b981",contactName:rr.audit?.contactName})); await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save-sites",radarId:r.id,sites:newLeads.map((l: any)=>({domain:l.domain,name:l.name,url:l.url,ssl_status:l.ssl?.valid?"ok":"error",ssl_days:l.ssl?.daysRemaining,ssl_grade:l.ssl?.grade,score:l.score,phone:l.phone,email:l.email,problems:l.problems}))})}); r.leadCount += newLeads.length; setRadars(prev=>prev.map(rr=>rr.id===r.id?r:rr)); loadRadarSites(r.id); } catch{} setLoading(false); setAuditProgress(""); }} title="Обновить радар" className="text-gray-600 hover:text-indigo-400"><RefreshCw size={14} /></button>
                     <button onClick={(e) => { e.stopPropagation(); deleteRadar(r.id); }} className="text-gray-600 hover:text-red-400"><Trash2 size={14} /></button>
-                  </div>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                     <span>{r.city}</span>
@@ -522,7 +327,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {activeTab === "radars" && leads.length > 0 && (
+        {leads.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
@@ -537,13 +342,7 @@ function generateKP(lead: Lead) {
                     <tr key={lead.domain} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300 visited:text-purple-400">{lead.domain} ↗</a>
-                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
-                          <span className="text-xs text-gray-500 italic mt-0.5 block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>
-                        )}
-                        {lead.cms && (
-                          <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>
-                        )}
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
                         <div className="flex gap-2 mt-1">
                           {lead.h1 && !lead.h1.ok && <span className="text-xs text-red-400">H1: {lead.h1.count === 0 ? "нет" : lead.h1.texts[0]?.slice(0, 30)}</span>}
                           {lead.cms && <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">{lead.cms}</span>}
@@ -558,7 +357,7 @@ function generateKP(lead: Lead) {
                       <td className="p-4"><div className="flex flex-col gap-1">{lead.problems.slice(0, 2).map(p => <span key={p} className="text-xs text-gray-400">{p}</span>)}</div></td>
                       <td className="p-4">
                       <div className="flex flex-col gap-1 text-xs">
-                        {lead.sent || lead.problems.includes("📩 отправлено") ? (
+                        {lead.problems.includes("📩 отправлено") ? (
                           <span className="text-green-400">📩 Отправлено</span>
                         ) : lead.problems.includes("📞 позвонить") ? (
                           <span className="text-amber-400">⏳ Ждёт 3+ дня</span>
@@ -566,53 +365,9 @@ function generateKP(lead: Lead) {
                       </div>
                     </td>
                     <td className="p-4"><div className="flex flex-col gap-1 text-xs text-gray-400">{lead.phone && <span><Phone size={10} className="inline mr-1"/>{lead.phone}</span>}{lead.email && <span><Mail size={10} className="inline mr-1"/>{lead.email}</span>}</div></td>
-                      <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП →</button>
-                        <button onClick={async () => { if(!confirm("Удалить сайт?"))return; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})}); setLeads(prev => [...prev.filter((l: Lead) => l.domain !== lead.domain)]); }} className="text-gray-700 hover:text-red-400" title="Удалить"><Trash2 size={12} /></button>
-                      </div>
-                    </td>
+                      <td className="p-4"><button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП →</button></td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        
-        {activeTab === "pipeline" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-400 uppercase">Лиды в работе ({pipelineLeads.filter((l:any)=>l.status!=="new").length})</h2>
-              <div className="flex gap-3 text-xs">
-                <span className="text-green-400">{pipelineLeads.filter((l:any)=>l.status==="replied"||l.status==="won").length} отвечено</span>
-                <span className="text-amber-400">{pipelineLeads.filter((l:any)=>l.status==="contacted").length} отправлено</span>
-                <span className="text-red-400">{pipelineLeads.filter((l:any)=>l.status==="lost").length} проиграно</span>
-              </div>
-            </div>
-            <div className="border border-white/[0.06] rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-white/[0.06] bg-[#0f172a]"><th className="p-4 text-xs text-gray-500 text-left">Сайт</th><th className="p-4 text-xs text-gray-500 text-left">Статус</th><th className="p-4 text-xs text-gray-500 text-left">Контакты</th><th className="p-4 text-xs text-gray-500 text-left"></th></tr></thead>
-                <tbody>
-                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).map((lead:any) => (
-                    <tr key={lead.id} className="border-b border-white/[0.04]">
-                      <td className="p-4">
-                        <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold text-sm">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
-                        {lead.phone && <span className="text-xs text-gray-500 block">{lead.phone}</span>}
-                        {lead.email && <span className="text-xs text-gray-500 block">{lead.email}</span>}
-                      </td>
-                      <td className="p-4">
-                        <select defaultValue={lead.status} onChange={async (e:any) => { await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:e.target.value})}); setPipelineLeads((prev:any)=>prev.map((l:any)=>l.id===lead.id?{...l,status:e.target.value}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
-                          <option value="new">Новый</option><option value="contacted">📩 Отправлено</option><option value="replied">✅ Отвечено</option><option value="won">🏆 Выиграл</option><option value="lost">❌ Проиграл</option>
-                        </select>
-                      </td>
-                      <td className="p-4"><div className="text-xs text-gray-400">{lead.phone}{lead.email}</div></td>
-                      <td className="p-4"><button onClick={async()=>{if(!confirm("Удалить?"))return;await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})});setPipelineLeads((p:any)=>p.filter((l:any)=>l.id!==lead.id));}} className="text-xs text-gray-600 hover:text-red-400">🗑</button></td>
-                    </tr>
-                  ))}
-                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).length===0 && <tr><td colSpan={4} className="p-8 text-center text-gray-500 text-sm">Нет лидов в работе</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -666,7 +421,8 @@ function generateKP(lead: Lead) {
                       if (d.ok) {
                         setEmailStatus("sent");
                         setEmailSent(true);
-                        setLeads(prev => prev.map((l: any) => l.domain === previewLead.domain ? {...l, sent: true, problems: [...l.problems.filter((p: string) => !p.includes("📩")), "📩 отправлено"]} : l));
+                        // Обновить статус в таблице
+                        setLeads(prev => prev.map(l => l.domain === previewLead.domain ? {...l, problems: [...l.problems, "📩 отправлено"]} : l));
                         if (previewLead.id) {
                           await fetch("/api/lead-radar", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"update-status", siteId: previewLead.id, status: "contacted" }) });
                         }
@@ -677,8 +433,8 @@ function generateKP(lead: Lead) {
                   }} disabled={emailStatus === "sending" || emailStatus === "checking"} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
                     {emailStatus === "sending" ? "⏳ Отправка..." : emailStatus === "sent" ? "✅ Отправлено" : emailStatus === "error" ? "❌ Ошибка" : "📩 Отправить"}
                   </button></div><div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <label className="flex items-center gap-2"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> 📨 Мне (копия)</label>
-                    <label className="flex items-center gap-2"><input type="checkbox" checked={sendToClient} onChange={e => setSendToClient(e.target.checked)} /> 📩 Клиенту</label>
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> 📨 Мне (проверка)</label>
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={!testMode} onChange={e => setTestMode(!e.target.checked)} /> 📩 Клиенту</label>
                   </div></div></div>
                   </div>
                 </div>
