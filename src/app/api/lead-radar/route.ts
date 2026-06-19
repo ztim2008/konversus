@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listRadars, createRadar, deleteRadar, saveRadarSites, listRadarSites, updateRadarLastCheck, updateSiteStatus, deleteSite } from "@/lib/data/lead-radar";
+import { listRadars, createRadar, deleteRadar, saveRadarSites, listRadarSites, updateRadarLastCheck, updateSiteStatus, deleteSite, listAllSites } from "@/lib/data/lead-radar";
 
 // Список радаров
 export async function GET() {
@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
     await updateRadarLastCheck(body.radarId, count);
     return NextResponse.json({ ok: true, count });
   }
+
+  if (body.action === "list-all-sites") { const sites = await listAllSites(); return NextResponse.json({ sites }); }
 
   if (body.action === "update-check") {
     await updateRadarLastCheck(body.radarId, 0);

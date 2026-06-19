@@ -74,6 +74,8 @@ export default function LeadRadarPage() {
   const [testMode, setTestMode] = useState(true);
   const [sendToClient, setSendToClient] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("radars");
+  const [pipelineLeads, setPipelineLeads] = useState<any[]>([]);
   const [followUpStats, setFollowUpStats] = useState({ sent: 0, opened: 0, replied: 0, won: 0 });
   const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
@@ -428,7 +430,7 @@ function generateKP(lead: Lead) {
           </button>
         </div>
 
-        {showAdd && (
+        {activeTab === "radars" && showAdd && (
           <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
             <h3 className="font-bold text-white mb-4">Новый радар</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -494,7 +496,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {radars.length > 0 && (
+        {activeTab === "radars" && radars.length > 0 && (
           <div className="mb-8">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Мои радары ({radars.length})</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -517,7 +519,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {leads.length > 0 && (
+        {activeTab === "radars" && leads.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
@@ -563,6 +565,55 @@ function generateKP(lead: Lead) {
                     </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        
+        {activeTab === "pipeline" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Лиды в работе ({pipelineLeads.filter((l:any)=>l.status!=="new").length})</h2>
+              <div className="flex gap-3 text-xs">
+                <span className="text-green-400">{pipelineLeads.filter((l:any)=>l.status==="replied"||l.status==="won").length} отвечено</span>
+                <span className="text-amber-400">{pipelineLeads.filter((l:any)=>l.status==="contacted").length} отправлено</span>
+                <span className="text-red-400">{pipelineLeads.filter((l:any)=>l.status==="lost").length} проиграно</span>
+              </div>
+            </div>
+            <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-white/[0.06] bg-[#0f172a]"><th className="text-left p-4 text-xs text-gray-500">Сайт</th><th className="text-left p-4 text-xs text-gray-500">Статус</th><th className="text-left p-4 text-xs text-gray-500">Действия</th></tr></thead>
+                <tbody>
+                  {pipelineLeads.filter((l:any) => l.status !== "new" || l.sent).map((lead:any) => (
+                    <tr key={lead.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                      <td className="p-4">
+                        <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400 text-sm">{lead.name}</a>
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
+                        {lead.phone && <span className="text-xs text-gray-500 block">{lead.phone}</span>}
+                        {lead.email && <span className="text-xs text-gray-500 block">{lead.email}</span>}
+                      </td>
+                      <td className="p-4">
+                        <select defaultValue={lead.status} onChange={async (e:any) => { const ns = e.target.value; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:ns})}); setPipelineLeads((prev:any)=>prev.map((l:any)=>l.id===lead.id?{...l,status:ns,sent:ns==="contacted"||ns==="replied"}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
+                          <option value="new">Новый</option>
+                          <option value="contacted">📩 Отправлено</option>
+                          <option value="replied">✅ Отвечено</option>
+                          <option value="won">🏆 Выиграл</option>
+                          <option value="lost">❌ Проиграл</option>
+                        </select>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-2">
+                          <button onClick={() => { setPreviewLead(lead); setActiveTab("radars"); }} className="text-xs text-indigo-400 hover:text-indigo-300">КП</button>
+                          <button onClick={async () => { if(!confirm("Удалить?"))return; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})}); setPipelineLeads((prev:any)=>prev.filter((l:any)=>l.id!==lead.id)); }} className="text-xs text-gray-600 hover:text-red-400">🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).length === 0 && (
+                    <tr><td colSpan={3} className="p-8 text-center text-gray-500 text-sm">Нет лидов в работе. Отправьте КП — они появятся здесь.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
