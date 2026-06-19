@@ -210,7 +210,7 @@ export default function LeadRadarPage() {
             domain: l.domain, name: l.name, url: l.url,
             ssl_status: l.ssl?.valid ? "ok" : "error", ssl_days: l.ssl?.daysRemaining,
             ssl_grade: l.ssl?.grade, score: l.score, phone: l.phone, email: l.email,
-            problems: l.problems,
+            problems: l.problems, h1_text: l.h1?.texts?.[0]?.slice(0, 200) || null,
           })),
         }),
       });
