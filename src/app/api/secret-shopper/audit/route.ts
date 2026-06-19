@@ -29,6 +29,9 @@ export async function POST(req: NextRequest) {
           gradeLabel: grade.label,
           gradeColor: grade.color,
           scorePercent: scoreToPercent(audit.score),
+          h1: audit.h1,
+          cms: audit.cms,
+          hotScore: audit.hotScore,
         },
       });
     } catch {

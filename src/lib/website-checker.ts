@@ -1,5 +1,5 @@
-// Портировано с Python gmaps-lead-finder/website_checker.py
-// Проверяет сайт на проблемы: SSL, mobile, copyright, speed, status
+// Аудит сайта: SSL, mobile, copyright, speed, SEO (H1), CMS, phone
+// Скоринг горячих лидов
 
 export interface WebsiteResult {
   url: string;
@@ -10,119 +10,182 @@ export interface WebsiteResult {
   responseTime: number;
   statusCode: number;
   issues: string[];
-  score: number; // 0 = отлично, чем выше = хуже
+  score: number;
+  h1: { count: number; texts: string[]; ok: boolean };
+  cms: string | null;
+  hasPhone: boolean;
+  // Скоринг горячего лида (0-100)
+  hotScore: number;
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
 const OUTDATED_CUTOFF = CURRENT_YEAR - 2;
-const SLOW_THRESHOLD = 5.0; // секунд
+
+// CMS сигнатуры
+const CMS_SIGNATURES: Record<string, { name: string; patterns: RegExp[] }> = {
+  wordpress: { name: "WordPress", patterns: [/wp-content/, /wp-includes/, /wordpress/i] },
+  tilda: { name: "Tilda", patterns: [/tilda\.cc/, /tildacdn\.com/, /tilda\.ws/] },
+  bitrix: { name: "1C-Битрикс", patterns: [/bitrix/, /bx-panel/] },
+  joomla: { name: "Joomla", patterns: [/joomla/i, /com_content/] },
+  opencart: { name: "OpenCart", patterns: [/opencart/i, /catalog\/view/] },
+  wix: { name: "Wix", patterns: [/wix\.com/, /static\.wixstatic/] },
+  shopify: { name: "Shopify", patterns: [/shopify\.com/, /myshopify/] },
+  nextjs: { name: "Next.js", patterns: [/__NEXT/, /_next\/static/] },
+  react: { name: "React", patterns: [/react\/jsx-runtime/, /react\.development/] },
+};
+
+// Скоринг: баллы за проблемы
+const HOT_SCORES = {
+  ssl_expired: 30,
+  ssl_soon: 20,
+  no_h1: 25,       // нет H1 — сигнал на переделку!
+  bad_h1: 15,       // кривой H1
+  no_viewport: 10,
+  old_copyright: 5,
+  no_phone: 5,
+  has_phone: -15,   // телефон есть — бонус (легче связаться)
+  has_email: -10,   // email есть — бонус
+};
 
 export async function checkWebsite(url: string): Promise<WebsiteResult> {
   const result: WebsiteResult = {
-    url,
-    reachable: true,
-    ssl: false,
-    copyrightYear: null,
-    hasViewport: true,
-    responseTime: 0,
-    statusCode: 0,
-    issues: [],
-    score: 0,
+    url, reachable: true, ssl: false,
+    copyrightYear: null, hasViewport: true,
+    responseTime: 0, statusCode: 0,
+    issues: [], score: 0,
+    h1: { count: 0, texts: [], ok: false },
+    cms: null, hasPhone: false,
+    hotScore: 50, // начинаем с 50 (нейтрально)
   };
 
-  if (!url || !url.trim()) {
+  if (!url?.trim()) {
     result.reachable = false;
     result.issues.push("нет URL");
     result.score += 5;
+    result.hotScore = 0;
     return result;
   }
 
   let cleanUrl = url.trim();
-  if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
-    cleanUrl = "https://" + cleanUrl;
-  }
-
+  if (!cleanUrl.startsWith("http")) cleanUrl = "https://" + cleanUrl;
   result.ssl = cleanUrl.startsWith("https://");
-  if (!result.ssl) {
-    result.issues.push("нет HTTPS");
-    result.score += 2;
-  }
 
   try {
     const t0 = Date.now();
     const resp = await fetch(cleanUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; KonversusLeadRadar/1.0)" },
-      signal: AbortSignal.timeout(10000),
-      redirect: "follow",
+      signal: AbortSignal.timeout(10000), redirect: "follow",
     });
-    result.responseTime = (Date.now() - t0) / 1000;
+    result.responseTime = +(Date.now() - t0) / 1000;
     result.statusCode = resp.status;
 
     if (resp.status >= 400) {
       result.reachable = false;
       result.issues.push(`HTTP ${resp.status}`);
       result.score += 3;
+      result.hotScore += 10;
       return result;
     }
 
     const html = await resp.text();
 
-    // Проверка мобильной версии
+    // ─── H1 ────────────────────────────────────────────────────
+    const h1Regex = /<h1[^>]*>([\s\S]*?)<\/h1>/gi;
+    const h1Matches = html.matchAll(h1Regex);
+    const h1Texts: string[] = [];
+    for (const m of h1Matches) {
+      const text = m[1].replace(/<[^>]+>/g, "").trim();
+      if (text) h1Texts.push(text);
+    }
+    result.h1 = { count: h1Texts.length, texts: h1Texts, ok: false };
+
+    if (h1Texts.length === 0) {
+      result.issues.push("❌ нет H1 (главный заголовок)");
+      result.score += 2;
+      result.hotScore += HOT_SCORES.no_h1;
+    } else if (h1Texts.length > 1) {
+      result.issues.push(`⚠️ ${h1Texts.length} заголовков H1 (должен быть один)`);
+      result.score += 1;
+      result.hotScore += HOT_SCORES.bad_h1;
+    } else {
+      const h1 = h1Texts[0];
+      if (h1.length < 10) {
+        result.issues.push(`⚠️ H1 слишком короткий: «${h1}»`);
+        result.score += 1;
+        result.hotScore += HOT_SCORES.bad_h1;
+      } else if (h1.length > 120) {
+        result.issues.push(`⚠️ H1 слишком длинный (${h1.length} символов)`);
+        result.hotScore += HOT_SCORES.bad_h1;
+      } else {
+        result.h1.ok = true;
+      }
+    }
+
+    // ─── CMS ───────────────────────────────────────────────────
+    for (const [key, cms] of Object.entries(CMS_SIGNATURES)) {
+      if (cms.patterns.some(p => p.test(html))) {
+        result.cms = cms.name;
+        break;
+      }
+    }
+
+    // ─── SSL ───────────────────────────────────────────────────
+    if (!result.ssl) {
+      result.issues.push("нет HTTPS");
+      result.score += 2;
+      result.hotScore += HOT_SCORES.ssl_expired;
+    }
+
+    // ─── Viewport ──────────────────────────────────────────────
     if (!/<meta[^>]*name=["']viewport["'][^>]*>/i.test(html)) {
       result.hasViewport = false;
       result.issues.push("не адаптирован под мобильные");
       result.score += 2;
+      result.hotScore += HOT_SCORES.no_viewport;
     }
 
-    // Проверка года в копирайте
-    const yearMatches = html.matchAll(/©\s*(\d{4})|[Cc]opyright\s+(\d{4})/g);
+    // ─── Copyright ─────────────────────────────────────────────
     const years: number[] = [];
-    for (const m of yearMatches) {
+    for (const m of html.matchAll(/©\s*(\d{4})|[Cc]opyright\s+(\d{4})/g)) {
       const yr = parseInt(m[1] || m[2]);
       if (yr >= 2000 && yr <= CURRENT_YEAR) years.push(yr);
     }
     if (years.length > 0) {
       result.copyrightYear = Math.max(...years);
       if (result.copyrightYear <= OUTDATED_CUTOFF) {
-        result.issues.push(`копирайт ${result.copyrightYear} г. (устарел)`);
+        result.issues.push(`копирайт ${result.copyrightYear} г.`);
         result.score += 2;
+        result.hotScore += HOT_SCORES.old_copyright;
       }
     }
 
-    // Проверка скорости
-    if (result.responseTime > SLOW_THRESHOLD) {
-      result.issues.push(`медленный (${result.responseTime.toFixed(1)}с)`);
-      result.score += 1;
-    }
-
-    // Проверка наличия телефона
-    if (!/\+7|8\s*\(?\d{3}\)?[\s-]?\d{3}/.test(html)) {
+    // ─── Phone ─────────────────────────────────────────────────
+    result.hasPhone = /\+7|8\s*\(?\d{3}\)?[\s-]?\d{3}/.test(html);
+    if (!result.hasPhone) {
       result.issues.push("нет телефона на сайте");
       result.score += 1;
+      result.hotScore += HOT_SCORES.no_phone;
+    } else {
+      result.hotScore += HOT_SCORES.has_phone;
+    }
+
+    // ─── Email (для бонуса) ────────────────────────────────────
+    if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(html)) {
+      result.hotScore += HOT_SCORES.has_email;
     }
 
   } catch (err: any) {
     result.reachable = false;
-    if (err.name === "TimeoutError" || err.code === "ETIMEDOUT") {
-      result.issues.push("таймаут");
-      result.score += 3;
-    } else if (err.cause?.code === "ECONNREFUSED") {
-      result.issues.push("сайт недоступен");
-      result.score += 3;
-    } else if (err.message?.includes("SSL") || err.message?.includes("certificate")) {
-      result.issues.push("ошибка SSL");
-      result.score += 2;
-    } else {
-      result.issues.push("ошибка соединения");
-      result.score += 2;
-    }
+    result.issues.push(err.name === "TimeoutError" ? "таймаут" : "сайт недоступен");
+    result.score += 3;
+    result.hotScore = 0;
   }
 
+  result.hotScore = Math.max(0, Math.min(100, result.hotScore));
   return result;
 }
 
-// Конвертация score в человеческую оценку
-export function scoreToGrade(score: number): { grade: string; color: string; label: string } {
+export function scoreToGrade(score: number) {
   if (score === 0) return { grade: "A+", color: "#10b981", label: "Отлично" };
   if (score <= 2) return { grade: "A", color: "#10b981", label: "Хорошо" };
   if (score <= 4) return { grade: "B", color: "#f59e0b", label: "Средне" };
@@ -130,7 +193,14 @@ export function scoreToGrade(score: number): { grade: string; color: string; lab
   return { grade: "D", color: "#ef4444", label: "Критично" };
 }
 
-// Нормализация в 0-100 для отображения
-export function scoreToPercent(score: number): number {
+export function scoreToPercent(score: number) {
   return Math.max(0, 100 - score * 12);
+}
+
+// Метка горячести
+export function hotLabel(score: number) {
+  if (score >= 75) return { emoji: "🔥", label: "ГОРЯЧИЙ", color: "#ef4444" };
+  if (score >= 60) return { emoji: "🟡", label: "ТЁПЛЫЙ", color: "#f59e0b" };
+  if (score >= 30) return { emoji: "🔵", label: "ХОЛОДНЫЙ", color: "#3b82f6" };
+  return { emoji: "⚪", label: "ЛЁД", color: "#94a3b8" };
 }

@@ -10,6 +10,9 @@ interface Radar {
 
 interface Lead {
   id: string; domain: string; name: string; url: string;
+  h1?: { count: number; texts: string[]; ok: boolean };
+  cms?: string | null;
+  hotScore: number;
   ssl?: { valid: boolean; daysRemaining: number; grade: string };
   score: number; scorePercent: number;
   phone?: string; email?: string;
@@ -110,7 +113,7 @@ export default function LeadRadarPage() {
         score: r.audit?.score || 0,
         scorePercent: r.audit?.scorePercent || 50,
         problems: r.audit?.issues || [],
-        gradeColor: r.audit?.gradeColor || "#10b981",
+        h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50, gradeColor: r.audit?.gradeColor || "#10b981",
         phone: contact?.phone,
         email: contact?.email,
       };
@@ -156,7 +159,7 @@ export default function LeadRadarPage() {
       ssl: { valid: s.ssl_status === "ok", daysRemaining: s.ssl_days || 0, grade: s.ssl_grade || "?" },
       score: s.score || 0, scorePercent: Math.max(0, 100 - (s.score || 0) * 12),
       problems: typeof s.problems === "string" ? JSON.parse(s.problems) : (s.problems || []),
-      gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
+      h1: null, cms: null, hotScore: s.hotScore || 50, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
       phone: s.phone, email: s.email,
     })));
   }
@@ -261,6 +264,11 @@ function generateKP(lead: Lead) {
     return kpText.replace("[ДОМЕН]", lead.domain).replace("[ПРОБЛЕМЫ]", problems.join("\n"));
   }
 
+  function hotLabel(score: number) {
+    if (score >= 75) return { e: "🔥", t: "ГОРЯЧИЙ", c: "#ef4444" };
+    if (score >= 60) return { e: "🟡", t: "ТЁПЛЫЙ", c: "#f59e0b" };
+    return { e: "🔵", t: "ХОЛОДНЫЙ", c: "#3b82f6" };
+  }
   const criticalCount = leads.filter(l => l.score >= 5).length;
 
   return (
@@ -329,9 +337,16 @@ function generateKP(lead: Lead) {
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400">{lead.name}</a>
                         <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
+                        <div className="flex gap-2 mt-1">
+                          {lead.h1 && !lead.h1.ok && <span className="text-xs text-red-400">H1: {lead.h1.count === 0 ? "нет" : lead.h1.texts[0]?.slice(0, 30)}</span>}
+                          {lead.cms && <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">{lead.cms}</span>}
+                        </div>
                       </td>
                       <td className="p-4">
+                        <div className="flex flex-col gap-1">
                         <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: lead.gradeColor + "15", color: lead.gradeColor }}>{lead.scorePercent}%</span>
+                        <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: hotLabel(lead.hotScore).c + "15", color: hotLabel(lead.hotScore).c }}>{hotLabel(lead.hotScore).e} {lead.hotScore}</span>
+                      </div>
                       </td>
                       <td className="p-4"><div className="flex flex-col gap-1">{lead.problems.slice(0, 2).map(p => <span key={p} className="text-xs text-gray-400">{p}</span>)}</div></td>
                       <td className="p-4"><div className="flex flex-col gap-1 text-xs text-gray-400">{lead.phone && <span><Phone size={10} className="inline mr-1"/>{lead.phone}</span>}{lead.email && <span><Mail size={10} className="inline mr-1"/>{lead.email}</span>}</div></td>
