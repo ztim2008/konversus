@@ -22,8 +22,21 @@ interface Lead {
   gradeColor: string;
 }
 
+interface SourceStatus {
+  status: "pending" | "running" | "done" | "error";
+  count: number;
+  error?: string;
+}
 
-
+interface ScanProgress {
+  stage: string;
+  sources: { twogis: SourceStatus; google: SourceStatus };
+  current: number;
+  total: number;
+  message: string;
+  error?: string;
+  sites?: any[];
+}
 
 const NICHES = ["Стоматологии","Строительство","Кафе и рестораны","Автосервисы","Юристы","Клиники","Салоны красоты","Фитнес-клубы","Отели","Грузоперевозки","Интернет-магазины","Недвижимость","Бухгалтерия","Рекламные агентства","Туризм","Образование","Производство","IT-компании"];
 const CITIES = ["Москва","Санкт-Петербург","Казань","Екатеринбург","Новосибирск","Краснодар","Ростов-на-Дону","Нижний Новгород","Челябинск","Самара"];
@@ -61,8 +74,6 @@ export default function LeadRadarPage() {
   const [testMode, setTestMode] = useState(true);
   const [sendToClient, setSendToClient] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("radars");
-  const [pipelineLeads, setPipelineLeads] = useState<any[]>([]);
   const [followUpStats, setFollowUpStats] = useState({ sent: 0, opened: 0, replied: 0, won: 0 });
   const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
@@ -70,19 +81,67 @@ export default function LeadRadarPage() {
   const [progressTotal, setProgressTotal] = useState(0);
 
   // SSE прогресс
-  
+  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const currentScanIdRef = useRef<string | null>(null);
 
   // Загружаем радары из БД
   useEffect(() => {
-    fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars((d.radars||[]).map((r:any)=>({...r,leadCount:r.lead_count||0})))).catch(() => {});
+    fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars(d.radars || [])).catch(() => {});
   }, []);
 
   // Cleanup SSE on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
 
+  function connectSSE(scanId: string) {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const es = new EventSource(`/api/secret-shopper/progress?radarId=${scanId}`);
+    eventSourceRef.current = es;
+    currentScanIdRef.current = scanId;
+
+    es.onmessage = (event) => {
+      try {
+        const data: ScanProgress = JSON.parse(event.data);
+        setScanProgress(data);
+
+        if (data.stage === "error") {
+          setScanError(data.error || data.message);
+          setLoading(false);
+          es.close();
+        }
+
+        if (data.stage === "done") {
+          setLoading(false);
+          es.close();
+          // Через 3 секунды скрыть прогресс
+          setTimeout(() => {
+            setScanProgress(null);
+            setScanError(null);
+          }, 3000);
+        }
+      } catch {}
+    };
+
+    es.onerror = () => {
+      es.close();
+    };
+  }
 
   async function addRadar() {
     setShowAdd(false);
     setLoading(true);
+    setScanError(null);
+    setScanProgress(null);
 
     // Сохраняем радар в БД
     const res = await fetch("/api/lead-radar", {
@@ -93,6 +152,7 @@ export default function LeadRadarPage() {
     setSelectedRadarId(id);
 
     // Подключаем SSE для прогресса
+    connectSSE(id);
 
     // Запускаем поиск
     try {
@@ -103,12 +163,13 @@ export default function LeadRadarPage() {
       const data = await searchRes.json();
 
       if (data.error) {
-        // ignore
+        setScanError(data.error);
         setLoading(false);
         return;
       }
 
       // Аудит
+      setScanProgress(prev => prev ? { ...prev, stage: "audit", message: `Аудит ${data.sites.length} сайтов...` } : null);
       const auditRes = await fetch("/api/secret-shopper/audit", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sites: data.sites }),
@@ -146,7 +207,7 @@ export default function LeadRadarPage() {
             domain: l.domain, name: l.name, url: l.url,
             ssl_status: l.ssl?.valid ? "ok" : "error", ssl_days: l.ssl?.daysRemaining,
             ssl_grade: l.ssl?.grade, score: l.score, phone: l.phone, email: l.email,
-            problems: l.problems, h1_text: l.h1?.texts?.[0]?.slice(0, 200) || null,
+            problems: l.problems,
           })),
         }),
       });
@@ -158,11 +219,33 @@ export default function LeadRadarPage() {
       setLoading(false);
 
     } catch (err: any) {
-      setAuditProgress("❌ " + (err.message || "Ошибка"));
+      setScanError(err.message || "Неизвестная ошибка");
       setLoading(false);
     }
   }
 
+  async function retrySearch() {
+    if (currentScanIdRef.current) {
+      setScanError(null);
+      setLoading(true);
+      connectSSE(currentScanIdRef.current);
+      
+      try {
+        const searchRes = await fetch("/api/secret-shopper/search", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ city: newCity, niche: newNiche, radarId: currentScanIdRef.current }),
+        });
+        const data = await searchRes.json();
+        
+        if (data.error) {
+          setScanError(data.error);
+        }
+      } catch (err: any) {
+        setScanError(err.message);
+      }
+      setLoading(false);
+    }
+  }
 
   async function deleteRadar(id: string) {
     await fetch("/api/lead-radar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete", id }) });
@@ -183,7 +266,7 @@ export default function LeadRadarPage() {
       score: s.score || 0, scorePercent: Math.max(0, 100 - (s.score || 0) * 12),
       problems: typeof s.problems === "string" ? JSON.parse(s.problems) : (s.problems || []),
       sent: s.status === "contacted" || s.status === "replied",
-      h1: s.h1 || null, cms: s.cms || null, hotScore: s.hotScore || 50, contactName: null, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
+      h1: null, cms: null, hotScore: s.hotScore || 50, contactName: null, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
       phone: s.phone, email: s.email,
     })));
   }
@@ -296,6 +379,40 @@ function generateKP(lead: Lead) {
   }
   const criticalCount = leads.filter(l => l.score >= 5).length;
 
+  function SourceProgressRow({ name, status }: { name: string; status: SourceStatus }) {
+    const icons: Record<string, React.ReactNode> = {
+      pending: <Clock size={14} className="text-gray-600" />,
+      running: <RefreshCw size={14} className="text-indigo-400 animate-spin" />,
+      done: <CheckCircle size={14} className="text-green-400" />,
+      error: <XCircle size={14} className="text-red-400" />,
+    };
+
+    return (
+      <div className="flex items-center gap-3 text-sm">
+        {icons[status.status]}
+        <span className="text-gray-400 w-28">{name}</span>
+        <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-300 ${
+              status.status === "done" ? "bg-green-500" : 
+              status.status === "error" ? "bg-red-500" : 
+              status.status === "running" ? "bg-indigo-500 animate-pulse" : "bg-white/10"
+            }`}
+            style={{ width: status.status === "done" ? "100%" : status.status === "running" ? "60%" : "0%" }}
+          />
+        </div>
+        <span className={`text-xs font-mono ${
+          status.status === "done" ? "text-green-400" : 
+          status.status === "error" ? "text-red-400" : 
+          status.status === "running" ? "text-indigo-400" : "text-gray-600"
+        }`}>
+          {status.status === "done" ? `${status.count} найдено` : 
+           status.status === "error" ? "ошибка" :
+           status.status === "running" ? "поиск..." : "ожидание"}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0e13] text-gray-300">
@@ -305,16 +422,12 @@ function generateKP(lead: Lead) {
             <h1 className="text-2xl font-bold text-white flex items-center gap-3"><Radar size={28} className="text-indigo-400" /> Лид-радар</h1>
             <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. 2GIS + Google Maps. Сохранение в БД.</p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold transition-colors " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400 hover:text-white")}>📡 Радары</button>
-            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,ssl:{valid:s.ssl_status==="ok",daysRemaining:s.ssl_days||0,grade:s.ssl_grade||"?"},score:s.score||0,scorePercent:Math.max(0,100-(s.score||0)*12),problems:typeof s.problems==="string"?JSON.parse(s.problems):(s.problems||[]),gradeColor:(s.score||0)<=2?"#10b981":(s.score||0)<=4?"#f59e0b":"#ef4444",hotScore:s.hotScore||50,phone:s.phone,email:s.email,sent:s.status==="contacted"||s.status==="replied",opened:!!s.opened_at,status:s.status}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold transition-colors " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400 hover:text-white")}>📋 Лиды в работе</button>
-          </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
           </button>
         </div>
 
-        {activeTab === "radars" && showAdd && (
+        {showAdd && (
           <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
             <h3 className="font-bold text-white mb-4">Новый радар</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -325,15 +438,62 @@ function generateKP(lead: Lead) {
                   {loading ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />}
                   {loading ? "Поиск..." : "Запустить"}
                 </button>
-                <button onClick={() => { setShowAdd(false); }} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
+                <button onClick={() => { setShowAdd(false); setScanProgress(null); setScanError(null); }} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
               </div>
             </div>
           </div>
         )}
 
         {/* Прогресс-бар */}
+        {(scanProgress || scanError) && (
+          <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                {scanError ? <XCircle size={18} className="text-red-400" /> : <Zap size={18} className="text-indigo-400" />}
+                {scanError ? "Ошибка сканирования" : "Сканирование"}
+              </h3>
+              {scanProgress && scanProgress.stage !== "done" && scanProgress.stage !== "error" && (
+                <span className="text-xs text-gray-500">{scanProgress.message}</span>
+              )}
+            </div>
 
-        {activeTab === "radars" && radars.length > 0 && (
+            {scanError ? (
+              <div>
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                  <p className="text-red-400 text-sm">{scanError}</p>
+                </div>
+                <button 
+                  onClick={retrySearch}
+                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                >
+                  <RefreshCw size={14} /> Перезапустить
+                </button>
+              </div>
+            ) : scanProgress ? (
+              <div className="space-y-3">
+                <SourceProgressRow name="2GIS" status={scanProgress.sources.twogis} />
+                <SourceProgressRow name="Google Maps" status={scanProgress.sources.google} />
+                
+                {scanProgress.stage === "done" && (
+                  <div className="pt-3 border-t border-white/[0.06] flex items-center gap-2">
+                    <CheckCircle size={16} className="text-green-400" />
+                    <span className="text-green-400 text-sm font-semibold">
+                      Найдено {scanProgress.sources.twogis.count + scanProgress.sources.google.count} лидов
+                    </span>
+                    {scanProgress.sources.twogis.status === "error" && (
+                      <span className="text-xs text-gray-500">(2GIS недоступен)</span>
+                    )}
+                    {scanProgress.sources.google.status === "error" && (
+                      <span className="text-xs text-gray-500">(Google Maps недоступен)</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {radars.length > 0 && (
           <div className="mb-8">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Мои радары ({radars.length})</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -342,10 +502,7 @@ function generateKP(lead: Lead) {
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-white font-semibold text-sm">{r.niche}</span>
                     <div className="flex gap-1">
-                    <button onClick={async (e) => { e.stopPropagation(); setSelectedRadarId(r.id); setLoading(true); setAuditProgress("🔍 Ищем новые компании..."); setProgressStep(1); setProgressTotal(4);; try { const searchRes = await fetch("/api/secret-shopper/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({city:r.city,niche:r.niche})}); const data = await searchRes.json(); setAuditProgress("🧠 Аудит сайтов..."); setProgressStep(2);
-                      const auditRes = await fetch("/api/secret-shopper/audit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites})}); const auditData = await auditRes.json(); setAuditProgress("📞 Сохраняю..."); setProgressStep(3);
-                      const newLeads = (auditData.results||[]).map((rr:any)=>({id:"",domain:rr.domain,name:rr.name,url:`https://${rr.domain}`,ssl:{valid:rr.audit?.ssl,daysRemaining:rr.audit?.ssl?90:0,grade:rr.audit?.grade||"?"},score:rr.audit?.score||0,scorePercent:rr.audit?.scorePercent||50,problems:rr.audit?.issues||[],h1:rr.audit?.h1,cms:rr.audit?.cms,hotScore:rr.audit?.hotScore||50,gradeColor:rr.audit?.gradeColor||"#10b981",contactName:rr.audit?.contactName})); await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save-sites",radarId:r.id,sites:newLeads.map((l: any)=>({domain:l.domain,name:l.name,url:l.url,ssl_status:l.ssl?.valid?"ok":"error",ssl_days:l.ssl?.daysRemaining,ssl_grade:l.ssl?.grade,score:l.score,phone:l.phone,email:l.email,problems:l.problems, h1_text: l.h1?.texts?.[0]?.slice(0, 200) || null}))})}); setAuditProgress("✅ +" + newLeads.length + " лидов"); setProgressStep(4); setTimeout(() => { setAuditProgress(""); setProgressStep(0); }, 2500);
-                      r.leadCount += newLeads.length; setRadars(prev=>prev.map(rr=>rr.id===r.id?r:rr)); loadRadarSites(r.id); } catch{} setLoading(false); setAuditProgress(""); setProgressStep(0); setActiveTab("radars"); }} title="Обновить радар" className="text-gray-600 hover:text-indigo-400"><RefreshCw size={14} /></button>
+                    <button onClick={async (e) => { e.stopPropagation(); setSelectedRadarId(r.id); setLoading(true); setAuditProgress("🔍 Обновляем..."); try { const searchRes = await fetch("/api/secret-shopper/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({city:r.city,niche:r.niche})}); const data = await searchRes.json(); const auditRes = await fetch("/api/secret-shopper/audit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites})}); const auditData = await auditRes.json(); const newLeads = (auditData.results||[]).map((rr:any)=>({id:"",domain:rr.domain,name:rr.name,url:`https://${rr.domain}`,ssl:{valid:rr.audit?.ssl,daysRemaining:rr.audit?.ssl?90:0,grade:rr.audit?.grade||"?"},score:rr.audit?.score||0,scorePercent:rr.audit?.scorePercent||50,problems:rr.audit?.issues||[],h1:rr.audit?.h1,cms:rr.audit?.cms,hotScore:rr.audit?.hotScore||50,gradeColor:rr.audit?.gradeColor||"#10b981",contactName:rr.audit?.contactName})); await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save-sites",radarId:r.id,sites:newLeads.map((l: any)=>({domain:l.domain,name:l.name,url:l.url,ssl_status:l.ssl?.valid?"ok":"error",ssl_days:l.ssl?.daysRemaining,ssl_grade:l.ssl?.grade,score:l.score,phone:l.phone,email:l.email,problems:l.problems}))})}); r.leadCount += newLeads.length; setRadars(prev=>prev.map(rr=>rr.id===r.id?r:rr)); loadRadarSites(r.id); } catch{} setLoading(false); setAuditProgress(""); }} title="Обновить радар" className="text-gray-600 hover:text-indigo-400"><RefreshCw size={14} /></button>
                     <button onClick={(e) => { e.stopPropagation(); deleteRadar(r.id); }} className="text-gray-600 hover:text-red-400"><Trash2 size={14} /></button>
                   </div>
                   </div>
@@ -359,7 +516,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {activeTab === "radars" && leads.length > 0 && (
+        {leads.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
@@ -374,13 +531,16 @@ function generateKP(lead: Lead) {
                     <tr key={lead.domain} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300 visited:text-purple-400">{lead.domain} ↗</a>
+                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
+                          <span className="text-xs text-gray-500 italic mt-0.5 block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>
+                        )}
+                        {lead.cms && (
+                          <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>
+                        )}
                         <div className="flex gap-2 mt-1">
                           {lead.h1 && !lead.h1.ok && <span className="text-xs text-red-400">H1: {lead.h1.count === 0 ? "нет" : lead.h1.texts[0]?.slice(0, 30)}</span>}
-                          {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
-                        <span className="text-xs text-gray-400 italic mt-0.5 block truncate max-w-[250px]">«{lead.h1.texts[0].slice(0, 80)}»</span>
-                      )}
-                      {lead.cms && <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>}
+                          {lead.cms && <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">{lead.cms}</span>}
                         </div>
                       </td>
                       <td className="p-4">
@@ -408,59 +568,6 @@ function generateKP(lead: Lead) {
                     </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        
-        {activeTab === "pipeline" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Лиды в работе ({pipelineLeads.filter((l:any)=>l.status!=="new").length})</h2>
-              <div className="flex gap-3 text-xs">
-                <span className="text-green-400">{pipelineLeads.filter((l:any)=>l.status==="replied"||l.status==="won").length} отвечено</span>
-                <span className="text-amber-400">{pipelineLeads.filter((l:any)=>l.status==="contacted").length} отправлено</span>
-                <span className="text-red-400">{pipelineLeads.filter((l:any)=>l.status==="lost").length} проиграно</span>
-              </div>
-            </div>
-            <div className="border border-white/[0.06] rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-white/[0.06] bg-[#0f172a]"><th className="text-left p-4 text-xs text-gray-500">Сайт</th><th className="text-left p-4 text-xs text-gray-500">Статус</th><th className="text-left p-4 text-xs text-gray-500">Действия</th></tr></thead>
-                <tbody>
-                  {pipelineLeads.filter((l:any) => l.status !== "new" || l.sent).map((lead:any) => (
-                    <tr key={lead.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                      <td className="p-4">
-                        <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400 text-sm">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
-                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
-                        <span className="text-xs text-gray-400 italic block truncate max-w-[250px]">«{lead.h1.texts[0].slice(0, 80)}»</span>
-                      )}
-                      {lead.phone && <span className="text-xs text-gray-500 block">{lead.phone}</span>}
-                        {lead.email && <span className="text-xs text-gray-500 block">{lead.email}</span>}
-                      </td>
-                      <td className="p-4">
-                        <select defaultValue={lead.status} onChange={async (e:any) => { const ns = e.target.value; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:ns})}); setPipelineLeads((prev:any)=>prev.map((l:any)=>l.id===lead.id?{...l,status:ns,sent:ns==="contacted"||ns==="replied",opened:lead.opened}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
-                          <option value="new">Новый</option>
-                          <option value="contacted">📩 Отправлено</option>
-                          <option value="replied">✅ Отвечено</option>
-                          <option value="won">🏆 Выиграл</option>
-                          <option value="lost">❌ Проиграл</option>
-                        </select>
-                        {lead.opened && <span className="text-xs text-blue-400 ml-2">👁 Открыто</span>}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex gap-2">
-                          <button onClick={() => { setPreviewLead(lead); setActiveTab("radars"); }} className="text-xs text-indigo-400 hover:text-indigo-300">КП</button>
-                          <button onClick={async () => { if(!confirm("Удалить?"))return; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})}); setPipelineLeads((prev:any)=>prev.filter((l:any)=>l.id!==lead.id)); }} className="text-xs text-gray-600 hover:text-red-400">🗑</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).length === 0 && (
-                    <tr><td colSpan={3} className="p-8 text-center text-gray-500 text-sm">Нет лидов в работе. Отправьте КП — они появятся здесь.</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
