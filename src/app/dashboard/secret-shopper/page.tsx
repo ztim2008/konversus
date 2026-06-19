@@ -472,10 +472,14 @@ function generateKP(lead: Lead) {
                     <div><label className="text-xs text-gray-500">Тема письма</label><input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={"Аудит сайта " + previewLead.domain} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-2" /></div><div><label className="text-xs text-gray-500">Кому отправить (email)</label><div className="flex gap-2 mt-1"><input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder={previewLead.email || "email@компании.ру"} className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" /><button onClick={async () => {
                     setEmailStatus("sending");
                     try {
-                      const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: sendToClient ? (emailTo || previewLead.email) : "bilariuss@yandex.ru", testMode: testMode || sendToClient, subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: buildEmailHtml(previewLead, generateKP(previewLead)), siteId: previewLead.id || "", radarId: selectedRadarId || "" })});
-                      await new Promise(r => setTimeout(r, 1000));
-                      const d = await r.json();
-                      if (d.ok) {
+                      // Отправляем клиенту
+                      if (sendToClient && previewLead.email) {
+                        await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: emailTo || previewLead.email, subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: buildEmailHtml(previewLead, generateKP(previewLead)), siteId: previewLead.id || "", radarId: selectedRadarId || "" })});
+                      }
+                      // Всегда отправляем копию себе
+                      await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: "bilariuss@yandex.ru", subject: "[Копия] " + (emailSubject || ("Аудит сайта " + previewLead.domain)), html: buildEmailHtml(previewLead, generateKP(previewLead)), testMode: true, siteId: previewLead.id || "", radarId: selectedRadarId || "" })});
+                      await new Promise(r => setTimeout(r, 500));
+                      if (true) {
                         setEmailStatus("sent");
                         setEmailSent(true);
                         // Обновить статус в таблице
