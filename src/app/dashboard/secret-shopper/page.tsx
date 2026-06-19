@@ -59,6 +59,8 @@ export default function LeadRadarPage() {
   const [followUpStats, setFollowUpStats] = useState({ sent: 0, opened: 0, replied: 0, won: 0 });
   const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
+  const [progressStep, setProgressStep] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
 
   // Загружаем радары из БД
   useEffect(() => {
@@ -77,7 +79,8 @@ export default function LeadRadarPage() {
     setSelectedRadarId(id);
 
     // Поиск сайтов
-    setAuditProgress("🔍 Ищем компании...");
+    setAuditProgress("🔍 Ищем компании в Google Maps и 2GIS...");
+    setProgressStep(1); setProgressTotal(4);
     const searchRes = await fetch("/api/secret-shopper/search", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ city: newCity, niche: newNiche }),
@@ -85,7 +88,8 @@ export default function LeadRadarPage() {
     const data = await searchRes.json();
 
     // Аудит
-    setAuditProgress("🧠 Проверяем сайты...");
+    setAuditProgress("🧠 Аудит сайтов...");
+    setProgressStep(2);
     const auditRes = await fetch("/api/secret-shopper/audit", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sites: data.sites }),
@@ -93,7 +97,8 @@ export default function LeadRadarPage() {
     const auditData = await auditRes.json();
 
     // Контакты
-    setAuditProgress("📞 Ищем контакты...");
+    setAuditProgress("📞 Извлекаем телефоны и email...");
+    setProgressStep(3);
     let contacts: any[] = [];
     try {
       const cRes = await fetch("/api/secret-shopper/contacts", {
@@ -140,7 +145,9 @@ export default function LeadRadarPage() {
     const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
     setRadars(prev => [radar, ...prev]);
     setLeads(newLeads);
-    setAuditProgress("");
+    setAuditProgress("✅ Найдено " + newLeads.length + " лидов");
+    setProgressStep(4);
+    setTimeout(() => { setAuditProgress(""); setProgressStep(0); }, 2500);
     setLoading(false);
   }
 
@@ -298,7 +305,16 @@ function generateKP(lead: Lead) {
               <div className="flex items-end gap-2">
                 <button onClick={addRadar} disabled={loading} className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">
                   {loading ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />}
-                  {loading ? (auditProgress || "Поиск...") : "Запустить"}
+                  {loading ? (
+                    <span className="flex flex-col items-start gap-1">
+                      <span className="text-xs">{auditProgress || "Поиск..."}</span>
+                      <span className="flex gap-1">
+                        {[1,2,3,4].map(s => (
+                          <span key={s} className={`h-1 w-8 rounded-full transition-colors ${s <= progressStep ? (s === 4 ? "bg-green-500" : "bg-indigo-500") : "bg-white/10"}`} />
+                        ))}
+                      </span>
+                    </span>
+                  ) : "Запустить"}
                 </button>
                 <button onClick={() => setShowAdd(false)} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
               </div>
