@@ -76,6 +76,33 @@ export async function updateSiteStatus(id: string, status: string): Promise<void
   await db.query("UPDATE lead_radar_sites SET status = ? WHERE id = ?", [status, id]);
 }
 
+
+// ─── Email log ─────────────────────────────────────────────────────────────
+
+export async function logEmail(params: {
+  siteId?: string; radarId?: string; toEmail: string;
+  subject: string; messageId?: string; status?: string;
+}): Promise<void> {
+  const db = getDbPool();
+  const id = randomUUID();
+  await db.query(
+    `INSERT INTO lead_emails (id, site_id, radar_id, to_email, subject, message_id, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, params.siteId || null, params.radarId || null,
+     params.toEmail, params.subject, params.messageId || null,
+     params.status || "sent"]
+  );
+}
+
+export async function listEmails(siteId: string): Promise<any[]> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    "SELECT * FROM lead_emails WHERE site_id = ? ORDER BY sent_at DESC",
+    [siteId]
+  );
+  return rows as any[];
+}
+
 export async function deleteRadarSites(radarId: string): Promise<void> {
   const db = getDbPool();
   await db.query("DELETE FROM lead_radar_sites WHERE radar_id = ?", [radarId]);
