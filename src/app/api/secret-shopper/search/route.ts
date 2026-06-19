@@ -90,6 +90,61 @@ async function searchGoogleMaps(query: string, city: string): Promise<string[]> 
   return domains;
 }
 
+
+async function search2GIS(query: string, city: string): Promise<string[]> {
+  const domains: string[] = [];
+  const seen = new Set<string>();
+  const browser = await chromium.launch({ headless: true });
+
+  try {
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+    });
+    const page = await context.newPage();
+
+    // 2GIS поиск
+    const searchUrl = `https://2gis.ru/${encodeURIComponent(city.toLowerCase())}/search/${encodeURIComponent(query)}`;
+    console.log(`[2gis] ${searchUrl}`);
+
+    await page.goto(searchUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await page.waitForTimeout(4000);
+
+    // Извлекаем ссылки на сайты
+    const links = await page.evaluate(() => {
+      const results: string[] = [];
+      document.querySelectorAll("a[href]").forEach(a => {
+        const h = (a as HTMLAnchorElement).href;
+        if (h.startsWith("http") && !h.includes("2gis") && !h.includes("google")) {
+          results.push(h);
+        }
+      });
+      return results;
+    });
+
+    for (const link of links) {
+      try {
+        const u = new URL(link);
+        let d = u.hostname.replace(/^www\./, "").toLowerCase();
+        if (!RU_DOMAIN.test(d)) continue;
+        if (SKIP.test(d)) continue;
+        if (d.length < 5) continue;
+        if (seen.has(d)) continue;
+        seen.add(d);
+        domains.push(d);
+      } catch {}
+    }
+
+    await context.close();
+  } catch (err) {
+    console.error("[2gis] error:", err);
+  } finally {
+    await browser.close();
+  }
+
+  return domains;
+}
+
 export async function POST(req: NextRequest) {
   const { city, niche } = await req.json();
   if (!city || !niche) return NextResponse.json({ error: "city and niche required" }, { status: 400 });
@@ -98,9 +153,13 @@ export async function POST(req: NextRequest) {
   const allDomains: string[] = [];
   const seen = new Set<string>();
 
-  // Google Maps поиск
+  // Google Maps + 2GIS поиск
   for (const q of queries.slice(0, 2)) {
-    const domains = await searchGoogleMaps(q, city);
+    const [gmDomains, gisDomains] = await Promise.all([
+      searchGoogleMaps(q, city).catch(() => [] as string[]),
+      search2GIS(q, city).catch(() => [] as string[]),
+    ]);
+    const domains = [...gmDomains, ...gisDomains];
     for (const d of domains) {
       if (!seen.has(d)) { seen.add(d); allDomains.push(d); }
     }
