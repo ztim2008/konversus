@@ -39,7 +39,32 @@ Konversus · 17 лет в digital`);
 
   async function handleSearch() {
     setLoading(true);
-    // Эмуляция поиска — в реальности парсим Яндекс/2ГИС
+    setResults([]);
+    try {
+      const res = await fetch("/api/secret-shopper/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city, niche }),
+      });
+      const data = await res.json();
+      
+      // Базовые результаты
+      const sites: SiteResult[] = (data.sites || []).map((s: any) => ({
+        domain: s.domain,
+        name: s.name,
+        score: 50,
+        ssl: undefined,
+        http: undefined,
+        contacts: {},
+      }));
+      
+      setResults(sites);
+    } catch { setResults([]); }
+    setLoading(false);
+  }
+
+  function __OLD_HANDLE__() {
+    // Старый мок-код удалён
     const mockDomains: SiteResult[] = [
       { domain: "stomat-1.ru", name: "Стоматология «Улыбка»", ssl: { valid: true, daysRemaining: 8, grade: "B" }, http: { hasHttps: true, statusCode: 200 }, score: 38, contacts: { phone: "+7 (495) 123-45-67", email: "info@stomat-1.ru" } },
       { domain: "stomat-2.ru", name: "Дентал Профи", ssl: { valid: false, daysRemaining: 0, grade: "F" }, http: { hasHttps: false, statusCode: 0 }, score: 15, contacts: { phone: "+7 (495) 234-56-78" } },
