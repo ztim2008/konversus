@@ -1,7 +1,7 @@
-import { readdirSync } from "node:fs";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Globe, Briefcase, Code, Palette, Shield, TrendingUp, MessageCircle, Phone, ExternalLink, ChevronRight, ChevronLeft, X, ArrowRight, Layers, Sparkles, Zap, Users } from "lucide-react";
+import { Globe, Briefcase, Code, Palette, Shield, TrendingUp, MessageCircle, Phone, ExternalLink, ArrowRight, Sparkles, Zap, Users } from "lucide-react";
+import { PortfolioGallery } from "@/components/portfolio-gallery";
 
 export const metadata: Metadata = {
   title: "Алексей Тимофеев — 17 лет в digital | Сайты, AI, дизайн",
@@ -20,19 +20,7 @@ export const metadata: Metadata = {
 };
 
 const PHOTO = "/sales-doc/uploads/2026/05/82eb66a3fa60b3f306af1c2a.jpg";
-const PORTFOLIO_DIR = "/var/www/www-root/data/www/konversus.ru/portfolio";
-
-function getPortfolioImages(count = 12): string[] {
-  try {
-    const files = readdirSync(PORTFOLIO_DIR).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f));
-    for (let i = files.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [files[i], files[j]] = [files[j], files[i]]; }
-    return files.slice(0, count);
-  } catch { return []; }
-}
-
 export default function AboutPage() {
-  const portfolioImages = getPortfolioImages(12);
-
   return (
     <div className="min-h-screen bg-[#0a0e13] text-gray-300">
       {/* Hero */}
@@ -100,20 +88,14 @@ export default function AboutPage() {
       </section>
 
       {/* Портфолио */}
-      {portfolioImages.length > 0 && (
-        <section className="border-b border-white/[0.06]">
+      <section className="border-b border-white/[0.06]">
           <div className="mx-auto max-w-4xl px-6 py-20">
             <div className="mb-12">
               <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">Портфолио</p>
               <h2 className="text-3xl font-bold text-white">Избранные работы</h2>
+              <p className="mt-3 text-sm text-gray-500">Нажмите на изображение чтобы увеличить · Стрелки для навигации · Esc для закрытия</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-0 border border-white/[0.06] rounded-xl overflow-hidden">
-              {portfolioImages.map((img, i) => (
-                <a key={img} href={`/portfolio/${img}`} target="_blank" className="block border-white/[0.06] [&:not(:nth-child(3n))]:border-r [&:not(:nth-last-child(-n+3))]:border-b">
-                  <img src={`/portfolio/${img}`} alt={`Работа ${i + 1}`} className="w-full h-48 object-cover hover:opacity-80 transition-opacity" loading="lazy" />
-                </a>
-              ))}
-            </div>
+            <PortfolioGallery />
             <div className="mt-6 text-center">
               <a href="https://www.behance.net/timofeev_aleksey" target="_blank" rel="noopener" className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
                 <ExternalLink size={14} /> Больше работ на Behance
@@ -121,7 +103,6 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-      )}
 
       {/* Продукты */}
       <section className="border-b border-white/[0.06]">
