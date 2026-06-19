@@ -272,6 +272,12 @@ export default async function Home() {
               className="border border-white/10 px-5 py-2.5 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white"
             >
               Как работаю →
+            <a
+              href="/about"
+              className="border border-white/10 px-5 py-2.5 text-sm text-slate-300 transition-colors hover:border-white/20 hover:text-white"
+            >
+              Подробнее обо мне →
+            </a>
             </a>
           </div>
         </div>

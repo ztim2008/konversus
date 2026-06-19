@@ -1,142 +1,181 @@
+import { readdirSync } from "node:fs";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Globe, Briefcase, Code, Palette, Shield, TrendingUp, MessageCircle, Phone, ExternalLink, ChevronRight, ChevronLeft, X, ArrowRight, Layers, Sparkles, Zap, Users } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Алексей Тимофеев — 17 лет в digital | Konversus",
-  description: "Создаю digital-проекты для бизнеса: сайты, AI-решения, дизайн. 17 лет опыта. Next.js, React, SEO, автоматизация.",
+  title: "Алексей Тимофеев — 17 лет в digital | Сайты, AI, дизайн",
+  description: "Создаю digital-проекты для бизнеса: сайты, AI-решения, дизайн, SEO. 17 лет опыта. Next.js, React, TypeScript, Tailwind, OpenRouter, DeepSeek.",
+  keywords: ["Алексей Тимофеев", "веб-разработчик", "дизайнер", "AI-специалист", "Konversus", "создание сайтов", "Next.js", "React", "SEO"],
   openGraph: {
     title: "Алексей Тимофеев — digital-эксперт",
     description: "Сайты, AI, дизайн. 17 лет в digital. Проекты: Konversus, SSL Doctor, Leads AI.",
     images: [{ url: "https://konversus.ru/sales-doc/uploads/2026/05/82eb66a3fa60b3f306af1c2a.jpg", width: 800, height: 800 }],
+    type: "profile",
+    locale: "ru_RU",
   },
+  twitter: { card: "summary_large_image", title: "Алексей Тимофеев — digital-эксперт", description: "Сайты, AI, дизайн. 17 лет опыта." },
+  robots: { index: true, follow: true },
+  alternates: { canonical: "https://konversus.ru/about" },
 };
 
-const PHOTO = "https://konversus.ru/sales-doc/uploads/2026/05/82eb66a3fa60b3f306af1c2a.jpg";
+const PHOTO = "/sales-doc/uploads/2026/05/82eb66a3fa60b3f306af1c2a.jpg";
+const PORTFOLIO_DIR = "/var/www/www-root/data/www/konversus.ru/portfolio";
 
-const SERVICES = [
-  { icon: "🌐", title: "Разработка сайтов", desc: "Продающие лендинги, интернет-магазины, корпоративные сайты. Next.js, React, TypeScript, Tailwind.", price: "от 80 000 ₽", tags: ["Next.js", "React", "Tailwind"] },
-  { icon: "🤖", title: "AI и автоматизация", desc: "Чат-боты, AI-аналитика, автоматизация процессов. OpenRouter, DeepSeek, GPT-4o, Telegram Bot API.", price: "от 50 000 ₽", tags: ["AI", "Боты", "OpenRouter"] },
-  { icon: "🎨", title: "Дизайн и брендинг", desc: "Фирменный стиль, логотипы, упаковка, презентации, полиграфия. Figma, Photoshop.", price: "от 30 000 ₽", tags: ["Figma", "Бренд", "Логотип"] },
-  { icon: "📈", title: "SEO и трафик", desc: "Поисковая оптимизация, аналитика, Яндекс Метрика, Вебмастер. Рост позиций и конверсии.", price: "от 25 000 ₽", tags: ["SEO", "Метрика", "Трафик"] },
-  { icon: "🛡️", title: "SSL и безопасность", desc: "Проверка SSL, восстановление сертификатов, мониторинг безопасности сайта 24/7.", price: "от 5 000 ₽", tags: ["SSL", "HTTPS", "Защита"] },
-  { icon: "🎯", title: "Лидогенерация", desc: "Автоматический сбор заявок с Profi.ru. AI-оценка, готовые отклики, уведомления в Telegram.", price: "от 15 000 ₽", tags: ["Profi", "AI", "Telegram"] },
-];
-
-const PRODUCTS = [
-  { name: "Factory Proposal Builder", desc: "Конструктор digital-концептов для производств и B2B", url: "/" },
-  { name: "SSL Doctor", desc: "Диагностика и восстановление SSL-сертификатов", url: "https://ssl.konversus.ru" },
-  { name: "Leads AI", desc: "Автоматический поиск заказов с фриланс-площадок", url: "https://leads.konversus.ru" },
-  { name: "AI Business Architect", desc: "AI-анализ сайта и стратегия роста бизнеса", url: "/architect" },
-];
-
-const PORTFOLIO = [
-  { name: "Behance", url: "https://www.behance.net/timofeev_aleksey", desc: "Дизайн-портфолио" },
-  { name: "Маркет-фон", url: "https://маркет-фон.рф/portfolio/", desc: "Работы и кейсы" },
-  { name: "Kwork", url: "https://kwork.ru/user/bilarius", desc: "Фриланс-профиль" },
-];
-
-const PROJECTS = [
-  { name: "Маркет-фон.рф", url: "https://маркет-фон.рф", desc: "Маркетинговая платформа" },
-  { name: "Russait.ru", url: "https://russait.ru/", desc: "AI-проект" },
-];
-
-const SOCIAL = [
-  { name: "Telegram", url: "https://t.me/bilarius", icon: "💬" },
-  { name: "ВКонтакте", url: "https://vk.com/bilarius", icon: "📱" },
-  { name: "Телефон", url: "tel:+79212013252", icon: "📞" },
-];
+function getPortfolioImages(count = 12): string[] {
+  try {
+    const files = readdirSync(PORTFOLIO_DIR).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f));
+    for (let i = files.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [files[i], files[j]] = [files[j], files[i]]; }
+    return files.slice(0, count);
+  } catch { return []; }
+}
 
 export default function AboutPage() {
+  const portfolioImages = getPortfolioImages(12);
+
   return (
-    <div style={{ background: "var(--bg-root)", color: "var(--ink-body)", fontFamily: "Inter, sans-serif" }}>
+    <div className="min-h-screen bg-[#0a0e13] text-gray-300">
       {/* Hero */}
-      <header style={{ padding: "100px 0 60px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto", padding: "0 24px" }}>
-          <img src={PHOTO} alt="Алексей Тимофеев" style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", marginBottom: 24, border: "3px solid var(--accent)" }} />
-          <h1 style={{ fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 800, lineHeight: 1.1, marginBottom: 8, color: "#fff" }}>
-            Тимофеев Алексей
-          </h1>
-          <p style={{ fontSize: "var(--text-lg)", color: "var(--accent)", marginBottom: 16, fontWeight: 600 }}>
-            17 лет в digital
+      <header className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent" />
+        <div className="relative mx-auto max-w-4xl px-6 py-24 sm:py-32 text-center">
+          <img src={PHOTO} alt="Алексей Тимофеев" className="w-28 h-28 rounded-full object-cover mx-auto mb-6 ring-2 ring-indigo-500/30" />
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">Тимофеев Алексей</h1>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 text-sm font-semibold text-indigo-400">
+            <Zap size={14} /> 17 лет в digital
+          </div>
+          <p className="mt-6 text-lg text-gray-400 max-w-xl mx-auto leading-relaxed">
+            Я создаю digital-проекты, которые приносят реальную выручку — не просто «красивые сайты», а инструменты продаж. От вёрстки до комплексной цифровой упаковки бизнеса.
           </p>
-          <p style={{ fontSize: "var(--text-base)", color: "#94a3b8", maxWidth: 550, margin: "0 auto 32px", lineHeight: 1.7 }}>
-            Я создаю digital-проекты, которые приносят реальную выручку — не просто «красивые сайты»,
-            а инструменты продаж. От вёрстки до комплексной цифровой упаковки бизнеса.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="https://t.me/bilarius" target="_blank" rel="noopener" style={{ padding: "12px 24px", borderRadius: 8, background: "var(--accent)", color: "#fff", fontWeight: 700, textDecoration: "none" }}>
-              💬 Написать в Telegram
+          <div className="mt-8 flex gap-4 justify-center flex-wrap">
+            <a href="https://t.me/bilarius" target="_blank" rel="noopener" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
+              <MessageCircle size={18} /> Написать в Telegram
             </a>
-            <a href="#services" style={{ padding: "12px 24px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontWeight: 600, textDecoration: "none" }}>
-              Мои услуги ↓
+            <a href="tel:+79212013252" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3 text-sm font-semibold text-gray-300 hover:border-white/20 transition-colors">
+              <Phone size={18} /> Позвонить
             </a>
           </div>
         </div>
       </header>
 
-      {/* Услуги */}
-      <section id="services" style={{ padding: "80px 0" }}>
-        <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 24px" }}>
-          <h2 style={{ textAlign: "center", fontSize: "var(--text-2xl)", fontWeight: 700, marginBottom: 8, color: "#fff" }}>Что я делаю</h2>
-          <p style={{ textAlign: "center", color: "#94a3b8", marginBottom: 48 }}>Услуги и цены</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 0, border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden" }}>
-            {SERVICES.map((s, i) => (
-              <div key={s.title} style={{ padding: "28px 24px", background: "#0f172a", borderRight: i % 2 === 0 && i < SERVICES.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none", borderBottom: i < SERVICES.length - 2 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
-                <div style={{ fontSize: "2rem", marginBottom: 12 }}>{s.icon}</div>
-                <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 650, marginBottom: 4, color: "#fff" }}>{s.title}</h3>
-                <p style={{ fontSize: "var(--text-sm)", color: "#94a3b8", marginBottom: 12, lineHeight: 1.5 }}>{s.desc}</p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <p style={{ fontWeight: 700, fontSize: "var(--text-base)", color: "var(--accent)" }}>{s.price}</p>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {s.tags.map(t => <span key={t} style={{ padding: "2px 8px", borderRadius: 100, background: "rgba(255,255,255,0.05)", fontSize: "0.65rem", color: "#64748b" }}>{t}</span>)}
-                  </div>
-                </div>
+      {/* Цифры */}
+      <section className="border-b border-white/[0.06]">
+        <div className="mx-auto max-w-4xl px-6 py-16">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-white/[0.06]">
+            {[{ value: "17", label: "лет в digital" }, { value: "120+", label: "проектов" }, { value: "4", label: "собственных продукта" }, { value: "24/7", label: "на связи" }].map((s, i) => (
+              <div key={s.label} className="text-center px-4 py-6">
+                <p className="text-3xl sm:text-4xl font-extrabold text-indigo-400">{s.value}</p>
+                <p className="mt-2 text-sm text-gray-500">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Услуги */}
+      <section className="border-b border-white/[0.06]">
+        <div className="mx-auto max-w-4xl px-6 py-20">
+          <div className="mb-12">
+            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">Услуги</p>
+            <h2 className="text-3xl font-bold text-white">Что я делаю</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border border-white/[0.06] rounded-xl overflow-hidden">
+            {[
+              { icon: Globe, title: "Разработка сайтов", desc: "Продающие лендинги, интернет-магазины, корпоративные сайты. Next.js, React, TypeScript.", price: "от 80 000 ₽" },
+              { icon: Sparkles, title: "AI и автоматизация", desc: "Чат-боты, AI-аналитика, автопилот для бизнеса. OpenRouter, DeepSeek, GPT-4o.", price: "от 50 000 ₽" },
+              { icon: Palette, title: "Дизайн и брендинг", desc: "Фирменный стиль, логотипы, упаковка, полиграфия. Figma, Photoshop.", price: "от 30 000 ₽" },
+              { icon: TrendingUp, title: "SEO и трафик", desc: "Поисковая оптимизация, аналитика, Яндекс Метрика, Вебмастер.", price: "от 25 000 ₽" },
+              { icon: Shield, title: "SSL и безопасность", desc: "Проверка SSL, восстановление сертификатов, мониторинг 24/7.", price: "от 5 000 ₽" },
+              { icon: Code, title: "Лидогенерация", desc: "Автоматический сбор заявок с Profi.ru. AI-оценка, готовые отклики.", price: "от 15 000 ₽" },
+            ].map((s, i) => (
+              <div key={s.title} className={`p-8 bg-[#0f172a] ${i % 2 === 0 ? "sm:border-r" : ""} ${i < 4 ? "border-b" : ""} border-white/[0.06]`}>
+                <s.icon size={28} className="text-indigo-400 mb-4" strokeWidth={1.5} />
+                <h3 className="text-lg font-bold text-white mb-2">{s.title}</h3>
+                <p className="text-sm text-gray-500 mb-4 leading-relaxed">{s.desc}</p>
+                <p className="text-base font-bold text-indigo-400">{s.price}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Портфолио */}
+      {portfolioImages.length > 0 && (
+        <section className="border-b border-white/[0.06]">
+          <div className="mx-auto max-w-4xl px-6 py-20">
+            <div className="mb-12">
+              <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">Портфолио</p>
+              <h2 className="text-3xl font-bold text-white">Избранные работы</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-0 border border-white/[0.06] rounded-xl overflow-hidden">
+              {portfolioImages.map((img, i) => (
+                <a key={img} href={`/portfolio/${img}`} target="_blank" className="block border-white/[0.06] [&:not(:nth-child(3n))]:border-r [&:not(:nth-last-child(-n+3))]:border-b">
+                  <img src={`/portfolio/${img}`} alt={`Работа ${i + 1}`} className="w-full h-48 object-cover hover:opacity-80 transition-opacity" loading="lazy" />
+                </a>
+              ))}
+            </div>
+            <div className="mt-6 text-center">
+              <a href="https://www.behance.net/timofeev_aleksey" target="_blank" rel="noopener" className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
+                <ExternalLink size={14} /> Больше работ на Behance
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Продукты */}
-      <section style={{ padding: "0 0 80px" }}>
-        <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 24px" }}>
-          <h2 style={{ textAlign: "center", fontSize: "var(--text-2xl)", fontWeight: 700, marginBottom: 8, color: "#fff" }}>Мои продукты</h2>
-          <p style={{ textAlign: "center", color: "#94a3b8", marginBottom: 48 }}>Собственные сервисы экосистемы Konversus</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 0, border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden" }}>
-            {PRODUCTS.map((p, i) => (
-              <a key={p.name} href={p.url} target={p.url.startsWith("http") ? "_blank" : undefined} rel="noopener" style={{ padding: "24px 20px", background: "#0f172a", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none", textDecoration: "none", display: "block" }}>
-                <h3 style={{ fontSize: "var(--text-base)", fontWeight: 650, marginBottom: 4, color: "#fff" }}>{p.name}</h3>
-                <p style={{ fontSize: "var(--text-sm)", color: "#94a3b8" }}>{p.desc}</p>
-                <span style={{ display: "inline-block", marginTop: 8, fontSize: "var(--text-xs)", color: "var(--accent)", fontWeight: 600 }}>Открыть →</span>
+      <section className="border-b border-white/[0.06]">
+        <div className="mx-auto max-w-4xl px-6 py-20">
+          <div className="mb-12">
+            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">Продукты</p>
+            <h2 className="text-3xl font-bold text-white">Экосистема Konversus</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border border-white/[0.06] rounded-xl overflow-hidden">
+            {[
+              { name: "Factory Proposal Builder", desc: "Конструктор digital-концептов для производств и B2B", url: "/" },
+              { name: "SSL Doctor", desc: "Диагностика и восстановление SSL-сертификатов", url: "https://ssl.konversus.ru" },
+              { name: "Leads AI", desc: "Автоматический поиск заказов с фриланс-площадок", url: "https://leads.konversus.ru" },
+              { name: "AI Architect", desc: "AI-анализ сайта и стратегия роста бизнеса", url: "/architect" },
+            ].map((p, i) => (
+              <a key={p.name} href={p.url} target={p.url.startsWith("http") ? "_blank" : undefined} rel="noopener" className={`p-6 bg-[#0f172a] hover:bg-[#111820] transition-colors group ${i % 2 === 0 ? "sm:border-r" : ""} ${i < 2 ? "border-b" : ""} border-white/[0.06]`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-white group-hover:text-indigo-400 transition-colors">{p.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{p.desc}</p>
+                  </div>
+                  <ArrowRight size={16} className="text-gray-600 group-hover:text-indigo-400 transition-colors shrink-0" />
+                </div>
               </a>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Портфолио и проекты */}
-      <section style={{ padding: "0 0 60px" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
-            <div>
-              <h3 style={{ fontSize: "var(--text-base)", fontWeight: 650, marginBottom: 12, color: "#fff" }}>📂 Портфолио</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {PORTFOLIO.map(p => (
-                  <a key={p.name} href={p.url} target="_blank" rel="noopener" style={{ padding: "10px 14px", borderRadius: 8, background: "#0f172a", border: "1px solid rgba(255,255,255,0.06)", textDecoration: "none", color: "#fff", fontSize: "var(--text-sm)" }}>
-                    <span style={{ fontWeight: 600 }}>{p.name}</span>
-                    <span style={{ display: "block", fontSize: "var(--text-xs)", color: "#64748b" }}>{p.desc}</span>
-                  </a>
+      {/* Ссылки */}
+      <section className="border-b border-white/[0.06]">
+        <div className="mx-auto max-w-4xl px-6 py-20">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-white/[0.06] rounded-xl overflow-hidden">
+            <div className="p-6 border-b sm:border-b-0 sm:border-r border-white/[0.06]">
+              <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Briefcase size={16} className="text-indigo-400" /> Портфолио</h3>
+              <div className="space-y-2">
+                {[{ name: "Behance", url: "https://www.behance.net/timofeev_aleksey" }, { name: "Маркет-фон", url: "https://маркет-фон.рф/portfolio/" }, { name: "Kwork", url: "https://kwork.ru/user/bilarius" }].map(l => (
+                  <a key={l.name} href={l.url} target="_blank" rel="noopener" className="block text-sm text-gray-400 hover:text-indigo-400 transition-colors">{l.name} →</a>
                 ))}
               </div>
             </div>
-            <div>
-              <h3 style={{ fontSize: "var(--text-base)", fontWeight: 650, marginBottom: 12, color: "#fff" }}>🚀 Проекты</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {PROJECTS.map(p => (
-                  <a key={p.name} href={p.url} target="_blank" rel="noopener" style={{ padding: "10px 14px", borderRadius: 8, background: "#0f172a", border: "1px solid rgba(255,255,255,0.06)", textDecoration: "none", color: "#fff", fontSize: "var(--text-sm)" }}>
-                    <span style={{ fontWeight: 600 }}>{p.name}</span>
-                    <span style={{ display: "block", fontSize: "var(--text-xs)", color: "#64748b" }}>{p.desc}</span>
-                  </a>
+            <div className="p-6 border-b sm:border-b-0 sm:border-r border-white/[0.06]">
+              <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Globe size={16} className="text-indigo-400" /> Проекты</h3>
+              <div className="space-y-2">
+                {[{ name: "Маркет-фон.рф", url: "https://маркет-фон.рф" }, { name: "Russait.ru", url: "https://russait.ru/" }, { name: "Nordic Builder", url: "https://nordic-builder.ru" }].map(l => (
+                  <a key={l.name} href={l.url} target="_blank" rel="noopener" className="block text-sm text-gray-400 hover:text-indigo-400 transition-colors">{l.name} →</a>
+                ))}
+              </div>
+            </div>
+            <div className="p-6">
+              <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Users size={16} className="text-indigo-400" /> Соцсети</h3>
+              <div className="space-y-2">
+                {[{ name: "Telegram", url: "https://t.me/bilarius" }, { name: "ВКонтакте", url: "https://vk.com/bilarius" }, { name: "YouTube", url: "https://vkvideo.ru/@bilarius" }].map(l => (
+                  <a key={l.name} href={l.url} target="_blank" rel="noopener" className="block text-sm text-gray-400 hover:text-indigo-400 transition-colors">{l.name} →</a>
                 ))}
               </div>
             </div>
@@ -144,63 +183,37 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Цифры */}
-      <section style={{ padding: "60px 0", background: "var(--bg-layer)", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 32, textAlign: "center" }}>
-            {[{ value: "17", label: "лет в digital" }, { value: "120+", label: "проектов" }, { value: "4", label: "продукта" }, { value: "24/7", label: "на связи" }].map(s => (
-              <div key={s.label}>
-                <p style={{ fontSize: "var(--text-3xl)", fontWeight: 800, color: "var(--accent)" }}>{s.value}</p>
-                <p style={{ fontSize: "var(--text-sm)", color: "#94a3b8", marginTop: 4 }}>{s.label}</p>
-              </div>
+      {/* Технологии */}
+      <section className="border-b border-white/[0.06]">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+          <h2 className="text-3xl font-bold text-white mb-10">Технологический стек</h2>
+          <div className="flex flex-wrap gap-3 justify-center">
+            {["Next.js", "React", "TypeScript", "Tailwind", "PostgreSQL", "Prisma", "Redis", "Docker", "PM2", "Nginx", "OpenRouter", "DeepSeek", "GPT-4o", "Playwright", "Figma", "Node.js", "Git", "BullMQ", "Let's Encrypt", "Stripe"].map(tech => (
+              <span key={tech} className="px-4 py-2 rounded-lg bg-[#0f172a] border border-white/[0.06] text-sm text-gray-400">{tech}</span>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Стек */}
-      <section style={{ padding: "80px 0" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
-          <h2 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, marginBottom: 40, color: "#fff" }}>Технологии</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
-            {["Next.js", "React", "TypeScript", "Tailwind CSS", "PostgreSQL", "Prisma", "Redis", "Docker", "PM2", "Nginx", "OpenRouter", "DeepSeek", "GPT-4o", "Playwright", "Figma", "Photoshop", "Node.js", "Git", "BullMQ", "Let's Encrypt"].map(tech => (
-              <span key={tech} style={{ padding: "8px 16px", borderRadius: 8, background: "#0f172a", border: "1px solid rgba(255,255,255,0.06)", fontSize: "var(--text-sm)", fontWeight: 500, color: "#94a3b8" }}>{tech}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Соцсети */}
-      <section style={{ padding: "0 0 60px", textAlign: "center" }}>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-          {SOCIAL.map(s => (
-            <a key={s.name} href={s.url} target="_blank" rel="noopener" style={{ padding: "12px 20px", borderRadius: 8, background: "#0f172a", border: "1px solid rgba(255,255,255,0.06)", textDecoration: "none", color: "#fff", fontSize: "var(--text-sm)", fontWeight: 600 }}>
-              {s.icon} {s.name}
-            </a>
-          ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section style={{ padding: "80px 0", background: "linear-gradient(135deg, #4f46e5, #7c3aed)", textAlign: "center" }}>
-        <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 24px" }}>
-          <h2 style={{ fontSize: "var(--text-2xl)", fontWeight: 800, color: "#fff", marginBottom: 12 }}>Обсудим проект?</h2>
-          <p style={{ fontSize: "var(--text-base)", color: "rgba(255,255,255,0.75)", marginBottom: 32 }}>
-            Напишите мне лично — отвечаю в течение дня. Обсудим задачу, сроки и бюджет.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="https://t.me/bilarius" target="_blank" rel="noopener" style={{ padding: "14px 28px", borderRadius: 8, background: "#fff", color: "#4f46e5", fontWeight: 700, fontSize: "var(--text-base)", textDecoration: "none" }}>
-              💬 @bilarius
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700" />
+        <div className="relative mx-auto max-w-2xl px-6 py-24 text-center">
+          <h2 className="text-3xl font-extrabold text-white mb-4">Обсудим проект?</h2>
+          <p className="text-indigo-100/80 mb-8">Напишите мне лично — отвечаю в течение дня. Обсудим задачу, сроки и бюджет.</p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <a href="https://t.me/bilarius" target="_blank" rel="noopener" className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-indigo-600 hover:bg-gray-100 transition-colors">
+              <MessageCircle size={18} /> @bilarius
             </a>
-            <a href="tel:+79212013252" style={{ padding: "14px 28px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.3)", color: "#fff", fontWeight: 600, fontSize: "var(--text-base)", textDecoration: "none" }}>
-              📞 Позвонить
+            <a href="tel:+79212013252" className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:border-white/40 transition-colors">
+              <Phone size={18} /> Позвонить
             </a>
           </div>
         </div>
       </section>
 
-      <footer style={{ padding: "32px 0", textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        <p style={{ fontSize: "var(--text-sm)", color: "#64748b" }}>© Алексей Тимофеев · <Link href="/" style={{ color: "var(--accent)" }}>Konversus</Link></p>
+      <footer className="border-t border-white/[0.06] py-8 text-center">
+        <p className="text-sm text-gray-600">© Алексей Тимофеев · <Link href="/" className="text-indigo-400 hover:text-indigo-300">Konversus</Link></p>
       </footer>
     </div>
   );

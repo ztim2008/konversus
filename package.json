@@ -27,6 +27,7 @@
     "@tiptap/starter-kit": "^3.23.6",
     "chart.js": "^4.5.1",
     "lowlight": "^3.3.0",
+    "lucide-react": "^1.21.0",
     "mysql2": "^3.15.3",
     "next": "16.2.6",
     "playwright": "^1.60.0",
