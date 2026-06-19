@@ -1,59 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
+import { chromium } from "playwright";
 
-// Большой справочник ниш
 const NICHE_QUERIES: Record<string, string[]> = {
-  "Стоматологии": ["стоматология", "стоматологическая клиника", "дантист", " dental clinic"],
-  "Строительство": ["строительная компания", "строительство домов", "ремонт квартир", "строительная фирма"],
-  "Кафе и рестораны": ["кафе", "ресторан", "кофейня", "доставка еды", "cafe"],
-  "Автосервисы": ["автосервис", "автомастерская", "шиномонтаж", "кузовной ремонт", "car service"],
-  "Юристы": ["юридическая компания", "адвокат", "юридические услуги", "law firm"],
-  "Клиники": ["медицинский центр", "клиника", "медцентр", "medical clinic"],
-  "Салоны красоты": ["салон красоты", "парикмахерская", "барбершоп", "beauty salon", "ногтевой сервис"],
-  "Фитнес-клубы": ["фитнес клуб", "тренажерный зал", "спортзал", "йога студия", "fitness"],
-  "Отели": ["гостиница", "отель", "хостел", "мини-отель", "hotel"],
-  "Грузоперевозки": ["грузоперевозки", "транспортная компания", "перевозка грузов", "логистика"],
-  "Интернет-магазины": ["интернет магазин", "онлайн магазин", "ecommerce", "доставка"],
-  "Недвижимость": ["агентство недвижимости", "риэлтор", "квартиры", "real estate"],
-  "Бухгалтерия": ["бухгалтерские услуги", "бухгалтер", "аутсорсинг бухгалтерии"],
-  "Охранные предприятия": ["охранное предприятие", "чоп", "системы безопасности", "видеонаблюдение"],
-  "Рекламные агентства": ["рекламное агентство", "маркетинговое агентство", "digital агентство", "контекстная реклама"],
-  "Туризм": ["турагентство", "туроператор", "travel agency", "горящие туры"],
-  "Образование": ["образовательный центр", "курсы", "репетитор", "школа", "training"],
-  "Производство": ["производственная компания", "завод", "производство", "manufacturing"],
-  "Сельское хозяйство": ["фермерское хозяйство", "агрокомплекс", "теплица", "сельхоз"],
-  "IT-компании": ["it компания", "разработка по", "веб-студия", "software"],
+  "Стоматологии": ["стоматология", "стоматологическая клиника", "дантист"],
+  "Строительство": ["строительная компания", "ремонт квартир", "строительство домов"],
+  "Кафе и рестораны": ["кафе", "ресторан", "кофейня"],
+  "Автосервисы": ["автосервис", "шиномонтаж", "кузовной ремонт"],
+  "Юристы": ["юридическая компания", "адвокат", "юридические услуги"],
+  "Клиники": ["медицинский центр", "клиника", "медцентр"],
+  "Салоны красоты": ["салон красоты", "парикмахерская", "барбершоп"],
+  "Фитнес-клубы": ["фитнес клуб", "тренажерный зал", "спортзал"],
+  "Отели": ["гостиница", "отель", "хостел"],
+  "Грузоперевозки": ["грузоперевозки", "транспортная компания", "доставка грузов"],
+  "Интернет-магазины": ["интернет магазин", "онлайн магазин", "интернет-магазин"],
+  "Недвижимость": ["агентство недвижимости", "риэлтор", "квартиры"],
+  "Бухгалтерия": ["бухгалтерские услуги", "бухгалтер", "аутсорсинг"],
+  "Рекламные агентства": ["рекламное агентство", "маркетинговое агентство", "digital агентство"],
+  "Туризм": ["турагентство", "туроператор", "горящие туры"],
+  "Образование": ["образовательный центр", "курсы", "репетитор"],
+  "Производство": ["производственная компания", "завод", "производство"],
+  "Сельское хозяйство": ["фермерское хозяйство", "агрокомплекс", "теплица"],
+  "IT-компании": ["it компания", "веб-студия", "разработка по"],
+  "Охранные предприятия": ["охранное предприятие", "чоп", "видеонаблюдение"],
 };
 
-const RU_DOMAIN = /\.(ru|рф|su|москва|moscow|дети)$/i;
-const SKIP = /yandex|google|2gis|wikipedia|facebook|vk\.com|instagram|youtube|t\.me|telegram|avito|youla|cian/i;
+const RU_DOMAIN = /\.(ru|рф|су|москва|moscow|дети)$/i;
+const SKIP = /yandex|google|2gis|wikipedia|facebook|vk\.com|instagram|youtube|t\.me|telegram|avito|youla|cian|dzen/i;
 
-async function searchYandex(query: string): Promise<string[]> {
+async function searchWithPlaywright(query: string, city: string): Promise<string[]> {
   const domains: string[] = [];
   const seen = new Set<string>();
+  const browser = await chromium.launch({ headless: true });
 
   try {
-    for (let page = 0; page < 40; page += 10) {
-      const url = `https://yandex.ru/search/?text=${encodeURIComponent(query + " сайт")}&p=${page / 10}&lr=225`;
-      const res = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36", "Accept": "text/html", "Accept-Language": "ru-RU,ru;q=0.9" },
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!res.ok) break;
-      const html = await res.text();
-      
-      const matches = html.matchAll(/href="https?:\/\/([^\/"]+)"/gi);
-      for (const m of matches) {
-        let d = m[1].replace(/^www\./, "").toLowerCase();
-        if (!RU_DOMAIN.test(d) || SKIP.test(d) || d.length < 5) continue;
-        if (seen.has(d)) continue;
-        seen.add(d);
-        domains.push(d);
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+    });
+    const page = await context.newPage();
+
+    const searchText = `${query} ${city} сайт`;
+
+    for (let p = 0; p < 30; p += 10) {
+      const url = `https://yandex.ru/search/?text=${encodeURIComponent(searchText)}&p=${p / 10}&lr=225`;
+      console.log(`[search] ${url}`);
+
+      try {
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+        await page.waitForTimeout(2000);
+
+        // Извлекаем все ссылки из результатов поиска
+        const links = await page.evaluate(() => {
+          const anchors = document.querySelectorAll("a[href]");
+          return Array.from(anchors)
+            .map(a => (a as HTMLAnchorElement).href)
+            .filter(h => h.startsWith("http"));
+        });
+
+        for (const link of links) {
+          try {
+            const u = new URL(link);
+            let d = u.hostname.replace(/^www\./, "").toLowerCase();
+            if (!RU_DOMAIN.test(d)) continue;
+            if (SKIP.test(d)) continue;
+            if (d.length < 5 || !d.includes(".")) continue;
+            if (seen.has(d)) continue;
+
+            seen.add(d);
+            domains.push(d);
+          } catch {}
+        }
+      } catch (err) {
+        console.error(`[search] page ${p} error:`, err);
       }
+
       if (domains.length >= 25) break;
-      await new Promise(r => setTimeout(r, 1000));
+      await page.waitForTimeout(1500);
     }
-  } catch (e) { /* идём дальше */ }
-  
+
+    await context.close();
+  } catch (err) {
+    console.error("[search] browser error:", err);
+  } finally {
+    await browser.close();
+  }
+
   return domains;
 }
 
@@ -65,13 +96,12 @@ export async function POST(req: NextRequest) {
   const allDomains: string[] = [];
   const seen = new Set<string>();
 
-  // Ищем по всем вариантам запросов
-  for (const q of queries.slice(0, 3)) {
-    const domains = await searchYandex(`${q} ${city}`);
-    for (const d of domains) {
-      if (!seen.has(d)) { seen.add(d); allDomains.push(d); }
-    }
-    if (allDomains.length >= 30) break;
+  // Ищем по первому (основному) запросу — для скорости
+  const mainQuery = queries[0];
+  const domains = await searchWithPlaywright(mainQuery, city);
+
+  for (const d of domains) {
+    if (!seen.has(d)) { seen.add(d); allDomains.push(d); }
   }
 
   const sites = allDomains.slice(0, 30).map(d => ({
@@ -80,5 +110,5 @@ export async function POST(req: NextRequest) {
     url: `https://${d}`,
   }));
 
-  return NextResponse.json({ sites, source: "yandex", count: sites.length });
+  return NextResponse.json({ sites, source: "playwright", count: sites.length });
 }
