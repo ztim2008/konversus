@@ -297,7 +297,25 @@ function generateKP(lead: Lead) {
                         {architectLoading ? "⏳ Анализ..." : "📈 +Architect"}
                       </button>
                     </div>
-                    <div><label className="text-xs text-gray-500">Тема письма</label><input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={"Аудит сайта " + previewLead.domain} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-2" /></div><div><label className="text-xs text-gray-500">Кому отправить (email)</label><div className="flex gap-2 mt-1"><input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder={previewLead.email || "email@компании.ру"} className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" /><button onClick={async () => { setEmailSending(true); try { const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: emailTo || previewLead.email || "bilariuss@yandex.ru", subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: generateKP(previewLead).replace(/\n/g,"<br>"), testMode })}); const d = await r.json(); setEmailSent(true); } catch{} setEmailSending(false); }} disabled={emailSending} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{emailSending ? "Отправка..." : emailSent ? "✅ Отправлено" : "📩 Отправить"}</button></div><label className="flex items-center gap-2 mt-2 text-xs text-gray-500"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> Тест-режим (отправить себе)</label></div></div>
+                    <div><label className="text-xs text-gray-500">Тема письма</label><input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={"Аудит сайта " + previewLead.domain} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-2" /></div><div><label className="text-xs text-gray-500">Кому отправить (email)</label><div className="flex gap-2 mt-1"><input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder={previewLead.email || "email@компании.ру"} className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" /><button onClick={async () => {
+                    setEmailStatus("sending");
+                    try {
+                      const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: emailTo || previewLead.email || "bilariuss@yandex.ru", subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: generateKP(previewLead).replace(/\n/g,"<br>"), testMode })});
+                      await new Promise(r => setTimeout(r, 1000));
+                      const d = await r.json();
+                      if (d.ok) {
+                        setEmailStatus("sent");
+                        setEmailSent(true);
+                        if (previewLead.id) {
+                          await fetch("/api/lead-radar", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"update-status", siteId: previewLead.id, status: "contacted" }) });
+                        }
+                      } else {
+                        setEmailStatus("error");
+                      }
+                    } catch { setEmailStatus("error"); }
+                  }} disabled={emailStatus === "sending" || emailStatus === "checking"} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+                    {emailStatus === "sending" ? "⏳ Отправка..." : emailStatus === "sent" ? "✅ Отправлено" : emailStatus === "error" ? "❌ Ошибка" : "📩 Отправить"}
+                  </button></div><label className="flex items-center gap-2 mt-2 text-xs text-gray-500"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> Тест-режим (отправить себе)</label></div></div>
                   </div>
                 </div>
               </div>
