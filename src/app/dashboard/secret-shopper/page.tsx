@@ -206,7 +206,7 @@ export default function LeadRadarPage() {
                     <tr key={lead.domain} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <p className="text-white font-semibold">{lead.name}</p>
-                        <p className="text-xs text-gray-500">{lead.domain}</p>
+                        <a href={"https://"+lead.domain} target="_blank" rel="noopener" className="text-xs text-indigo-400 hover:text-indigo-300">{lead.domain} ↗</a>
                       </td>
                       <td className="p-4">
                         {lead.ssl?.valid
