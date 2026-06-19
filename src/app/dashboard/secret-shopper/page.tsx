@@ -42,6 +42,11 @@ export default function LeadRadarPage() {
   const [newNiche, setNewNiche] = useState("Стоматологии");
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
   const [kpText, setKpText] = useState(KP_TEMPLATE);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [architectLoading, setArchitectLoading] = useState(false);
+  const [testMode, setTestMode] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
   const [auditProgress, setAuditProgress] = useState("");
 
@@ -152,7 +157,36 @@ export default function LeadRadarPage() {
     })));
   }
 
-  function generateKP(lead: Lead) {
+  async function runArchitect(lead: Lead) {
+    setArchitectLoading(true);
+    try {
+      const res = await fetch("/api/architect/analyze", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: lead.url }),
+      });
+      const data = await res.json();
+      if (data.id) {
+        // Ждём результат
+        let result = null;
+        for (let i = 0; i < 15; i++) {
+          await new Promise(r => setTimeout(r, 2000));
+          const check = await fetch(`/api/architect/${data.id}`);
+          const checkData = await check.json();
+          if (checkData.status === "done") { result = checkData.result_json || checkData; break; }
+        }
+        if (result) {
+          const growth = result.growth_potential_pct || "?";
+          const niche = result.niche || lead.name;
+          const summary = result.summary || "";
+          const archText = `\n\n📈 Анализ роста бизнеса (Architect):\n• Ниша: ${niche}\n• Потенциал роста: +${growth}%\n• ${summary}`;
+          setKpText(prev => prev + archText);
+        }
+      }
+    } catch {}
+    setArchitectLoading(false);
+  }
+
+function generateKP(lead: Lead) {
     const problems = lead.problems.map((p, i) => `${i === 0 ? "🔴" : "🟡"} ${p}`);
     return kpText.replace("[ДОМЕН]", lead.domain).replace("[ПРОБЛЕМЫ]", problems.join("\n"));
   }
@@ -253,8 +287,14 @@ export default function LeadRadarPage() {
                 <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
                   <div className="text-xs text-gray-500">📱 @bilarius · 📞 +7 921 201-32-52</div>
                   <div className="flex gap-2">
-                    <button onClick={() => navigator.clipboard.writeText(generateKP(previewLead))} className="flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:text-white">📋 Копировать</button>
-                    <button onClick={() => window.open(`https://t.me/bilarius`, "_blank")} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white">📩 Отправить</button>
+                    <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <button onClick={() => navigator.clipboard.writeText(generateKP(previewLead))} className="flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:text-white">📋 Копировать</button>
+                      <button onClick={() => runArchitect(previewLead)} disabled={architectLoading} className="flex items-center gap-1 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs text-indigo-400 hover:bg-indigo-500/20 disabled:opacity-50">
+                        {architectLoading ? "⏳ Анализ..." : "📈 +Architect"}
+                      </button>
+                    </div>
+                    <div><label className="text-xs text-gray-500">Кому отправить (email)</label><div className="flex gap-2 mt-1"><input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder={previewLead.email || "email@компании.ру"} className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" /><button onClick={async () => { setEmailSending(true); try { const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: emailTo || previewLead.email || "bilariuss@yandex.ru", subject: "Аудит сайта "+previewLead.domain, html: generateKP(previewLead).replace(/\n/g,"<br>"), testMode })}); const d = await r.json(); setEmailSent(true); } catch{} setEmailSending(false); }} disabled={emailSending} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{emailSending ? "Отправка..." : emailSent ? "✅ Отправлено" : "📩 Отправить"}</button></div><label className="flex items-center gap-2 mt-2 text-xs text-gray-500"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> Тест-режим (отправить себе)</label></div></div>
                   </div>
                 </div>
               </div>
