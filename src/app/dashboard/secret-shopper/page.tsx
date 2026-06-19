@@ -22,21 +22,8 @@ interface Lead {
   gradeColor: string;
 }
 
-interface SourceStatus {
-  status: "pending" | "running" | "done" | "error";
-  count: number;
-  error?: string;
-}
 
-interface ScanProgress {
-  stage: string;
-  sources: { twogis: SourceStatus; google: SourceStatus };
-  current: number;
-  total: number;
-  message: string;
-  error?: string;
-  sites?: any[];
-}
+
 
 const NICHES = ["Стоматологии","Строительство","Кафе и рестораны","Автосервисы","Юристы","Клиники","Салоны красоты","Фитнес-клубы","Отели","Грузоперевозки","Интернет-магазины","Недвижимость","Бухгалтерия","Рекламные агентства","Туризм","Образование","Производство","IT-компании"];
 const CITIES = ["Москва","Санкт-Петербург","Казань","Екатеринбург","Новосибирск","Краснодар","Ростов-на-Дону","Нижний Новгород","Челябинск","Самара"];
@@ -83,10 +70,7 @@ export default function LeadRadarPage() {
   const [progressTotal, setProgressTotal] = useState(0);
 
   // SSE прогресс
-  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
-  const [scanError, setScanError] = useState<string | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const currentScanIdRef = useRef<string | null>(null);
+  
 
   // Загружаем радары из БД
   useEffect(() => {
@@ -94,56 +78,11 @@ export default function LeadRadarPage() {
   }, []);
 
   // Cleanup SSE on unmount
-  useEffect(() => {
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, []);
 
-  function connectSSE(scanId: string) {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-
-    const es = new EventSource(`/api/secret-shopper/progress?radarId=${scanId}`);
-    eventSourceRef.current = es;
-    currentScanIdRef.current = scanId;
-
-    es.onmessage = (event) => {
-      try {
-        const data: ScanProgress = JSON.parse(event.data);
-        setScanProgress(data);
-
-        if (data.stage === "error") {
-          setScanError(data.error || data.message);
-          setLoading(false);
-          es.close();
-        }
-
-        if (data.stage === "done") {
-          setLoading(false);
-          es.close();
-          // Через 3 секунды скрыть прогресс
-          setTimeout(() => {
-            setScanProgress(null);
-            setScanError(null);
-          }, 3000);
-        }
-      } catch {}
-    };
-
-    es.onerror = () => {
-      es.close();
-    };
-  }
 
   async function addRadar() {
     setShowAdd(false);
     setLoading(true);
-    setScanError(null);
-    setScanProgress(null);
 
     // Сохраняем радар в БД
     const res = await fetch("/api/lead-radar", {
@@ -154,7 +93,6 @@ export default function LeadRadarPage() {
     setSelectedRadarId(id);
 
     // Подключаем SSE для прогресса
-    connectSSE(id);
 
     // Запускаем поиск
     try {
@@ -165,13 +103,12 @@ export default function LeadRadarPage() {
       const data = await searchRes.json();
 
       if (data.error) {
-        setScanError(data.error);
+        // ignore
         setLoading(false);
         return;
       }
 
       // Аудит
-      setScanProgress(prev => prev ? { ...prev, stage: "audit", message: `Аудит ${data.sites.length} сайтов...` } : null);
       const auditRes = await fetch("/api/secret-shopper/audit", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sites: data.sites }),
@@ -180,8 +117,7 @@ export default function LeadRadarPage() {
 
       // Контакты (уже есть из 2GIS)
       let contacts: any[] = [];
-      try { const cRes = await fetch("/api/secret-shopper/contacts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites.slice(0,10)})}); const cData = await cRes.json();
-      contacts = cData.contacts || []; } catch {} 
+      try { const cRes = await fetch("/api/secret-shopper/contacts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites.slice(0,10)})}); const cData = await cRes.json(); contacts = cData.contacts || []; } catch {}
 
       // Формируем лиды
       const newLeads: Lead[] = (auditData.results || []).map((r: any, i: number) => {
@@ -219,37 +155,14 @@ export default function LeadRadarPage() {
       const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
       setRadars(prev => [radar, ...prev]);
       setLeads(newLeads);
-      setScanProgress(null);
       setLoading(false);
 
     } catch (err: any) {
-      setScanError(err.message || "Неизвестная ошибка");
+      setAuditProgress("❌ " + (err.message || "Ошибка"));
       setLoading(false);
     }
   }
 
-  async function retrySearch() {
-    if (currentScanIdRef.current) {
-      setScanError(null);
-      setLoading(true);
-      connectSSE(currentScanIdRef.current);
-      
-      try {
-        const searchRes = await fetch("/api/secret-shopper/search", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ city: newCity, niche: newNiche, radarId: currentScanIdRef.current }),
-        });
-        const data = await searchRes.json();
-        
-        if (data.error) {
-          setScanError(data.error);
-        }
-      } catch (err: any) {
-        setScanError(err.message);
-      }
-      setLoading(false);
-    }
-  }
 
   async function deleteRadar(id: string) {
     await fetch("/api/lead-radar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete", id }) });
@@ -383,40 +296,6 @@ function generateKP(lead: Lead) {
   }
   const criticalCount = leads.filter(l => l.score >= 5).length;
 
-  function SourceProgressRow({ name, status }: { name: string; status: SourceStatus }) {
-    const icons: Record<string, React.ReactNode> = {
-      pending: <Clock size={14} className="text-gray-600" />,
-      running: <RefreshCw size={14} className="text-indigo-400 animate-spin" />,
-      done: <CheckCircle size={14} className="text-green-400" />,
-      error: <XCircle size={14} className="text-red-400" />,
-    };
-
-    return (
-      <div className="flex items-center gap-3 text-sm">
-        {icons[status.status]}
-        <span className="text-gray-400 w-28">{name}</span>
-        <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
-          <div 
-            className={`h-full rounded-full transition-all duration-300 ${
-              status.status === "done" ? "bg-green-500" : 
-              status.status === "error" ? "bg-red-500" : 
-              status.status === "running" ? "bg-indigo-500 animate-pulse" : "bg-white/10"
-            }`}
-            style={{ width: status.status === "done" ? "100%" : status.status === "running" ? "60%" : "0%" }}
-          />
-        </div>
-        <span className={`text-xs font-mono ${
-          status.status === "done" ? "text-green-400" : 
-          status.status === "error" ? "text-red-400" : 
-          status.status === "running" ? "text-indigo-400" : "text-gray-600"
-        }`}>
-          {status.status === "done" ? `${status.count} найдено` : 
-           status.status === "error" ? "ошибка" :
-           status.status === "running" ? "поиск..." : "ожидание"}
-        </span>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#0a0e13] text-gray-300">
@@ -446,60 +325,13 @@ function generateKP(lead: Lead) {
                   {loading ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />}
                   {loading ? "Поиск..." : "Запустить"}
                 </button>
-                <button onClick={() => { setShowAdd(false); setScanProgress(null); setScanError(null); }} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
+                <button onClick={() => { setShowAdd(false); }} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
               </div>
             </div>
           </div>
         )}
 
         {/* Прогресс-бар */}
-        {(scanProgress || scanError) && (
-          <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                {scanError ? <XCircle size={18} className="text-red-400" /> : <Zap size={18} className="text-indigo-400" />}
-                {scanError ? "Ошибка сканирования" : "Сканирование"}
-              </h3>
-              {scanProgress && scanProgress.stage !== "done" && scanProgress.stage !== "error" && (
-                <span className="text-xs text-gray-500">{scanProgress.message}</span>
-              )}
-            </div>
-
-            {scanError ? (
-              <div>
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
-                  <p className="text-red-400 text-sm">{scanError}</p>
-                </div>
-                <button 
-                  onClick={retrySearch}
-                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
-                >
-                  <RefreshCw size={14} /> Перезапустить
-                </button>
-              </div>
-            ) : scanProgress ? (
-              <div className="space-y-3">
-                <SourceProgressRow name="2GIS" status={scanProgress.sources.twogis} />
-                <SourceProgressRow name="Google Maps" status={scanProgress.sources.google} />
-                
-                {scanProgress.stage === "done" && (
-                  <div className="pt-3 border-t border-white/[0.06] flex items-center gap-2">
-                    <CheckCircle size={16} className="text-green-400" />
-                    <span className="text-green-400 text-sm font-semibold">
-                      Найдено {scanProgress.sources.twogis.count + scanProgress.sources.google.count} лидов
-                    </span>
-                    {scanProgress.sources.twogis.status === "error" && (
-                      <span className="text-xs text-gray-500">(2GIS недоступен)</span>
-                    )}
-                    {scanProgress.sources.google.status === "error" && (
-                      <span className="text-xs text-gray-500">(Google Maps недоступен)</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : null}
-          </div>
-        )}
 
         {activeTab === "radars" && radars.length > 0 && (
           <div className="mb-8">
@@ -542,13 +374,7 @@ function generateKP(lead: Lead) {
                     <tr key={lead.domain} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300 visited:text-purple-400">{lead.domain} ↗</a>
-                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
-                          <span className="text-xs text-gray-500 italic mt-0.5 block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>
-                        )}
-                        {lead.cms && (
-                          <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>
-                        )}
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
                         <div className="flex gap-2 mt-1">
                           {lead.h1 && !lead.h1.ok && <span className="text-xs text-red-400">H1: {lead.h1.count === 0 ? "нет" : lead.h1.texts[0]?.slice(0, 30)}</span>}
                           {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
@@ -607,10 +433,7 @@ function generateKP(lead: Lead) {
                     <tr key={lead.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400 text-sm">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300 visited:text-purple-400">{lead.domain} ↗</a>
-                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
-                          <span className="text-xs text-gray-500 italic block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>
-                        )}
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
                         {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
                         <span className="text-xs text-gray-400 italic block truncate max-w-[250px]">«{lead.h1.texts[0].slice(0, 80)}»</span>
                       )}
