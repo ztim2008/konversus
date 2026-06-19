@@ -103,6 +103,57 @@ export async function listEmails(siteId: string): Promise<any[]> {
   return rows as any[];
 }
 
+
+// ─── Follow-ups ────────────────────────────────────────────────────────────
+
+export async function createFollowUp(params: {
+  siteId: string; type?: string;
+}): Promise<string> {
+  const db = getDbPool();
+  const id = randomUUID();
+  await db.query(
+    "INSERT INTO lead_follow_ups (id, site_id, type) VALUES (?, ?, ?)",
+    [id, params.siteId, params.type || "email"]
+  );
+  await db.query(
+    "UPDATE lead_radar_sites SET contacted_at = NOW(), follow_up_at = DATE_ADD(NOW(), INTERVAL 3 DAY) WHERE id = ?",
+    [params.siteId]
+  );
+  return id;
+}
+
+export async function getFollowUpStats(): Promise<{
+  sent: number; opened: number; replied: number; won: number;
+}> {
+  const db = getDbPool();
+  const [[{sent}]] = await db.query("SELECT COUNT(*) as sent FROM lead_follow_ups") as any;
+  const [[{opened}]] = await db.query("SELECT COUNT(*) as opened FROM lead_follow_ups WHERE opened_at IS NOT NULL") as any;
+  const [[{replied}]] = await db.query("SELECT COUNT(*) as replied FROM lead_follow_ups WHERE replied_at IS NOT NULL") as any;
+  const [[{won}]] = await db.query("SELECT COUNT(*) as won FROM lead_radar_sites WHERE status = 'won'") as any;
+  return { sent, opened, replied, won };
+}
+
+export async function getOverdueFollowUps(): Promise<any[]> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT s.*, f.sent_at as follow_sent, f.id as follow_id
+     FROM lead_radar_sites s
+     JOIN lead_follow_ups f ON f.site_id = s.id
+     WHERE s.follow_up_at IS NOT NULL
+       AND s.follow_up_at <= NOW()
+       AND s.status != 'won'
+       AND s.status != 'lost'
+     ORDER BY s.follow_up_at ASC`
+  );
+  return rows as any[];
+}
+
+export async function markReplied(siteId: string): Promise<void> {
+  const db = getDbPool();
+  await db.query("UPDATE lead_radar_sites SET status = 'replied', replied_at = NOW() WHERE id = ?", [siteId]);
+  await db.query("UPDATE lead_follow_ups SET replied_at = NOW() WHERE site_id = ? ORDER BY sent_at DESC LIMIT 1", [siteId]);
+}
+
 export async function deleteRadarSites(radarId: string): Promise<void> {
   const db = getDbPool();
   await db.query("DELETE FROM lead_radar_sites WHERE radar_id = ?", [radarId]);

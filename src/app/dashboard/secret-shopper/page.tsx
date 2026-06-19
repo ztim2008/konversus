@@ -55,6 +55,8 @@ export default function LeadRadarPage() {
   const [architectLink, setArchitectLink] = useState<string | null>(null);
   const [testMode, setTestMode] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
+  const [followUpStats, setFollowUpStats] = useState({ sent: 0, opened: 0, replied: 0, won: 0 });
+  const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
 
   // Загружаем радары из БД
@@ -330,7 +332,7 @@ function generateKP(lead: Lead) {
             </div>
             <div className="border border-white/[0.06] rounded-xl overflow-hidden">
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-white/[0.06] bg-[#0f172a]"><th className="text-left p-4 text-xs text-gray-500">Сайт</th><th className="text-left p-4 text-xs text-gray-500">Оценка</th><th className="text-left p-4 text-xs text-gray-500">Проблемы</th><th className="text-left p-4 text-xs text-gray-500">Контакты</th><th className="text-left p-4 text-xs text-gray-500"></th></tr></thead>
+                <thead><tr className="border-b border-white/[0.06] bg-[#0f172a]"><th className="text-left p-4 text-xs text-gray-500">Сайт</th><th className="text-left p-4 text-xs text-gray-500">Оценка</th><th className="text-left p-4 text-xs text-gray-500">Проблемы</th><th className="text-left p-4 text-xs text-gray-500">Статус</th><th className="text-left p-4 text-xs text-gray-500">Контакты</th><th className="text-left p-4 text-xs text-gray-500"></th></tr></thead>
                 <tbody>
                   {leads.map(lead => (
                     <tr key={lead.domain} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
@@ -349,7 +351,16 @@ function generateKP(lead: Lead) {
                       </div>
                       </td>
                       <td className="p-4"><div className="flex flex-col gap-1">{lead.problems.slice(0, 2).map(p => <span key={p} className="text-xs text-gray-400">{p}</span>)}</div></td>
-                      <td className="p-4"><div className="flex flex-col gap-1 text-xs text-gray-400">{lead.phone && <span><Phone size={10} className="inline mr-1"/>{lead.phone}</span>}{lead.email && <span><Mail size={10} className="inline mr-1"/>{lead.email}</span>}</div></td>
+                      <td className="p-4">
+                      <div className="flex flex-col gap-1 text-xs">
+                        {lead.problems.includes("📩 отправлено") ? (
+                          <span className="text-green-400">📩 Отправлено</span>
+                        ) : lead.problems.includes("📞 позвонить") ? (
+                          <span className="text-amber-400">⏳ Ждёт 3+ дня</span>
+                        ) : ""}
+                      </div>
+                    </td>
+                    <td className="p-4"><div className="flex flex-col gap-1 text-xs text-gray-400">{lead.phone && <span><Phone size={10} className="inline mr-1"/>{lead.phone}</span>}{lead.email && <span><Mail size={10} className="inline mr-1"/>{lead.email}</span>}</div></td>
                       <td className="p-4"><button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП →</button></td>
                     </tr>
                   ))}
