@@ -542,7 +542,13 @@ function generateKP(lead: Lead) {
                     <tr key={lead.domain} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300 visited:text-purple-400">{lead.domain} ↗</a>
+                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
+                          <span className="text-xs text-gray-500 italic mt-0.5 block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>
+                        )}
+                        {lead.cms && (
+                          <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>
+                        )}
                         <div className="flex gap-2 mt-1">
                           {lead.h1 && !lead.h1.ok && <span className="text-xs text-red-400">H1: {lead.h1.count === 0 ? "нет" : lead.h1.texts[0]?.slice(0, 30)}</span>}
                           {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
@@ -601,7 +607,10 @@ function generateKP(lead: Lead) {
                     <tr key={lead.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400 text-sm">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300 visited:text-purple-400">{lead.domain} ↗</a>
+                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
+                          <span className="text-xs text-gray-500 italic block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>
+                        )}
                         {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
                         <span className="text-xs text-gray-400 italic block truncate max-w-[250px]">«{lead.h1.texts[0].slice(0, 80)}»</span>
                       )}
