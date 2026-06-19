@@ -425,6 +425,10 @@ function generateKP(lead: Lead) {
             <h1 className="text-2xl font-bold text-white flex items-center gap-3"><Radar size={28} className="text-indigo-400" /> Лид-радар</h1>
             <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. 2GIS + Google Maps. Сохранение в БД.</p>
           </div>
+          <div className="flex gap-2">
+            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold transition-colors " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400 hover:text-white")}>📡 Радары</button>
+            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,ssl:{valid:s.ssl_status==="ok",daysRemaining:s.ssl_days||0,grade:s.ssl_grade||"?"},score:s.score||0,scorePercent:Math.max(0,100-(s.score||0)*12),problems:typeof s.problems==="string"?JSON.parse(s.problems):(s.problems||[]),gradeColor:(s.score||0)<=2?"#10b981":(s.score||0)<=4?"#f59e0b":"#ef4444",hotScore:s.hotScore||50,phone:s.phone,email:s.email,sent:s.status==="contacted"||s.status==="replied",status:s.status}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold transition-colors " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400 hover:text-white")}>📋 Лиды в работе</button>
+          </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
           </button>
