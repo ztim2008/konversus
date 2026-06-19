@@ -180,6 +180,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <Link className="db-action" href="/">На главную</Link>
             <Link className="db-action" href="/dashboard/architect">Architect</Link>
             <Link className="db-action" href="/dashboard/leads">🎯 Lead Hunter</Link>
+            <Link className="db-action" href="/dashboard/secret-shopper">🔍 Тайный покупатель</Link>
             <Link className="db-action" href="/dashboard/settings">Настройки</Link>
             <Link className="db-action" href="/dashboard/reviews">Отзывы</Link>
             <form action={signOutAction}><button className="db-action" type="submit">Выйти</button></form>
