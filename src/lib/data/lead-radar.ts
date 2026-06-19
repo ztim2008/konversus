@@ -154,7 +154,7 @@ export async function markReplied(siteId: string): Promise<void> {
   await db.query("UPDATE lead_follow_ups SET replied_at = NOW() WHERE site_id = ? ORDER BY sent_at DESC LIMIT 1", [siteId]);
 }
 
-export async function listAllSites(): Promise<any[]> { const db = getDbPool(); const [rows] = await db.query('SELECT s.*, f.opened_at FROM lead_radar_sites s LEFT JOIN lead_follow_ups f ON f.site_id = s.id AND f.opened_at IS NOT NULL WHERE (s.status != 'new' OR s.contacted_at IS NOT NULL) ORDER BY s.contacted_at DESC, s.found_at DESC LIMIT 100', ['new']); return rows as any[]; }
+export async function listAllSites(): Promise<any[]> { const db = getDbPool(); const [rows] = await db.query('SELECT s.*, f.opened_at FROM lead_radar_sites s LEFT JOIN lead_follow_ups f ON f.site_id = s.id AND f.opened_at IS NOT NULL WHERE (s.status != ? OR s.contacted_at IS NOT NULL) ORDER BY s.contacted_at DESC, s.found_at DESC LIMIT 100', ['new']); return rows as any[]; }
 
 export async function deleteSite(id: string): Promise<void> {
   const db = getDbPool();
