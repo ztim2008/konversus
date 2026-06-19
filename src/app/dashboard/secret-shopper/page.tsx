@@ -427,7 +427,7 @@ function generateKP(lead: Lead) {
           </div>
           <div className="flex gap-2">
             <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold transition-colors " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400 hover:text-white")}>📡 Радары</button>
-            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,ssl:{valid:s.ssl_status==="ok",daysRemaining:s.ssl_days||0,grade:s.ssl_grade||"?"},score:s.score||0,scorePercent:Math.max(0,100-(s.score||0)*12),problems:typeof s.problems==="string"?JSON.parse(s.problems):(s.problems||[]),gradeColor:(s.score||0)<=2?"#10b981":(s.score||0)<=4?"#f59e0b":"#ef4444",hotScore:s.hotScore||50,phone:s.phone,email:s.email,sent:s.status==="contacted"||s.status==="replied",status:s.status}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold transition-colors " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400 hover:text-white")}>📋 Лиды в работе</button>
+            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,ssl:{valid:s.ssl_status==="ok",daysRemaining:s.ssl_days||0,grade:s.ssl_grade||"?"},score:s.score||0,scorePercent:Math.max(0,100-(s.score||0)*12),problems:typeof s.problems==="string"?JSON.parse(s.problems):(s.problems||[]),gradeColor:(s.score||0)<=2?"#10b981":(s.score||0)<=4?"#f59e0b":"#ef4444",hotScore:s.hotScore||50,phone:s.phone,email:s.email,sent:s.status==="contacted"||s.status==="replied",opened:!!s.opened_at,status:s.status}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold transition-colors " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400 hover:text-white")}>📋 Лиды в работе</button>
           </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
@@ -599,13 +599,14 @@ function generateKP(lead: Lead) {
                         {lead.email && <span className="text-xs text-gray-500 block">{lead.email}</span>}
                       </td>
                       <td className="p-4">
-                        <select defaultValue={lead.status} onChange={async (e:any) => { const ns = e.target.value; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:ns})}); setPipelineLeads((prev:any)=>prev.map((l:any)=>l.id===lead.id?{...l,status:ns,sent:ns==="contacted"||ns==="replied"}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
+                        <select defaultValue={lead.status} onChange={async (e:any) => { const ns = e.target.value; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:ns})}); setPipelineLeads((prev:any)=>prev.map((l:any)=>l.id===lead.id?{...l,status:ns,sent:ns==="contacted"||ns==="replied",opened:lead.opened}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
                           <option value="new">Новый</option>
                           <option value="contacted">📩 Отправлено</option>
                           <option value="replied">✅ Отвечено</option>
                           <option value="won">🏆 Выиграл</option>
                           <option value="lost">❌ Проиграл</option>
                         </select>
+                        {lead.opened && <span className="text-xs text-blue-400 ml-2">👁 Открыто</span>}
                       </td>
                       <td className="p-4">
                         <div className="flex gap-2">
