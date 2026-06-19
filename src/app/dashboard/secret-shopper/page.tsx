@@ -494,8 +494,8 @@ function generateKP(lead: Lead) {
                   }} disabled={emailStatus === "sending" || emailStatus === "checking"} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
                     {emailStatus === "sending" ? "⏳ Отправка..." : emailStatus === "sent" ? "✅ Отправлено" : emailStatus === "error" ? "❌ Ошибка" : "📩 Отправить"}
                   </button></div><div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <label className="flex items-center gap-2"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> 📨 Мне (проверка)</label>
-                    <label className="flex items-center gap-2"><input type="checkbox" checked={!testMode} onChange={e => setTestMode(!e.target.checked)} /> 📩 Клиенту</label>
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> 📨 Мне (копия)</label>
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={sendToClient} onChange={e => setSendToClient(e.target.checked)} /> 📩 Клиенту</label>
                   </div></div></div>
                   </div>
                 </div>
