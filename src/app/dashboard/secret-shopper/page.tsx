@@ -178,10 +178,16 @@ export default function LeadRadarPage() {
       });
       const auditData = await auditRes.json();
 
-      // Контакты (уже есть из 2GIS)
+      // Контакты
       let contacts: any[] = [];
-      const sitesWithContacts = data.sites.filter((s: any) => s.phone || s.email);
-      contacts = sitesWithContacts;
+      try {
+        const cRes = await fetch('/api/secret-shopper/contacts', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ sites: data.sites.slice(0, 10) }),
+        });
+        const cData = await cRes.json();
+        contacts = cData.contacts || [];
+      } catch {}
 
       // Формируем лиды
       const newLeads: Lead[] = (auditData.results || []).map((r: any, i: number) => {
