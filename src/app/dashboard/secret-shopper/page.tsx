@@ -269,7 +269,7 @@ export default function LeadRadarPage() {
       score: s.score || 0, scorePercent: Math.max(0, 100 - (s.score || 0) * 12),
       problems: typeof s.problems === "string" ? JSON.parse(s.problems) : (s.problems || []),
       sent: s.status === "contacted" || s.status === "replied",
-      h1: null, cms: null, hotScore: s.hotScore || 50, contactName: null, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
+      h1: s.h1 || null, cms: s.cms || null, hotScore: s.hotScore || 50, contactName: null, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
       phone: s.phone, email: s.email,
     })));
   }
@@ -541,7 +541,10 @@ function generateKP(lead: Lead) {
                         <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
                         <div className="flex gap-2 mt-1">
                           {lead.h1 && !lead.h1.ok && <span className="text-xs text-red-400">H1: {lead.h1.count === 0 ? "нет" : lead.h1.texts[0]?.slice(0, 30)}</span>}
-                          {lead.cms && <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">{lead.cms}</span>}
+                          {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
+                        <span className="text-xs text-gray-400 italic mt-0.5 block truncate max-w-[250px]">«{lead.h1.texts[0].slice(0, 80)}»</span>
+                      )}
+                      {lead.cms && <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>}
                         </div>
                       </td>
                       <td className="p-4">
@@ -595,7 +598,10 @@ function generateKP(lead: Lead) {
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400 text-sm">{lead.name}</a>
                         <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
-                        {lead.phone && <span className="text-xs text-gray-500 block">{lead.phone}</span>}
+                        {lead.h1 && lead.h1.texts && lead.h1.texts[0] && (
+                        <span className="text-xs text-gray-400 italic block truncate max-w-[250px]">«{lead.h1.texts[0].slice(0, 80)}»</span>
+                      )}
+                      {lead.phone && <span className="text-xs text-gray-500 block">{lead.phone}</span>}
                         {lead.email && <span className="text-xs text-gray-500 block">{lead.email}</span>}
                       </td>
                       <td className="p-4">
