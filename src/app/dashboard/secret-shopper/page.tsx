@@ -57,6 +57,7 @@ export default function LeadRadarPage() {
   const [architectLoading, setArchitectLoading] = useState(false);
   const [architectLink, setArchitectLink] = useState<string | null>(null);
   const [testMode, setTestMode] = useState(true);
+  const [sendToClient, setSendToClient] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("radars");
   const [pipelineLeads, setPipelineLeads] = useState<any[]>([]);
@@ -291,7 +292,7 @@ function generateKP(lead: Lead) {
           </div>
           <div className="flex gap-2 mb-4">
             <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📡 Радары</button>
-            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,phone:s.phone,email:s.email,status:s.status}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📋 Лиды в работе</button>
+            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,phone:s.phone,email:s.email,status:s.status,opened:!!s.opened_at}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📋 Лиды в работе</button>
           </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
@@ -417,6 +418,7 @@ function generateKP(lead: Lead) {
                         <select defaultValue={lead.status} onChange={async (e:any) => { await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:e.target.value})}); setPipelineLeads((p:any)=>p.map((l:any)=>l.id===lead.id?{...l,status:e.target.value}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
                           <option value="new">Новый</option><option value="contacted">📩 Отправлено</option><option value="replied">✅ Отвечено</option><option value="won">🏆 Выиграл</option><option value="lost">❌ Проиграл</option>
                         </select>
+                        {lead.opened && <span className="text-xs text-blue-400 ml-2">👁</span>}
                       </td>
                       <td className="p-4"><span className="text-xs text-gray-400">{lead.email}</span></td>
                       <td className="p-4"><button onClick={async()=>{if(!confirm("Удалить?"))return;await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})});setPipelineLeads((p:any)=>p.filter((l:any)=>l.id!==lead.id));}} className="text-xs text-gray-600 hover:text-red-400">🗑</button></td>
@@ -470,7 +472,7 @@ function generateKP(lead: Lead) {
                     <div><label className="text-xs text-gray-500">Тема письма</label><input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={"Аудит сайта " + previewLead.domain} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-2" /></div><div><label className="text-xs text-gray-500">Кому отправить (email)</label><div className="flex gap-2 mt-1"><input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder={previewLead.email || "email@компании.ру"} className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" /><button onClick={async () => {
                     setEmailStatus("sending");
                     try {
-                      const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: emailTo || previewLead.email || "bilariuss@yandex.ru", subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: buildEmailHtml(previewLead, generateKP(previewLead)), testMode, siteId: previewLead.id || "", radarId: selectedRadarId || "" })});
+                      const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: sendToClient ? (emailTo || previewLead.email) : "bilariuss@yandex.ru", testMode: testMode || sendToClient, subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: buildEmailHtml(previewLead, generateKP(previewLead)), siteId: previewLead.id || "", radarId: selectedRadarId || "" })});
                       await new Promise(r => setTimeout(r, 1000));
                       const d = await r.json();
                       if (d.ok) {
