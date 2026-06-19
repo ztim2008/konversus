@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, Plus, Trash2, ExternalLink, Phone, Mail, Send, FileText, RefreshCw, Radar, Zap, Clock, CheckCircle, XCircle, ArrowUpRight } from "lucide-react";
 
 interface Radar {
@@ -20,6 +20,22 @@ interface Lead {
   phone?: string; email?: string;
   problems: string[];
   gradeColor: string;
+}
+
+interface SourceStatus {
+  status: "pending" | "running" | "done" | "error";
+  count: number;
+  error?: string;
+}
+
+interface ScanProgress {
+  stage: string;
+  sources: { twogis: SourceStatus; google: SourceStatus };
+  current: number;
+  total: number;
+  message: string;
+  error?: string;
+  sites?: any[];
 }
 
 const NICHES = ["Стоматологии","Строительство","Кафе и рестораны","Автосервисы","Юристы","Клиники","Салоны красоты","Фитнес-клубы","Отели","Грузоперевозки","Интернет-магазины","Недвижимость","Бухгалтерия","Рекламные агентства","Туризм","Образование","Производство","IT-компании"];
@@ -64,13 +80,68 @@ export default function LeadRadarPage() {
   const [progressStep, setProgressStep] = useState(0);
   const [progressTotal, setProgressTotal] = useState(0);
 
+  // SSE прогресс
+  const [scanProgress, setScanProgress] = useState<ScanProgress | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const currentScanIdRef = useRef<string | null>(null);
+
   // Загружаем радары из БД
   useEffect(() => {
     fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars(d.radars || [])).catch(() => {});
   }, []);
 
+  // Cleanup SSE on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
+  }, []);
+
+  function connectSSE(scanId: string) {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const es = new EventSource(`/api/secret-shopper/progress?radarId=${scanId}`);
+    eventSourceRef.current = es;
+    currentScanIdRef.current = scanId;
+
+    es.onmessage = (event) => {
+      try {
+        const data: ScanProgress = JSON.parse(event.data);
+        setScanProgress(data);
+
+        if (data.stage === "error") {
+          setScanError(data.error || data.message);
+          setLoading(false);
+          es.close();
+        }
+
+        if (data.stage === "done") {
+          setLoading(false);
+          es.close();
+          // Через 3 секунды скрыть прогресс
+          setTimeout(() => {
+            setScanProgress(null);
+            setScanError(null);
+          }, 3000);
+        }
+      } catch {}
+    };
+
+    es.onerror = () => {
+      es.close();
+    };
+  }
+
   async function addRadar() {
-    setShowAdd(false); setLoading(true);
+    setShowAdd(false);
+    setLoading(true);
+    setScanError(null);
+    setScanProgress(null);
 
     // Сохраняем радар в БД
     const res = await fetch("/api/lead-radar", {
@@ -80,77 +151,101 @@ export default function LeadRadarPage() {
     const { id } = await res.json();
     setSelectedRadarId(id);
 
-    // Поиск сайтов
-    setAuditProgress("🔍 Ищем компании в Google Maps и 2GIS...");
-    setProgressStep(1); setProgressTotal(4);
-    const searchRes = await fetch("/api/secret-shopper/search", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ city: newCity, niche: newNiche }),
-    });
-    const data = await searchRes.json();
+    // Подключаем SSE для прогресса
+    connectSSE(id);
 
-    // Аудит
-    setAuditProgress("🧠 Аудит сайтов...");
-    setProgressStep(2);
-    const auditRes = await fetch("/api/secret-shopper/audit", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sites: data.sites }),
-    });
-    const auditData = await auditRes.json();
-
-    // Контакты
-    setAuditProgress("📞 Извлекаем телефоны и email...");
-    setProgressStep(3);
-    let contacts: any[] = [];
+    // Запускаем поиск
     try {
-      const cRes = await fetch("/api/secret-shopper/contacts", {
+      const searchRes = await fetch("/api/secret-shopper/search", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sites: data.sites.slice(0, 10) }),
+        body: JSON.stringify({ city: newCity, niche: newNiche, radarId: id }),
       });
-      const cData = await cRes.json();
-      contacts = cData.contacts || [];
-    } catch {}
+      const data = await searchRes.json();
 
-    // Формируем лиды
-    const newLeads: Lead[] = (auditData.results || []).map((r: any, i: number) => {
-      const contact = contacts.find((c: any) => c.domain === r.domain);
-      return {
-        id: "",
-        domain: r.domain,
-        name: r.name,
-        url: `https://${r.domain}`,
-        ssl: { valid: r.audit?.ssl, daysRemaining: r.audit?.ssl ? 90 : 0, grade: r.audit?.grade || "?" },
-        score: r.audit?.score || 0,
-        scorePercent: r.audit?.scorePercent || 50,
-        problems: r.audit?.issues || [],
-        h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50, contactName: r.audit?.contactName, gradeColor: r.audit?.gradeColor || "#10b981",
-        phone: contact?.phone,
-        email: contact?.email,
-      };
-    });
+      if (data.error) {
+        setScanError(data.error);
+        setLoading(false);
+        return;
+      }
 
-    // Сохраняем сайты в БД
-    await fetch("/api/lead-radar", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "save-sites", radarId: id,
-        sites: newLeads.map(l => ({
-          domain: l.domain, name: l.name, url: l.url,
-          ssl_status: l.ssl?.valid ? "ok" : "error", ssl_days: l.ssl?.daysRemaining,
-          ssl_grade: l.ssl?.grade, score: l.score, phone: l.phone, email: l.email,
-          problems: l.problems,
-        })),
-      }),
-    });
+      // Аудит
+      setScanProgress(prev => prev ? { ...prev, stage: "audit", message: `Аудит ${data.sites.length} сайтов...` } : null);
+      const auditRes = await fetch("/api/secret-shopper/audit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sites: data.sites }),
+      });
+      const auditData = await auditRes.json();
 
-    // Обновляем список
-    const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
-    setRadars(prev => [radar, ...prev]);
-    setLeads(newLeads);
-    setAuditProgress("✅ Найдено " + newLeads.length + " лидов");
-    setProgressStep(4);
-    setTimeout(() => { setAuditProgress(""); setProgressStep(0); }, 2500);
-    setLoading(false);
+      // Контакты (уже есть из 2GIS)
+      let contacts: any[] = [];
+      const sitesWithContacts = data.sites.filter((s: any) => s.phone || s.email);
+      contacts = sitesWithContacts;
+
+      // Формируем лиды
+      const newLeads: Lead[] = (auditData.results || []).map((r: any, i: number) => {
+        const contact = contacts.find((c: any) => c.domain === r.domain);
+        return {
+          id: "",
+          domain: r.domain,
+          name: r.name,
+          url: `https://${r.domain}`,
+          ssl: { valid: r.audit?.ssl, daysRemaining: r.audit?.ssl ? 90 : 0, grade: r.audit?.grade || "?" },
+          score: r.audit?.score || 0,
+          scorePercent: r.audit?.scorePercent || 50,
+          problems: r.audit?.issues || [],
+          h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50, contactName: r.audit?.contactName, gradeColor: r.audit?.gradeColor || "#10b981",
+          phone: contact?.phone,
+          email: contact?.email,
+        };
+      });
+
+      // Сохраняем сайты в БД
+      await fetch("/api/lead-radar", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save-sites", radarId: id,
+          sites: newLeads.map(l => ({
+            domain: l.domain, name: l.name, url: l.url,
+            ssl_status: l.ssl?.valid ? "ok" : "error", ssl_days: l.ssl?.daysRemaining,
+            ssl_grade: l.ssl?.grade, score: l.score, phone: l.phone, email: l.email,
+            problems: l.problems,
+          })),
+        }),
+      });
+
+      // Обновляем список
+      const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
+      setRadars(prev => [radar, ...prev]);
+      setLeads(newLeads);
+      setLoading(false);
+
+    } catch (err: any) {
+      setScanError(err.message || "Неизвестная ошибка");
+      setLoading(false);
+    }
+  }
+
+  async function retrySearch() {
+    if (currentScanIdRef.current) {
+      setScanError(null);
+      setLoading(true);
+      connectSSE(currentScanIdRef.current);
+      
+      try {
+        const searchRes = await fetch("/api/secret-shopper/search", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ city: newCity, niche: newNiche, radarId: currentScanIdRef.current }),
+        });
+        const data = await searchRes.json();
+        
+        if (data.error) {
+          setScanError(data.error);
+        }
+      } catch (err: any) {
+        setScanError(err.message);
+      }
+      setLoading(false);
+    }
   }
 
   async function deleteRadar(id: string) {
@@ -186,7 +281,6 @@ export default function LeadRadarPage() {
       });
       const data = await res.json();
       if (data.id) {
-        // Ждём результат
         let result = null;
         for (let i = 0; i < 15; i++) {
           await new Promise(r => setTimeout(r, 2000));
@@ -286,13 +380,48 @@ function generateKP(lead: Lead) {
   }
   const criticalCount = leads.filter(l => l.score >= 5).length;
 
+  function SourceProgressRow({ name, status }: { name: string; status: SourceStatus }) {
+    const icons: Record<string, React.ReactNode> = {
+      pending: <Clock size={14} className="text-gray-600" />,
+      running: <RefreshCw size={14} className="text-indigo-400 animate-spin" />,
+      done: <CheckCircle size={14} className="text-green-400" />,
+      error: <XCircle size={14} className="text-red-400" />,
+    };
+
+    return (
+      <div className="flex items-center gap-3 text-sm">
+        {icons[status.status]}
+        <span className="text-gray-400 w-28">{name}</span>
+        <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-300 ${
+              status.status === "done" ? "bg-green-500" : 
+              status.status === "error" ? "bg-red-500" : 
+              status.status === "running" ? "bg-indigo-500 animate-pulse" : "bg-white/10"
+            }`}
+            style={{ width: status.status === "done" ? "100%" : status.status === "running" ? "60%" : "0%" }}
+          />
+        </div>
+        <span className={`text-xs font-mono ${
+          status.status === "done" ? "text-green-400" : 
+          status.status === "error" ? "text-red-400" : 
+          status.status === "running" ? "text-indigo-400" : "text-gray-600"
+        }`}>
+          {status.status === "done" ? `${status.count} найдено` : 
+           status.status === "error" ? "ошибка" :
+           status.status === "running" ? "поиск..." : "ожидание"}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0e13] text-gray-300">
       <div className="max-w-6xl mx-auto p-6 sm:p-10">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-3"><Radar size={28} className="text-indigo-400" /> Лид-радар</h1>
-            <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. Google Maps + 2GIS. Сохранение в БД.</p>
+            <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. 2GIS + Google Maps. Сохранение в БД.</p>
           </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
@@ -308,20 +437,60 @@ function generateKP(lead: Lead) {
               <div className="flex items-end gap-2">
                 <button onClick={addRadar} disabled={loading} className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">
                   {loading ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />}
-                  {loading ? (
-                    <span className="flex flex-col items-start gap-1">
-                      <span className="text-xs">{auditProgress || "Поиск..."}</span>
-                      <span className="flex gap-1">
-                        {[1,2,3,4].map(s => (
-                          <span key={s} className={`h-1 w-8 rounded-full transition-colors ${s <= progressStep ? (s === 4 ? "bg-green-500" : "bg-indigo-500") : "bg-white/10"}`} />
-                        ))}
-                      </span>
-                    </span>
-                  ) : "Запустить"}
+                  {loading ? "Поиск..." : "Запустить"}
                 </button>
-                <button onClick={() => setShowAdd(false)} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
+                <button onClick={() => { setShowAdd(false); setScanProgress(null); setScanError(null); }} className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-gray-400 hover:text-white">✕</button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Прогресс-бар */}
+        {(scanProgress || scanError) && (
+          <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                {scanError ? <XCircle size={18} className="text-red-400" /> : <Zap size={18} className="text-indigo-400" />}
+                {scanError ? "Ошибка сканирования" : "Сканирование"}
+              </h3>
+              {scanProgress && scanProgress.stage !== "done" && scanProgress.stage !== "error" && (
+                <span className="text-xs text-gray-500">{scanProgress.message}</span>
+              )}
+            </div>
+
+            {scanError ? (
+              <div>
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                  <p className="text-red-400 text-sm">{scanError}</p>
+                </div>
+                <button 
+                  onClick={retrySearch}
+                  className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                >
+                  <RefreshCw size={14} /> Перезапустить
+                </button>
+              </div>
+            ) : scanProgress ? (
+              <div className="space-y-3">
+                <SourceProgressRow name="2GIS" status={scanProgress.sources.twogis} />
+                <SourceProgressRow name="Google Maps" status={scanProgress.sources.google} />
+                
+                {scanProgress.stage === "done" && (
+                  <div className="pt-3 border-t border-white/[0.06] flex items-center gap-2">
+                    <CheckCircle size={16} className="text-green-400" />
+                    <span className="text-green-400 text-sm font-semibold">
+                      Найдено {scanProgress.sources.twogis.count + scanProgress.sources.google.count} лидов
+                    </span>
+                    {scanProgress.sources.twogis.status === "error" && (
+                      <span className="text-xs text-gray-500">(2GIS недоступен)</span>
+                    )}
+                    {scanProgress.sources.google.status === "error" && (
+                      <span className="text-xs text-gray-500">(Google Maps недоступен)</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -447,8 +616,6 @@ function generateKP(lead: Lead) {
                       if (d.ok) {
                         setEmailStatus("sent");
                         setEmailSent(true);
-                        // Confirmation shown via status change
-                        // Обновить статус в таблице
                         setLeads(prev => prev.map((l: any) => l.domain === previewLead.domain ? {...l, sent: true, problems: [...l.problems.filter((p: string) => !p.includes("📩")), "📩 отправлено"]} : l));
                         if (previewLead.id) {
                           await fetch("/api/lead-radar", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"update-status", siteId: previewLead.id, status: "contacted" }) });

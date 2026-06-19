@@ -1,176 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import { chromium } from "playwright";
-
-const NICHE_QUERIES: Record<string, string[]> = {
-  "Стоматологии": ["стоматология", "стоматологическая клиника"],
-  "Строительство": ["строительная компания", "ремонт квартир"],
-  "Кафе и рестораны": ["кафе", "ресторан"],
-  "Автосервисы": ["автосервис", "шиномонтаж"],
-  "Юристы": ["юридическая компания", "адвокат"],
-  "Клиники": ["медицинский центр", "клиника"],
-  "Салоны красоты": ["салон красоты", "парикмахерская"],
-  "Фитнес-клубы": ["фитнес клуб", "тренажерный зал"],
-  "Отели": ["гостиница", "отель"],
-  "Грузоперевозки": ["грузоперевозки", "транспортная компания"],
-  "Интернет-магазины": ["интернет магазин", "онлайн магазин"],
-  "Недвижимость": ["агентство недвижимости", "риэлтор"],
-  "Бухгалтерия": ["бухгалтерские услуги", "бухгалтер"],
-  "Рекламные агентства": ["рекламное агентство", "маркетинговое агентство"],
-  "Туризм": ["турагентство", "туроператор"],
-  "Образование": ["образовательный центр", "курсы"],
-  "Производство": ["производственная компания", "завод"],
-  "Сельское хозяйство": ["фермерское хозяйство", "агрокомплекс"],
-  "IT-компании": ["it компания", "веб-студия"],
-  "Охранные предприятия": ["охранное предприятие", "чоп"],
-};
-
-const RU_DOMAIN = /\.(ru|рф|су|москва|moscow|дети)$/i;
-const SKIP = /yandex|google|2gis|wikipedia|facebook|vk\.com|instagram|youtube|t\.me|telegram|avito|youla|cian|dzen|ya\.ru|yastatic/i;
-
-async function searchGoogleMaps(query: string, city: string): Promise<string[]> {
-  const domains: string[] = [];
-  const seen = new Set<string>();
-  const browser = await chromium.launch({ headless: true });
-
-  try {
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
-      viewport: { width: 1920, height: 1080 },
-    });
-    const page = await context.newPage();
-
-    // Google Maps search
-    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(query + " " + city)}`;
-    console.log(`[maps] ${mapsUrl}`);
-
-    await page.goto(mapsUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
-    await page.waitForTimeout(5000);
-
-    // Скроллим для загрузки результатов
-    for (let i = 0; i < 3; i++) {
-      await page.evaluate(() => {
-        const panel = document.querySelector('[role="feed"], .m6QErb') || document.body;
-        panel.scrollBy(0, 500);
-      });
-      await page.waitForTimeout(1500);
-    }
-
-    // Извлекаем все ссылки
-    const links = await page.evaluate(() => {
-      const results: string[] = [];
-      document.querySelectorAll("a[href]").forEach(a => {
-        const h = (a as HTMLAnchorElement).href;
-        if (h.startsWith("http") && !h.includes("google") && !h.includes("gstatic")) {
-          results.push(h);
-        }
-      });
-      return results;
-    });
-
-    for (const link of links) {
-      try {
-        const u = new URL(link);
-        let d = u.hostname.replace(/^www\./, "").toLowerCase();
-        if (!RU_DOMAIN.test(d)) continue;
-        if (SKIP.test(d)) continue;
-        if (d.length < 5) continue;
-        if (seen.has(d)) continue;
-        seen.add(d);
-        domains.push(d);
-      } catch {}
-    }
-
-    await context.close();
-  } catch (err) {
-    console.error("[maps] error:", err);
-  } finally {
-    await browser.close();
-  }
-
-  return domains;
-}
-
-
-async function search2GIS(query: string, city: string): Promise<string[]> {
-  const domains: string[] = [];
-  const seen = new Set<string>();
-  const browser = await chromium.launch({ headless: true });
-
-  try {
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
-      viewport: { width: 1920, height: 1080 },
-    });
-    const page = await context.newPage();
-
-    // 2GIS поиск
-    const searchUrl = `https://2gis.ru/${encodeURIComponent(city.toLowerCase())}/search/${encodeURIComponent(query)}`;
-    console.log(`[2gis] ${searchUrl}`);
-
-    await page.goto(searchUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
-    await page.waitForTimeout(4000);
-
-    // Извлекаем ссылки на сайты
-    const links = await page.evaluate(() => {
-      const results: string[] = [];
-      document.querySelectorAll("a[href]").forEach(a => {
-        const h = (a as HTMLAnchorElement).href;
-        if (h.startsWith("http") && !h.includes("2gis") && !h.includes("google")) {
-          results.push(h);
-        }
-      });
-      return results;
-    });
-
-    for (const link of links) {
-      try {
-        const u = new URL(link);
-        let d = u.hostname.replace(/^www\./, "").toLowerCase();
-        if (!RU_DOMAIN.test(d)) continue;
-        if (SKIP.test(d)) continue;
-        if (d.length < 5) continue;
-        if (seen.has(d)) continue;
-        seen.add(d);
-        domains.push(d);
-      } catch {}
-    }
-
-    await context.close();
-  } catch (err) {
-    console.error("[2gis] error:", err);
-  } finally {
-    await browser.close();
-  }
-
-  return domains;
-}
+import { searchAllSources } from "@/lib/lead-sources";
+import { createProgress, updateProgress, deleteProgress } from "@/lib/scan-progress";
 
 export async function POST(req: NextRequest) {
-  const { city, niche } = await req.json();
-  if (!city || !niche) return NextResponse.json({ error: "city and niche required" }, { status: 400 });
+  const { city, niche, radarId } = await req.json();
 
-  const queries = NICHE_QUERIES[niche] || [niche];
-  const allDomains: string[] = [];
-  const seen = new Set<string>();
-
-  // Google Maps + 2GIS поиск
-  for (const q of queries.slice(0, 2)) {
-    const [gmDomains, gisDomains] = await Promise.all([
-      searchGoogleMaps(q, city).catch(() => [] as string[]),
-      search2GIS(q, city).catch(() => [] as string[]),
-    ]);
-    const domains = [...gmDomains, ...gisDomains];
-    for (const d of domains) {
-      if (!seen.has(d)) { seen.add(d); allDomains.push(d); }
-    }
-    if (allDomains.length >= 25) break;
+  if (!city || !niche) {
+    return NextResponse.json({ error: "city and niche required" }, { status: 400 });
   }
 
-  const sites = allDomains.slice(0, 30).map(d => ({
-    domain: d,
-    name: d.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
-    url: `https://${d}`,
-  }));
+  const scanId = radarId || `scan_${Date.now()}`;
 
-  return NextResponse.json({ sites, source: "google-maps", count: sites.length });
+  // Создаём прогресс
+  createProgress(scanId);
+
+  try {
+    // Запускаем поиск с обоих источников
+    const { leads, errors } = await searchAllSources(city, niche, scanId);
+
+    // Обновляем прогресс — аудит
+    updateProgress(scanId, {
+      stage: "audit",
+      total: leads.length,
+      current: 0,
+      message: `Аудит ${leads.length} сайтов...`,
+    });
+
+    // Формируем результат для клиента
+    const sites = leads.map(l => ({
+      domain: l.domain,
+      name: l.name,
+      url: l.url,
+      source: l.source === "both" ? "2gis" : l.source,
+      phone: l.phone,
+      email: l.email,
+      telegram: l.telegram,
+      whatsapp: l.whatsapp,
+      vk: l.vk,
+      address: l.address,
+    }));
+
+    // Обновляем прогресс — готово
+    updateProgress(scanId, {
+      stage: "done",
+      current: leads.length,
+      total: leads.length,
+      message: `Найдено ${leads.length} лидов`,
+      sites,
+    });
+
+    return NextResponse.json({
+      sites,
+      count: sites.length,
+      scanId,
+      sources: {
+        twogis: leads.filter(l => l.source === "2gis" || l.source === "both").length,
+        google: leads.filter(l => l.source === "google" || l.source === "both").length,
+      },
+      errors: errors.length > 0 ? errors : undefined,
+    });
+  } catch (err: any) {
+    updateProgress(scanId, {
+      stage: "error",
+      error: err.message,
+      message: `Ошибка: ${err.message}`,
+    });
+
+    return NextResponse.json({ error: err.message, scanId }, { status: 500 });
+  }
 }

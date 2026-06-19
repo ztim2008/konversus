@@ -27,6 +27,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, count });
   }
 
+  if (body.action === "update-check") {
+    await updateRadarLastCheck(body.radarId, 0);
+    return NextResponse.json({ ok: true });
+  }
+
   if (body.action === "delete-site") {
     await deleteSite(body.siteId);
     return NextResponse.json({ ok: true });
