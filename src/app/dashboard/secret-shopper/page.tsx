@@ -45,6 +45,8 @@ export default function LeadRadarPage() {
   const [emailTo, setEmailTo] = useState("");
   const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<"idle"|"sending"|"checking"|"sent"|"error">("idle");
+  const [leadStatus, setLeadStatus] = useState<string>("");
   const [architectLoading, setArchitectLoading] = useState(false);
   const [testMode, setTestMode] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
