@@ -189,6 +189,78 @@ export default function LeadRadarPage() {
     setArchitectLoading(false);
   }
 
+
+function buildEmailHtml(lead: any, kpText: string) {
+  const problems = lead.problems || [];
+  const scoreColor = lead.gradeColor || "#10b981";
+  const photoUrl = "https://konversus.ru/sales-doc/uploads/2026/05/82eb66a3fa60b3f306af1c2a.jpg";
+  
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#0a0e13;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e13;padding:20px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#0f172a;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);">
+
+  <!-- Header -->
+  <tr><td style="padding:32px 40px 20px;text-align:center;">
+    <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.02em;">Аудит сайта</div>
+    <div style="font-size:16px;color:#6366f1;margin-top:6px;font-weight:600;">${lead.domain}</div>
+  </td></tr>
+
+  <!-- Score -->
+  <tr><td style="padding:0 40px 24px;text-align:center;">
+    <div style="display:inline-block;padding:14px 28px;border-radius:12px;background:${scoreColor}15;border:2px solid ${scoreColor};">
+      <div style="font-size:42px;font-weight:800;color:${scoreColor};line-height:1;">${lead.scorePercent}%</div>
+      <div style="font-size:12px;color:${scoreColor};opacity:0.7;margin-top:4px;">оценка сайта</div>
+    </div>
+  </td></tr>
+
+  <!-- Problems -->
+  <tr><td style="padding:0 40px 24px;">
+    <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:12px;">Обнаруженные проблемы:</div>
+    ${problems.map((p: string, i: number) => `
+    <div style="padding:10px 16px;margin-bottom:8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+      <span style="color:${i === 0 ? '#ef4444' : '#f59e0b'};font-weight:700;">${i === 0 ? '🔴' : '🟡'}</span>
+      <span style="color:#d4d4d8;font-size:14px;">${p}</span>
+    </div>`).join('')}
+  </td></tr>
+
+  <!-- KP Text -->
+  <tr><td style="padding:0 40px 24px;">
+    <div style="color:#d4d4d8;font-size:14px;line-height:1.7;white-space:pre-wrap;">${kpText.replace(/\n/g, '<br>')}</div>
+  </td></tr>
+
+  <!-- About Me Footer -->
+  <tr><td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(99,102,241,0.05);">
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td width="56"><img src="${photoUrl}" width="48" height="48" style="border-radius:50%;object-fit:cover;border:2px solid #6366f1;" alt="Алексей Тимофеев" /></td>
+        <td>
+          <div style="font-weight:700;color:#fff;font-size:15px;">Алексей Тимофеев</div>
+          <div style="color:#94a3b8;font-size:12px;margin-top:2px;">17 лет в digital · 120+ проектов</div>
+          <div style="margin-top:8px;font-size:12px;">
+            <a href="https://t.me/bilarius" style="color:#6366f1;text-decoration:none;margin-right:16px;">📱 @bilarius</a>
+            <a href="tel:+79212013252" style="color:#6366f1;text-decoration:none;margin-right:16px;">📞 +7 921 201-32-52</a>
+            <a href="https://konversus.ru" style="color:#6366f1;text-decoration:none;">🌐 konversus.ru</a>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:#64748b;">
+            <a href="https://behance.net/timofeev_aleksey" style="color:#64748b;">Портфолио</a> · 
+            <a href="https://ssl.konversus.ru" style="color:#64748b;">SSL Doctor</a> · 
+            <a href="https://leads.konversus.ru" style="color:#64748b;">Leads AI</a>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+</table>
+<div style="text-align:center;padding:16px;color:#475569;font-size:11px;">Отчёт создан сервисом Konversus Lead Radar</div>
+</td></tr></table>
+</body></html>`;
+}
+
 function generateKP(lead: Lead) {
     const problems = lead.problems.map((p, i) => `${i === 0 ? "🔴" : "🟡"} ${p}`);
     return kpText.replace("[ДОМЕН]", lead.domain).replace("[ПРОБЛЕМЫ]", problems.join("\n"));
@@ -300,7 +372,7 @@ function generateKP(lead: Lead) {
                     <div><label className="text-xs text-gray-500">Тема письма</label><input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={"Аудит сайта " + previewLead.domain} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-2" /></div><div><label className="text-xs text-gray-500">Кому отправить (email)</label><div className="flex gap-2 mt-1"><input value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder={previewLead.email || "email@компании.ру"} className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" /><button onClick={async () => {
                     setEmailStatus("sending");
                     try {
-                      const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: emailTo || previewLead.email || "bilariuss@yandex.ru", subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: generateKP(previewLead).replace(/\n/g,"<br>"), testMode })});
+                      const r = await fetch("/api/secret-shopper/send-email", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ to: emailTo || previewLead.email || "bilariuss@yandex.ru", subject: emailSubject || ("Аудит сайта " + previewLead.domain), html: buildEmailHtml(previewLead, generateKP(previewLead)), testMode })});
                       await new Promise(r => setTimeout(r, 1000));
                       const d = await r.json();
                       if (d.ok) {
