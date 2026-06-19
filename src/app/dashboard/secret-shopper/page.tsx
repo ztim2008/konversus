@@ -12,8 +12,10 @@ interface Lead {
   id: string; domain: string; name: string; url: string;
   h1?: { count: number; texts: string[]; ok: boolean };
   cms?: string | null;
-  hotScore: number;
   contactName?: string | null;
+  sent?: boolean;
+  status?: string;
+  hotScore: number;
   ssl?: { valid: boolean; daysRemaining: number; grade: string };
   score: number; scorePercent: number;
   phone?: string; email?: string;
@@ -56,6 +58,8 @@ export default function LeadRadarPage() {
   const [architectLink, setArchitectLink] = useState<string | null>(null);
   const [testMode, setTestMode] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("radars");
+  const [pipelineLeads, setPipelineLeads] = useState<any[]>([]);
   const [followUpStats, setFollowUpStats] = useState({ sent: 0, opened: 0, replied: 0, won: 0 });
   const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
@@ -285,12 +289,16 @@ function generateKP(lead: Lead) {
             <h1 className="text-2xl font-bold text-white flex items-center gap-3"><Radar size={28} className="text-indigo-400" /> Лид-радар</h1>
             <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. Google Maps + 2GIS. Сохранение в БД.</p>
           </div>
+          <div className="flex gap-2 mb-4">
+            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📡 Радары</button>
+            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,phone:s.phone,email:s.email,status:s.status}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📋 Лиды в работе</button>
+          </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
           </button>
         </div>
 
-        {showAdd && (
+        {activeTab === "radars" && showAdd && (
           <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
             <h3 className="font-bold text-white mb-4">Новый радар</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -307,7 +315,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {radars.length > 0 && (
+        {activeTab === "radars" && radars.length > 0 && (
           <div className="mb-8">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Мои радары ({radars.length})</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -315,7 +323,10 @@ function generateKP(lead: Lead) {
                 <div key={r.id} onClick={() => loadRadarSites(r.id)} className={`border cursor-pointer p-5 rounded-xl transition-colors ${selectedRadarId === r.id ? "border-indigo-500/30 bg-indigo-500/5" : "border-white/[0.06] bg-[#0f172a] hover:border-white/10"}`}>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-white font-semibold text-sm">{r.niche}</span>
+                    <div className="flex gap-1">
+                    <button onClick={async (e) => { e.stopPropagation(); setLoading(true); setAuditProgress("🔍 Обновление..."); try { const res = await fetch("/api/secret-shopper/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({city:r.city,niche:r.niche})}); const data = await res.json(); if(data.sites?.length>0){ const aRes=await fetch("/api/secret-shopper/audit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites})}); const aData=await aRes.json(); const nl=(aData.results||[]).map((rr:any)=>({id:"",domain:rr.domain,name:rr.name,url:"https://"+rr.domain,ssl:{valid:rr.audit?.ssl,daysRemaining:rr.audit?.ssl?90:0,grade:rr.audit?.grade||"?"},score:rr.audit?.score||0,scorePercent:rr.audit?.scorePercent||50,problems:rr.audit?.issues||[],h1:rr.audit?.h1,cms:rr.audit?.cms,hotScore:rr.audit?.hotScore||50,gradeColor:rr.audit?.gradeColor||"#10b981"})); await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"save-sites",radarId:r.id,sites:nl.map((l:any)=>({domain:l.domain,name:l.name,url:l.url,ssl_status:l.ssl?.valid?"ok":"error",ssl_days:l.ssl?.daysRemaining,score:l.score,problems:l.problems,h1_text:l.h1?.texts?.[0]?.slice(0,200)||null}))})}); r.leadCount+=nl.length; setRadars(p=>p.map(rr=>rr.id===r.id?r:rr)); loadRadarSites(r.id); setAuditProgress("✅ +"+nl.length); }else{setAuditProgress("⚠️ 0");}}catch{}setLoading(false);setTimeout(()=>setAuditProgress(""),2000);}} title="Обновить" className="text-gray-600 hover:text-indigo-400"><RefreshCw size={14} /></button>
                     <button onClick={(e) => { e.stopPropagation(); deleteRadar(r.id); }} className="text-gray-600 hover:text-red-400"><Trash2 size={14} /></button>
+                  </div>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                     <span>{r.city}</span>
@@ -327,7 +338,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {leads.length > 0 && (
+        {activeTab === "radars" && leads.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
@@ -342,7 +353,9 @@ function generateKP(lead: Lead) {
                     <tr key={lead.domain} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
                       <td className="p-4">
                         <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400">{lead.name}</a>
-                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300 visited:text-purple-400">{lead.domain} ↗</a>
+                        {lead.h1?.texts?.[0] && <span className="text-xs text-gray-500 italic block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>}
+                        {lead.cms && <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>}
                         <div className="flex gap-2 mt-1">
                           {lead.h1 && !lead.h1.ok && <span className="text-xs text-red-400">H1: {lead.h1.count === 0 ? "нет" : lead.h1.texts[0]?.slice(0, 30)}</span>}
                           {lead.cms && <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">{lead.cms}</span>}
@@ -365,9 +378,51 @@ function generateKP(lead: Lead) {
                       </div>
                     </td>
                     <td className="p-4"><div className="flex flex-col gap-1 text-xs text-gray-400">{lead.phone && <span><Phone size={10} className="inline mr-1"/>{lead.phone}</span>}{lead.email && <span><Mail size={10} className="inline mr-1"/>{lead.email}</span>}</div></td>
-                      <td className="p-4"><button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП →</button></td>
+                      <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП</button>
+                        <button onClick={async () => { if(!confirm("Удалить?"))return; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})}); setLeads(prev => [...prev.filter((l: Lead) => l.domain !== lead.domain)]); }} className="text-xs text-gray-600 hover:text-red-400">🗑</button>
+                      </div>
+                    </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        
+        {activeTab === "pipeline" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-400 uppercase">Лиды в работе ({pipelineLeads.filter((l:any)=>l.status!=="new").length})</h2>
+              <div className="flex gap-3 text-xs">
+                <span className="text-green-400">{pipelineLeads.filter((l:any)=>l.status==="replied"||l.status==="won").length} отвечено</span>
+                <span className="text-amber-400">{pipelineLeads.filter((l:any)=>l.status==="contacted").length} отправлено</span>
+              </div>
+            </div>
+            <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-white/[0.06] bg-[#0f172a]"><th className="p-4 text-xs text-gray-500 text-left">Сайт</th><th className="p-4 text-xs text-gray-500 text-left">Статус</th><th className="p-4 text-xs text-gray-500 text-left">Контакты</th><th className="p-4 text-xs text-gray-500"></th></tr></thead>
+                <tbody>
+                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).map((lead:any) => (
+                    <tr key={lead.id} className="border-b border-white/[0.04]">
+                      <td className="p-4">
+                        <span className="text-white font-semibold text-sm">{lead.name}</span>
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
+                        {lead.phone && <span className="text-xs text-gray-500 block">{lead.phone}</span>}
+                      </td>
+                      <td className="p-4">
+                        <select defaultValue={lead.status} onChange={async (e:any) => { await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:e.target.value})}); setPipelineLeads((p:any)=>p.map((l:any)=>l.id===lead.id?{...l,status:e.target.value}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
+                          <option value="new">Новый</option><option value="contacted">📩 Отправлено</option><option value="replied">✅ Отвечено</option><option value="won">🏆 Выиграл</option><option value="lost">❌ Проиграл</option>
+                        </select>
+                      </td>
+                      <td className="p-4"><span className="text-xs text-gray-400">{lead.email}</span></td>
+                      <td className="p-4"><button onClick={async()=>{if(!confirm("Удалить?"))return;await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})});setPipelineLeads((p:any)=>p.filter((l:any)=>l.id!==lead.id));}} className="text-xs text-gray-600 hover:text-red-400">🗑</button></td>
+                    </tr>
+                  ))}
+                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).length===0 && <tr><td colSpan={4} className="p-8 text-center text-gray-500 text-sm">Нет лидов в работе. Отправьте КП.</td></tr>}
                 </tbody>
               </table>
             </div>
