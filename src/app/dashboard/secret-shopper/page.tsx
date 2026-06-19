@@ -90,7 +90,7 @@ export default function LeadRadarPage() {
 
   // Загружаем радары из БД
   useEffect(() => {
-    fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars(d.radars || [])).catch(() => {});
+    fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars((d.radars||[]).map((r:any)=>({...r,leadCount:r.lead_count||0})))).catch(() => {});
   }, []);
 
   // Cleanup SSE on unmount
