@@ -49,6 +49,7 @@ export default function LeadRadarPage() {
   const [emailStatus, setEmailStatus] = useState<"idle"|"sending"|"checking"|"sent"|"error">("idle");
   const [leadStatus, setLeadStatus] = useState<string>("");
   const [architectLoading, setArchitectLoading] = useState(false);
+  const [architectLink, setArchitectLink] = useState<string | null>(null);
   const [testMode, setTestMode] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
   const [auditProgress, setAuditProgress] = useState("");
@@ -181,7 +182,9 @@ export default function LeadRadarPage() {
           const growth = result.growth_potential_pct || "?";
           const niche = result.niche || lead.name;
           const summary = result.summary || "";
-          const archText = `\n\n📈 Анализ роста бизнеса (Architect):\n• Ниша: ${niche}\n• Потенциал роста: +${growth}%\n• ${summary}`;
+          const archLink = `https://konversus.ru/architect/${data.id}`;
+          setArchitectLink(archLink);
+          const archText = `\n\n📈 Анализ роста бизнеса:\n• Ниша: ${niche}\n• Потенциал роста: +${growth}%\n• ${summary}\n• Полный отчёт: ${archLink}`;
           setKpText(prev => prev + archText);
         }
       }
@@ -350,14 +353,21 @@ function generateKP(lead: Lead) {
         )}
 
         {previewLead && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setPreviewLead(null)}>
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => { setPreviewLead(null); setArchitectLink(null); setEmailStatus("idle"); }}>
             <div className="bg-[#0f172a] border border-white/10 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="p-6 border-b border-white/[0.06] flex items-center justify-between"><h3 className="font-bold text-white">📄 КП для {previewLead.domain}</h3><button onClick={() => setPreviewLead(null)} className="text-gray-500 hover:text-white">✕</button></div>
+              <div className="p-6 border-b border-white/[0.06] flex items-center justify-between"><h3 className="font-bold text-white">📄 КП для {previewLead.domain}</h3><button onClick={() => { setPreviewLead(null); setArchitectLink(null); setEmailStatus("idle"); }} className="text-gray-500 hover:text-white">✕</button></div>
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/[0.06]">
                   <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">АТ</div>
                   <div><p className="font-bold text-white">Алексей Тимофеев</p><p className="text-xs text-gray-400">17 лет в digital · 120+ проектов</p></div>
                 </div>
+                {architectLink && (
+                <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                  <span className="text-xs text-indigo-400">📈</span>
+                  <a href={architectLink} target="_blank" rel="noopener" className="text-xs text-indigo-400 hover:text-indigo-300 underline flex-1">{architectLink}</a>
+                  <button onClick={() => navigator.clipboard.writeText(architectLink)} className="text-xs text-gray-500 hover:text-white">📋</button>
+                </div>
+              )}
                 <textarea value={generateKP(previewLead)} onChange={e => setKpText(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-4 text-sm text-gray-300 min-h-[200px] resize-y mb-4" />
                 <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
                   <div className="text-xs text-gray-500">📱 @bilarius · 📞 +7 921 201-32-52</div>
@@ -378,6 +388,8 @@ function generateKP(lead: Lead) {
                       if (d.ok) {
                         setEmailStatus("sent");
                         setEmailSent(true);
+                        // Обновить статус в таблице
+                        setLeads(prev => prev.map(l => l.domain === previewLead.domain ? {...l, problems: [...l.problems, "📩 отправлено"]} : l));
                         if (previewLead.id) {
                           await fetch("/api/lead-radar", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"update-status", siteId: previewLead.id, status: "contacted" }) });
                         }
@@ -387,7 +399,10 @@ function generateKP(lead: Lead) {
                     } catch { setEmailStatus("error"); }
                   }} disabled={emailStatus === "sending" || emailStatus === "checking"} className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
                     {emailStatus === "sending" ? "⏳ Отправка..." : emailStatus === "sent" ? "✅ Отправлено" : emailStatus === "error" ? "❌ Ошибка" : "📩 Отправить"}
-                  </button></div><label className="flex items-center gap-2 mt-2 text-xs text-gray-500"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> Тест-режим (отправить себе)</label></div></div>
+                  </button></div><div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={testMode} onChange={e => setTestMode(e.target.checked)} /> 📨 Мне (проверка)</label>
+                    <label className="flex items-center gap-2"><input type="checkbox" checked={!testMode} onChange={e => setTestMode(!e.target.checked)} /> 📩 Клиенту</label>
+                  </div></div></div>
                   </div>
                 </div>
               </div>
