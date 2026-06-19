@@ -74,6 +74,8 @@ export default function LeadRadarPage() {
   const [testMode, setTestMode] = useState(true);
   const [sendToClient, setSendToClient] = useState(true);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("radars");
+  const [pipelineLeads, setPipelineLeads] = useState<any[]>([]);
   const [followUpStats, setFollowUpStats] = useState({ sent: 0, opened: 0, replied: 0, won: 0 });
   const [overdueFollowUps, setOverdueFollowUps] = useState<any[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
@@ -88,7 +90,7 @@ export default function LeadRadarPage() {
 
   // Загружаем радары из БД
   useEffect(() => {
-    fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars(d.radars || [])).catch(() => {});
+    fetch("/api/lead-radar").then(r => r.json()).then(d => setRadars((d.radars||[]).map((r:any)=>({...r,leadCount:r.lead_count||0})))).catch(() => {});
   }, []);
 
   // Cleanup SSE on unmount
@@ -422,12 +424,16 @@ function generateKP(lead: Lead) {
             <h1 className="text-2xl font-bold text-white flex items-center gap-3"><Radar size={28} className="text-indigo-400" /> Лид-радар</h1>
             <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. 2GIS + Google Maps. Сохранение в БД.</p>
           </div>
+          <div className="flex gap-2 mb-4">
+            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📡 Радары</button>
+            <button onClick={async () => { setActiveTab("pipeline"); const res = await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"list-all-sites"})}); const d = await res.json(); setPipelineLeads((d.sites||[]).map((s:any)=>({id:s.id,domain:s.domain,name:s.name,url:s.url||"https://"+s.domain,phone:s.phone,email:s.email,status:s.status,sent:s.status==="contacted"||s.status==="replied",opened:!!s.opened_at}))); }} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📋 Лиды в работе</button>
+          </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
             <Plus size={18} /> Новый радар
           </button>
         </div>
 
-        {showAdd && (
+        {activeTab === "radars" && showAdd && (
           <div className="border border-white/[0.06] bg-[#0f172a] p-6 mb-8 rounded-xl">
             <h3 className="font-bold text-white mb-4">Новый радар</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -493,7 +499,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {radars.length > 0 && (
+        {activeTab === "radars" && radars.length > 0 && (
           <div className="mb-8">
             <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Мои радары ({radars.length})</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -516,7 +522,7 @@ function generateKP(lead: Lead) {
           </div>
         )}
 
-        {leads.length > 0 && (
+        {activeTab === "radars" && leads.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
@@ -568,6 +574,45 @@ function generateKP(lead: Lead) {
                     </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        
+        {activeTab === "pipeline" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-400 uppercase">Лиды в работе ({pipelineLeads.filter((l:any)=>l.status!=="new").length})</h2>
+              <div className="flex gap-3 text-xs">
+                <span className="text-green-400">{pipelineLeads.filter((l:any)=>l.status==="replied"||l.status==="won").length} отвечено</span>
+                <span className="text-amber-400">{pipelineLeads.filter((l:any)=>l.status==="contacted").length} отправлено</span>
+                <span className="text-red-400">{pipelineLeads.filter((l:any)=>l.status==="lost").length} проиграно</span>
+              </div>
+            </div>
+            <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-white/[0.06] bg-[#0f172a]"><th className="p-4 text-xs text-gray-500 text-left">Сайт</th><th className="p-4 text-xs text-gray-500 text-left">Статус</th><th className="p-4 text-xs text-gray-500 text-left">Контакты</th><th className="p-4 text-xs text-gray-500 text-left"></th></tr></thead>
+                <tbody>
+                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).map((lead:any) => (
+                    <tr key={lead.id} className="border-b border-white/[0.04]">
+                      <td className="p-4">
+                        <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold text-sm">{lead.name}</a>
+                        <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70">{lead.domain} ↗</a>
+                        {lead.phone && <span className="text-xs text-gray-500 block">{lead.phone}</span>}
+                        {lead.email && <span className="text-xs text-gray-500 block">{lead.email}</span>}
+                      </td>
+                      <td className="p-4">
+                        <select defaultValue={lead.status} onChange={async (e:any) => { await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"update-status",siteId:lead.id,status:e.target.value})}); setPipelineLeads((prev:any)=>prev.map((l:any)=>l.id===lead.id?{...l,status:e.target.value}:l)); }} className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white">
+                          <option value="new">Новый</option><option value="contacted">📩 Отправлено</option><option value="replied">✅ Отвечено</option><option value="won">🏆 Выиграл</option><option value="lost">❌ Проиграл</option>
+                        </select>
+                      </td>
+                      <td className="p-4"><div className="text-xs text-gray-400">{lead.phone}{lead.email}</div></td>
+                      <td className="p-4"><button onClick={async()=>{if(!confirm("Удалить?"))return;await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})});setPipelineLeads((p:any)=>p.filter((l:any)=>l.id!==lead.id));}} className="text-xs text-gray-600 hover:text-red-400">🗑</button></td>
+                    </tr>
+                  ))}
+                  {pipelineLeads.filter((l:any)=>l.status!=="new"||l.sent).length===0 && <tr><td colSpan={4} className="p-8 text-center text-gray-500 text-sm">Нет лидов в работе</td></tr>}
                 </tbody>
               </table>
             </div>
