@@ -180,7 +180,8 @@ export default function LeadRadarPage() {
 
       // Контакты (уже есть из 2GIS)
       let contacts: any[] = [];
-      try { const cRes = await fetch('/api/secret-shopper/contacts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sites:data.sites.slice(0,10)})}); const cData = await cRes.json(); contacts = cData.contacts || []; } catch {}
+      try { const cRes = await fetch("/api/secret-shopper/contacts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sites:data.sites.slice(0,10)})}); const cData = await cRes.json();
+      contacts = cData.contacts || []; } catch {} 
 
       // Формируем лиды
       const newLeads: Lead[] = (auditData.results || []).map((r: any, i: number) => {
@@ -217,8 +218,7 @@ export default function LeadRadarPage() {
       // Обновляем список
       const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
       setRadars(prev => [radar, ...prev]);
-      setScanProgress(null);
-      setLoading(false);
+      setLeads(newLeads);
       setLoading(false);
 
     } catch (err: any) {
