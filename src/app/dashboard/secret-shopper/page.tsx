@@ -370,7 +370,7 @@ function generateKP(lead: Lead) {
                       <td className="p-4">
                       <div className="flex items-center gap-2">
                         <button onClick={() => setPreviewLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">КП →</button>
-                        <button onClick={async () => { if(!confirm("Удалить сайт?"))return; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})}); setLeads(prev=>prev.filter(l=>l.domain!==lead.domain)); }} className="text-gray-700 hover:text-red-400" title="Удалить"><Trash2 size={12} /></button>
+                        <button onClick={async () => { if(!confirm("Удалить сайт?"))return; await fetch("/api/lead-radar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete-site",siteId:lead.id})}); setLeads(prev=>prev.filter((l: Lead)=>l.domain!==lead.domain)); }} className="text-gray-700 hover:text-red-400" title="Удалить"><Trash2 size={12} /></button>
                       </div>
                     </td>
                     </tr>
