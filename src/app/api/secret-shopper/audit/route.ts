@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
           h1: audit.h1,
           cms: audit.cms,
           hotScore: audit.hotScore,
+          contactName: audit.contactName,
         },
       });
     } catch {

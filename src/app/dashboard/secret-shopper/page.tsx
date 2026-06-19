@@ -13,6 +13,7 @@ interface Lead {
   h1?: { count: number; texts: string[]; ok: boolean };
   cms?: string | null;
   hotScore: number;
+  contactName?: string | null;
   ssl?: { valid: boolean; daysRemaining: number; grade: string };
   score: number; scorePercent: number;
   phone?: string; email?: string;
@@ -115,7 +116,7 @@ export default function LeadRadarPage() {
         score: r.audit?.score || 0,
         scorePercent: r.audit?.scorePercent || 50,
         problems: r.audit?.issues || [],
-        h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50, gradeColor: r.audit?.gradeColor || "#10b981",
+        h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50, contactName: r.audit?.contactName, gradeColor: r.audit?.gradeColor || "#10b981",
         phone: contact?.phone,
         email: contact?.email,
       };
@@ -161,7 +162,7 @@ export default function LeadRadarPage() {
       ssl: { valid: s.ssl_status === "ok", daysRemaining: s.ssl_days || 0, grade: s.ssl_grade || "?" },
       score: s.score || 0, scorePercent: Math.max(0, 100 - (s.score || 0) * 12),
       problems: typeof s.problems === "string" ? JSON.parse(s.problems) : (s.problems || []),
-      h1: null, cms: null, hotScore: s.hotScore || 50, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
+      h1: null, cms: null, hotScore: s.hotScore || 50, contactName: null, gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
       phone: s.phone, email: s.email,
     })));
   }
@@ -262,8 +263,10 @@ function buildEmailHtml(lead: any, kpText: string) {
 }
 
 function generateKP(lead: Lead) {
-    const problems = lead.problems.map((p, i) => `${i === 0 ? "🔴" : "🟡"} ${p}`);
-    return kpText.replace("[ДОМЕН]", lead.domain).replace("[ПРОБЛЕМЫ]", problems.join("\n"));
+    const name = lead.contactName || lead.name;
+    const greeting = name && name.length > 0 ? `Здравствуйте, ${name}!` : "Здравствуйте!";
+    const problems = lead.problems.filter(p => !p.includes("📩")).map((p, i) => `${i === 0 ? "🔴" : "🟡"} ${p}`);
+    return kpText.replace("Здравствуйте!", greeting).replace("[ДОМЕН]", lead.domain).replace("[ПРОБЛЕМЫ]", problems.join("\n"));
   }
 
   function hotLabel(score: number) {
@@ -386,7 +389,18 @@ function generateKP(lead: Lead) {
                   <button onClick={() => navigator.clipboard.writeText(architectLink)} className="text-xs text-gray-500 hover:text-white">📋</button>
                 </div>
               )}
-                <textarea value={generateKP(previewLead)} onChange={e => setKpText(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-4 text-sm text-gray-300 min-h-[200px] resize-y mb-4" />
+                <div className="mb-3">
+                <label className="text-xs text-gray-500">Обращение (имя получателя)</label>
+                <input 
+                  value={previewLead.contactName || previewLead.name} 
+                  onChange={e => {
+                    setPreviewLead({...previewLead, contactName: e.target.value});
+                  }}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                  placeholder="Иван Иванович"
+                />
+              </div>
+              <textarea value={generateKP(previewLead)} onChange={e => setKpText(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-4 text-sm text-gray-300 min-h-[200px] resize-y mb-4" />
                 <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
                   <div className="text-xs text-gray-500">📱 @bilarius · 📞 +7 921 201-32-52</div>
                   <div className="flex gap-2">

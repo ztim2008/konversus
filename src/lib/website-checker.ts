@@ -14,6 +14,7 @@ export interface WebsiteResult {
   h1: { count: number; texts: string[]; ok: boolean };
   cms: string | null;
   hasPhone: boolean;
+  contactName: string | null;
   // Скоринг горячего лида (0-100)
   hotScore: number;
 }
@@ -55,6 +56,7 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     issues: [], score: 0,
     h1: { count: 0, texts: [], ok: false },
     cms: null, hasPhone: false,
+    contactName: null,
     hotScore: 50, // начинаем с 50 (нейтрально)
   };
 
@@ -173,6 +175,37 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(html)) {
       result.hotScore += HOT_SCORES.has_email;
     }
+
+  
+    // ─── LPR (имя владельца/директора) ───────────────────────────
+    let contactName: string | null = null;
+    
+    // Паттерны: "ИП Иванов И.И.", "Директор: Петров А.А.", "Владелец: Сидоров"
+    const namePatterns = [
+      /(?:ИП|Директор|Владелец|Руководитель|Генеральный директор|Ген\. директор)[:\s]+([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]*(?:\s+[А-ЯЁ][а-яё]*)?)/i,
+      /(?:ИП|Директор|Владелец|Руководитель)[:\s]+([А-ЯЁ][а-яё]+\s+[А-ЯЁ]\.[А-ЯЁ]\.)/i,
+      /([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+(?:ович|овна|евич|евна))/i,
+      /([А-ЯЁ][а-яё]+\s+[А-ЯЁ]\.[А-ЯЁ]\.)/i,
+    ];
+    
+    for (const pattern of namePatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        contactName = match[1].trim();
+        break;
+      }
+    }
+    
+    // Если не нашли имя — берём название из title
+    if (!contactName) {
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      if (titleMatch) {
+        const title = titleMatch[1].replace(/[|–—\-].*/, "").trim();
+        if (title.length > 3 && title.length < 100) contactName = title;
+      }
+    }
+    
+    result.contactName = contactName;
 
   } catch (err: any) {
     result.reachable = false;
