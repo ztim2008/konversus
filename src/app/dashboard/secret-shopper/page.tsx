@@ -219,6 +219,7 @@ export default function LeadRadarPage() {
       const radar: Radar = { id, city: newCity, niche: newNiche, filters: [], leadCount: newLeads.length, active: true };
       setRadars(prev => [radar, ...prev]);
       setLeads(newLeads);
+      setScanProgress(null);
       setLoading(false);
 
     } catch (err: any) {
