@@ -26,7 +26,7 @@ const KP_TEMPLATE = `Здравствуйте!
 
 [ПРОБЛЕМЫ]
 
-Я могу это исправить за 2-3 дня. Портфолио: behance.net/timofeev_aleksey
+Я могу это исправить за 2-3 дня. Портфолио: konversus.ru/about
 
 Если интересно — напишите в Telegram @bilarius или позвоните +7 921 201-32-52.
 
@@ -212,14 +212,6 @@ function buildEmailHtml(lead: any, kpText: string) {
     <div style="font-size:16px;color:#6366f1;margin-top:6px;font-weight:600;">${lead.domain}</div>
   </td></tr>
 
-  <!-- Score -->
-  <tr><td style="padding:0 40px 24px;text-align:center;">
-    <div style="display:inline-block;padding:14px 28px;border-radius:12px;background:${scoreColor}15;border:2px solid ${scoreColor};">
-      <div style="font-size:42px;font-weight:800;color:${scoreColor};line-height:1;">${lead.scorePercent}%</div>
-      <div style="font-size:12px;color:${scoreColor};opacity:0.7;margin-top:4px;">оценка сайта</div>
-    </div>
-  </td></tr>
-
   <!-- Problems -->
   <tr><td style="padding:0 40px 24px;">
     <div style="font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:12px;">Обнаруженные проблемы:</div>
@@ -249,7 +241,7 @@ function buildEmailHtml(lead: any, kpText: string) {
             <a href="https://konversus.ru" style="color:#6366f1;text-decoration:none;">🌐 konversus.ru</a>
           </div>
           <div style="margin-top:6px;font-size:11px;color:#64748b;">
-            <a href="https://behance.net/timofeev_aleksey" style="color:#64748b;">Портфолио</a> · 
+            <a href="https://konversus.ru/about" style="color:#64748b;">Портфолио</a> · 
             <a href="https://ssl.konversus.ru" style="color:#64748b;">SSL Doctor</a> · 
             <a href="https://leads.konversus.ru" style="color:#64748b;">Leads AI</a>
           </div>
