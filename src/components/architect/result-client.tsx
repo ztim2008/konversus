@@ -255,6 +255,18 @@ function useRevealOnScroll(ref: React.RefObject<Element | null>) {
 
 // ── Main component ────────────────────────────────────────────────────────
 
+
+function ProblemSummaryRow({ label, count, price }: { label: string; count: number; price: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", fontSize: "clamp(0.8rem, 2.5vw, 0.9rem)" }}>
+      <span style={{ color: "#a1a1aa" }}>
+        {label} <b style={{ color: "#fafafa" }}>{count} проблем</b>
+      </span>
+      <span style={{ color: "#22c55e", fontWeight: 600 }}>{price}</span>
+    </div>
+  );
+}
+
 export default function ArchitectResultClient({
   id,
   initialStatus,
