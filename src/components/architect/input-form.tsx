@@ -58,7 +58,7 @@ export default function ArchitectInputForm() {
   const typeLabel = detectedType ? SOURCE_TYPE_LABELS[detectedType] : null;
 
   return (
-    <form onSubmit={handleSubmit} className="arc-input-form">
+    <form onSubmit={handleSubmit}>
       <div className="arc-input-wrap">
         <input
           type="text"

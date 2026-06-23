@@ -2,70 +2,37 @@ import type { Metadata } from "next";
 import ArchitectInputForm from "@/components/architect/input-form";
 
 export const metadata: Metadata = {
-  title: "Карта роста бизнеса · AI Architect",
-  description:
-    "Вставьте ссылку на сайт, Ozon, Wildberries или Авито — получите карту потерь дохода и конкретный план роста от AI.",
+  title: "AI-Аудитор сайта — узнайте где теряете клиентов",
+  description: "Бесплатный AI-аудит: SEO, скорость, безопасность, мобильность. Скриншот сайта, CMS-детекция, контакты. Конкретные проблемы с ценами исправления.",
+  keywords: ["аудит сайта", "ai аудит", "проверка сайта", "анализ сайта", "где теряю клиентов", "рост конверсии"],
   robots: { index: true, follow: true },
 };
 
-const BENEFITS = [
-  {
-    icon: "📍",
-    title: "Карта потерь",
-    desc: "Где и сколько теряет бизнес прямо сейчас",
-  },
-  {
-    icon: "🚀",
-    title: "План роста",
-    desc: "Конкретные шаги с оценкой влияния на доход",
-  },
-  {
-    icon: "📦",
-    title: "Digital-активы",
-    desc: "Что нужно создать для системного роста",
-  },
-];
-
 export default function ArchitectPage() {
   return (
-    <main className="arc-page">
-      <div className="arc-page-inner">
-        {/* Hero */}
-        <div className="arc-hero">
-          <div className="arc-hero-badge">AI Business Growth Architect</div>
-          <h1 className="arc-hero-title">
-            Карта роста<br />вашего бизнеса
-          </h1>
-          <p className="arc-hero-sub">
-            Вставьте ссылку — система определит тип бизнеса, найдёт точки потерь дохода
-            и сформирует персональный план масштабирования.
-          </p>
-        </div>
+    <main style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 80px" }}>
 
-        {/* Form */}
-        <div className="arc-form-block">
-          <ArchitectInputForm />
+      {/* Hero */}
+      <div style={{ padding: "clamp(32px, 8vw, 56px) 0 clamp(24px, 5vw, 40px)" }}>
+        <div style={{ display: "inline-block", padding: "4px 12px", borderRadius: 100, background: "rgba(34,197,94,0.1)", color: "#22c55e", fontSize: "0.75rem", fontWeight: 600, marginBottom: 16 }}>
+          🚀 AI-Аудитор сайта
         </div>
-
-        {/* Benefits */}
-        <div className="arc-benefits">
-          {BENEFITS.map((b) => (
-            <div key={b.title} className="arc-benefit-card">
-              <div className="arc-benefit-icon">{b.icon}</div>
-              <div className="arc-benefit-title">{b.title}</div>
-              <div className="arc-benefit-desc">{b.desc}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer brand */}
-        <div className="arc-powered">
-          Инструмент разработан в{" "}
-          <a href="https://konversus.ru" target="_blank" rel="noopener noreferrer">
-            Konversus
-          </a>
-        </div>
+        <h1 style={{ fontSize: "clamp(1.6rem, 5vw, 2.4rem)", fontWeight: 800, color: "#fafafa", lineHeight: 1.12, marginBottom: 14, letterSpacing: "-0.03em" }}>
+          Узнайте где ваш сайт<br />теряет клиентов
+        </h1>
+        <p style={{ fontSize: "clamp(0.9rem, 3vw, 1.05rem)", color: "#a1a1aa", lineHeight: 1.65, maxWidth: 520, marginBottom: 8 }}>
+          Вставьте ссылку — AI просканирует сайт, сделает скриншот, определит CMS, найдёт SEO-ошибки, проверит скорость и безопасность.
+        </p>
+        <p style={{ fontSize: "0.8rem", color: "#52525b" }}>
+          Поддерживаются: сайты, интернет-магазины, Ozon, Wildberries, Авито
+        </p>
       </div>
+
+      {/* Форма ввода */}
+      <div style={{ marginBottom: 48 }}>
+        <ArchitectInputForm />
+      </div>
+
     </main>
   );
 }

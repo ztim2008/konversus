@@ -1577,6 +1577,45 @@ export default function ArchitectResultClient({
           </div>
         </div>
 
+{/* Исполнитель */}
+        <section className="arc-section arc-reveal" style={{ animationDelay: "0.40s", marginTop: 40 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: "clamp(16px, 4vw, 24px)",
+            padding: "clamp(20px, 4vw, 28px)", borderRadius: 16,
+            border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)",
+            flexWrap: "wrap",
+          }}>
+            <img
+              src="https://konversus.ru/sales-doc/uploads/2026/05/82eb66a3fa60b3f306af1c2a.jpg"
+              alt="Тимофеев Алексей"
+              style={{
+                width: "clamp(80px, 20vw, 120px)", height: "clamp(80px, 20vw, 120px)",
+                borderRadius: "50%", objectFit: "cover", flexShrink: 0,
+                border: "2px solid rgba(255,255,255,0.1)",
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <p style={{ fontSize: "clamp(0.9rem, 3vw, 1.1rem)", fontWeight: 700, color: "#fafafa", marginBottom: 4 }}>
+                Тимофеев Алексей
+              </p>
+              <p style={{ fontSize: "clamp(0.8rem, 2.5vw, 0.9rem)", color: "#a1a1aa", lineHeight: 1.5, marginBottom: 12 }}>
+                17 лет в digital. Нахожу и исправляю проблемы сайтов, которые стоят бизнесу денег.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "clamp(0.8rem, 2.5vw, 0.9rem)" }}>
+                <a href="https://t.me/bilarius" target="_blank" style={{ color: "#3b82f6", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+                  ✈ Telegram: @bilarius
+                </a>
+                <a href="mailto:bilariuss@yandex.ru" style={{ color: "#a1a1aa", textDecoration: "none" }}>
+                  📧 bilariuss@yandex.ru
+                </a>
+                <a href="tel:+79212013252" style={{ color: "#a1a1aa", textDecoration: "none" }}>
+                  📱 +7 921 201-32-52
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="arc-powered-footer">
           <a href="https://konversus.ru" target="_blank" rel="noopener noreferrer">
             Powered by Konversus
