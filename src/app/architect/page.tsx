@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function ArchitectPage() {
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 80px" }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 20px 80px" }}>
 
       {/* Hero */}
       <div style={{ padding: "clamp(32px, 8vw, 56px) 0 clamp(24px, 5vw, 40px)" }}>
@@ -33,6 +33,6 @@ export default function ArchitectPage() {
         <ArchitectInputForm />
       </div>
 
-    </main>
+    </div>
   );
 }
