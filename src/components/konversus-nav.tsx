@@ -15,7 +15,7 @@ import {
 const PRODUCTS = [
   {
     name: "Ловец лидов",
-    description: "AI-поиск заявок с Profi.ru и других площадок. Мгновенные уведомления в Telegram.",
+    description: "AI-поиск заявок с Profi.ru. Мгновенные уведомления в Telegram. AI-анализ и авто-отклики.",
     href: "https://leads.konversus.ru",
     icon: Zap,
     color: "#22c55e",
@@ -23,14 +23,14 @@ const PRODUCTS = [
   },
   {
     name: "SSL Doctor",
-    description: "Проверка и автоматический выпуск SSL-сертификатов. Мониторинг безопасности сайта.",
+    description: "AI-мониторинг SSL и безопасности сайта. Авто-восстановление сертификатов 24/7.",
     href: "https://ssl.konversus.ru",
     icon: Shield,
     color: "#3b82f6",
   },
   {
     name: "Архитектор сайта",
-    description: "Анализ сайта на ошибки: SEO, скорость, безопасность. Карта роста бизнеса.",
+    description: "AI-аудит сайта: SEO, скорость, безопасность. Умные рекомендации по росту.",
     href: "/architect",
     icon: Search,
     color: "#8b5cf6",
@@ -44,7 +44,7 @@ const PRODUCTS = [
   },
   {
     name: "Тайный покупатель",
-    description: "Поиск клиентов для веб-студий. Аудит, КП, рассылка предложений.",
+    description: "AI-поиск клиентов. Авто-аудит сайтов, генерация КП, email-рассылки.",
     href: "/dashboard/secret-shopper",
     icon: ShoppingBag,
     color: "#ec4899",
