@@ -63,7 +63,7 @@ export default async function Home() {
   const portfolioImages = getRandomPortfolioImages(8);
   const s = await getAllSettings();
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 pb-20 pt-6 sm:px-8 lg:px-10">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 pb-20 pt-6 sm:px-8 lg:px-10">
 
       {/* ── Шапка ── */}
       <header className="sticky top-4 z-20 border border-white/10 bg-black/40 px-5 py-4 backdrop-blur-xl">
@@ -476,6 +476,6 @@ export default async function Home() {
         </div>
       </footer>
 
-    </main>
+    </div>
   );
 }
