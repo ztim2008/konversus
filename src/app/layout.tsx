@@ -4,6 +4,8 @@ import Script from "next/script";
 import "./globals.css";
 
 import { BodyScriptInjector } from "@/components/body-script-injector";
+import KonversusNav from "@/components/konversus-nav";
+import KonversusFooter from "@/components/konversus-footer";
 import { getAllSettings } from "@/lib/data/settings";
 
 const manrope = Manrope({
@@ -133,7 +135,9 @@ export default async function RootLayout({
         </Script>
       </head>
       <body className="min-h-full flex flex-col">
-        {children}
+        <KonversusNav />
+        <main className="flex-1" style={{ paddingTop: 56 }}>{children}</main>
+        <KonversusFooter />
         {/* Yandex Metrika noscript */}
         <noscript>
           {/* eslint-disable-next-line @next/next/no-img-element */}
