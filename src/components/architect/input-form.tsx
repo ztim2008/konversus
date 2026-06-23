@@ -70,11 +70,17 @@ export default function ArchitectInputForm() {
           autoComplete="off"
           spellCheck={false}
         />
-        {typeLabel && (
-          <div className="arc-type-badge">
-            {typeLabel}
-          </div>
-        )}
+        <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", height: 24, display: "flex", alignItems: "center" }}>
+          {typeLabel && (
+            <span style={{
+              fontSize: 10, fontWeight: 600, letterSpacing: ".05em",
+              color: "#22c55e", background: "rgba(34,197,94,.12)",
+              padding: "3px 8px", borderRadius: 3, whiteSpace: "nowrap",
+            }}>
+              {typeLabel}
+            </span>
+          )}
+        </div>
       </div>
 
       {error && <p className="arc-input-error">{error}</p>}
@@ -86,7 +92,7 @@ export default function ArchitectInputForm() {
             Запускаем анализ...
           </>
         ) : (
-          "Получить карту роста"
+          "🔍 Просканировать сайт"
         )}
       </button>
 
