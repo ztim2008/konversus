@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  Menu, X, ChevronDown, Globe, Search, Shield, Zap,
+  Menu, X, ChevronDown, Globe, Globe, Search, Shield, Zap,
   ShoppingBag, FileText, ExternalLink, Layers
 } from "lucide-react";
 
@@ -48,6 +48,14 @@ const PRODUCTS = [
     href: "/dashboard/secret-shopper",
     icon: ShoppingBag,
     color: "#ec4899",
+  },
+  {
+    name: "Telegram-консультант",
+    description: "Клиенты пишут на сайте — вы отвечаете из Telegram. AI + человек без CRM.",
+    href: "https://chat.konversus.ru",
+    icon: Globe,
+    color: "#22c55e",
+    badge: "Новое",
   },
   {
     name: "Портфолио",

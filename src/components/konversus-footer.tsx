@@ -7,6 +7,7 @@ const PRODUCTS = [
   { name: "SSL Doctor", href: "https://ssl.konversus.ru", ext: true },
   { name: "Архитектор сайта", href: "/architect" },
   { name: "Тайный покупатель", href: "/dashboard/secret-shopper" },
+  { name: "Telegram-консультант", href: "https://chat.konversus.ru", ext: true },
   { name: "Конструктор сайтов", href: "https://nordic-builder.ru", ext: true },
 ];
 
