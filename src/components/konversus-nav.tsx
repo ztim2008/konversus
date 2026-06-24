@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  Menu, X, ChevronDown, Globe, Globe, Search, Shield, Zap,
+  Menu, X, ChevronDown, Globe, Search, Shield, Zap,
   ShoppingBag, FileText, ExternalLink, Layers
 } from "lucide-react";
 
