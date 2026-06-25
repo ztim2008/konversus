@@ -39,6 +39,8 @@ export interface ExtractedLead {
   whatsapp?: string;
   vk?: string;
   address: string;
+  schedule?: string;
+  description?: string;
 }
 
 export const TWOGIS_CITY_IDS: Record<string, string> = {
@@ -152,6 +154,16 @@ export function extractLeadsFromItems(items: TwogisItem[]): ExtractedLead[] {
 
     if (!domain) continue;
 
+    // Форматируем расписание
+    let schedule: string | undefined;
+    if (item.schedule) {
+      try {
+        const s = item.schedule as any;
+        if (s.comment) schedule = s.comment;
+        else if (s.mon) schedule = `Пн-Пт: ${s.mon?.from || "?"}-${s.mon?.to || "?"}`;
+      } catch {}
+    }
+
     leads.push({
       source: "2gis",
       domain,
@@ -164,6 +176,8 @@ export function extractLeadsFromItems(items: TwogisItem[]): ExtractedLead[] {
       whatsapp: contacts.whatsapp,
       vk: contacts.vk,
       address: item.address_name + (item.address_comment ? `, ${item.address_comment}` : ""),
+      schedule,
+      description: item.purpose_name,
     });
   }
 

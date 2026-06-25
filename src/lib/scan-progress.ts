@@ -14,6 +14,7 @@ export interface ScanProgress {
   sources: {
     twogis: SourceStatus;
     google: SourceStatus;
+    yandex: SourceStatus;
   };
   current: number;
   total: number;
@@ -24,9 +25,15 @@ export interface ScanProgress {
     domain: string;
     name: string;
     url: string;
-    source: "2gis" | "google";
+    source: "2gis" | "google" | "yandex" | "both" | "multi";
     phone?: string;
     email?: string;
+    telegram?: string;
+    whatsapp?: string;
+    vk?: string;
+    address?: string;
+    schedule?: string;
+    description?: string;
   }>;
 }
 
@@ -39,6 +46,7 @@ export function createProgress(radarId: string): ScanProgress {
     sources: {
       twogis: { status: "pending", count: 0 },
       google: { status: "pending", count: 0 },
+      yandex: { status: "pending", count: 0 },
     },
     current: 0,
     total: 0,

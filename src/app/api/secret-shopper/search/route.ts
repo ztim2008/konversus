@@ -31,13 +31,15 @@ export async function POST(req: NextRequest) {
       domain: l.domain,
       name: l.name,
       url: l.url,
-      source: l.source === "both" ? "2gis" : l.source,
+      source: l.source,
       phone: l.phone,
       email: l.email,
       telegram: l.telegram,
       whatsapp: l.whatsapp,
       vk: l.vk,
       address: l.address,
+      schedule: l.schedule,
+      description: l.description,
     }));
 
     // Обновляем прогресс — готово
@@ -54,8 +56,9 @@ export async function POST(req: NextRequest) {
       count: sites.length,
       scanId,
       sources: {
-        twogis: leads.filter(l => l.source === "2gis" || l.source === "both").length,
-        google: leads.filter(l => l.source === "google" || l.source === "both").length,
+        twogis: leads.filter(l => l.source === "2gis" || l.source === "both" || l.source === "multi").length,
+        google: leads.filter(l => l.source === "google" || l.source === "both" || l.source === "multi").length,
+        yandex: leads.filter(l => l.source === "yandex" || l.source === "multi").length,
       },
       errors: errors.length > 0 ? errors : undefined,
     });
