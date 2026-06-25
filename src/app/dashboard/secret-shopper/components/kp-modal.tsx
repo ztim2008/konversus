@@ -14,6 +14,7 @@ export function KpModal({
   const [emailStatus, setEmailStatus] = useState<EmailStatus>("idle");
   const [architectLoading, setArchitectLoading] = useState(false);
   const [architectLink, setArchitectLink] = useState<string | null>(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [testMode, setTestMode] = useState(true);
   const [sendToClient, setSendToClient] = useState(true);
   const [contactName, setContactName] = useState(lead.contactName || lead.name);
@@ -46,6 +47,24 @@ export function KpModal({
       }
     } catch {}
     setArchitectLoading(false);
+  }
+
+  async function runAiGenerate() {
+    setAiGenerating(true);
+    try {
+      const res = await fetch("/api/secret-shopper/generate-kp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain: lead.domain,
+          issues: lead.problems,
+          niche: lead.name,
+          contactName: contactName,
+        }),
+      });
+      const data = await res.json();
+      if (data.kp) setKpText(data.kp);
+    } catch {}
+    setAiGenerating(false);
   }
 
   async function sendEmail() {
@@ -120,6 +139,9 @@ export function KpModal({
               <div className="space-y-3">
                 <div className="flex gap-2">
                   <button onClick={() => navigator.clipboard.writeText(currentKp)} className="flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-gray-400 hover:text-white">📋 Копировать</button>
+                  <button onClick={runAiGenerate} disabled={aiGenerating} className="flex items-center gap-1 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-xs text-green-400 hover:bg-green-500/20 disabled:opacity-50">
+                    {aiGenerating ? "⏳ AI..." : "🤖 AI-КП"}
+                  </button>
                   <button onClick={runArchitect} disabled={architectLoading} className="flex items-center gap-1 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs text-indigo-400 hover:bg-indigo-500/20 disabled:opacity-50">
                     {architectLoading ? "⏳ Анализ..." : "📈 +Architect"}
                   </button>
