@@ -104,7 +104,7 @@ export async function searchYandex(
   city: string,
   onProgress?: (source: string, count: number) => void
 ): Promise<YandexLead[]> {
-  const queries = NICHE_QUERIES[niche] || [niche];
+  const queries = NICHE_QUERIES[niche] || [niche.toLowerCase()];
   const allDomains: string[] = [];
   const seen = new Set<string>();
 

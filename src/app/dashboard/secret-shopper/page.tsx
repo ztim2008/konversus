@@ -22,6 +22,7 @@ export default function LeadRadarPage() {
   const [activeTab, setActiveTab] = useState("radars");
   const [pipelineLeads, setPipelineLeads] = useState<PipelineLead[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
+  const [followUps, setFollowUps] = useState<any[]>([]);
 
   // ─── Load radars ───
   useEffect(() => {
@@ -125,6 +126,8 @@ export default function LeadRadarPage() {
       id: s.id, domain: s.domain, name: s.name, url: s.url || "https://" + s.domain,
       phone: s.phone, email: s.email, status: s.status, opened: !!s.opened_at,
     })));
+    // Загружаем follow-up напоминания
+    fetch("/api/secret-shopper/check-follow-ups").then(r => r.json()).then(d => setFollowUps(d.overdue || [])).catch(() => {});
   }
 
   async function deleteLead(lead: Lead) {
@@ -188,7 +191,39 @@ export default function LeadRadarPage() {
         )}
 
         {activeTab === "pipeline" && (
-          <PipelineTable pipelineLeads={pipelineLeads} onStatusChange={updatePipelineStatus} onDelete={deletePipelineLead} />
+          <>
+            {followUps.length > 0 && (
+              <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <h3 className="text-sm font-semibold text-amber-400 mb-3">⏰ Напоминания ({followUps.length})</h3>
+                <div className="flex flex-col gap-2">
+                  {followUps.map((fu: any) => (
+                    <div key={fu.id} className="flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-white font-medium">{fu.name}</span>
+                        <span className="text-gray-500 ml-2">{fu.domain}</span>
+                        <span className="text-amber-400 ml-2">{fu.daysSinceContact} дн. назад</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setPreviewLead({
+                            id: fu.id, domain: fu.domain, name: fu.name, url: fu.url,
+                            email: fu.email, phone: fu.phone,
+                            problems: [], score: 0, scorePercent: 0, hotScore: 0, gradeColor: "#f59e0b",
+                            contactName: null,
+                          });
+                          // Pre-fill KP with follow-up template
+                        }}
+                        className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
+                      >
+                        📩 Напомнить
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <PipelineTable pipelineLeads={pipelineLeads} onStatusChange={updatePipelineStatus} onDelete={deletePipelineLead} />
+          </>
         )}
 
         {/* KP Modal */}

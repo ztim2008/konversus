@@ -151,7 +151,8 @@ export async function searchGoogle(
   city: string,
   onProgress?: (source: string, count: number) => void
 ): Promise<GoogleLead[]> {
-  const queries = NICHE_QUERIES[niche] || [niche];
+  // Если ниша есть в справочнике — используем подзапросы. Иначе — ниша как есть.
+  const queries = NICHE_QUERIES[niche] || [niche.toLowerCase()];
   const allDomains: string[] = [];
   const seen = new Set<string>();
 

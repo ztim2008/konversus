@@ -1,6 +1,6 @@
 "use client";
 import { Plus } from "lucide-react";
-import { NICHES, CITIES } from "../lib/types";
+import { NICHE_SUGGESTIONS, CITIES } from "../lib/types";
 
 export function RadarForm({
   show, onClose, newCity, setNewCity, newNiche, setNewNiche, onAdd, loading,
@@ -26,14 +26,23 @@ export function RadarForm({
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Ниша</label>
-            <select value={newNiche} onChange={e => setNewNiche(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
-              {NICHES.map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
+            <label className="text-xs text-gray-500 mb-1 block">Ниша (можно ввести свою)</label>
+            <input
+              type="text"
+              list="niche-suggestions"
+              value={newNiche}
+              onChange={e => setNewNiche(e.target.value)}
+              placeholder="Например: дизайн интерьера, фотографы..."
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600"
+            />
+            <datalist id="niche-suggestions">
+              {NICHE_SUGGESTIONS.map(n => <option key={n} value={n} />)}
+            </datalist>
+            <p className="text-xs text-gray-600 mt-1">Начните вводить — появятся подсказки. Или введите свою нишу.</p>
           </div>
           <button
             onClick={onAdd}
-            disabled={loading}
+            disabled={loading || !newNiche.trim()}
             className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
           >
             {loading ? "⏳ Ищем..." : "🚀 Запустить поиск"}
