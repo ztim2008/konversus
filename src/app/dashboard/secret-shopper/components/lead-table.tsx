@@ -37,7 +37,17 @@ export function LeadTable({
                   <a href={lead.url} target="_blank" rel="noopener" className="text-white font-semibold hover:text-indigo-400">{lead.name}</a>
                   <a href={lead.url} target="_blank" rel="noopener" className="block text-xs text-indigo-400/70 hover:text-indigo-300">{lead.domain} ↗</a>
                   {lead.h1?.texts?.[0] && <span className="text-xs text-gray-500 italic block truncate max-w-[300px]">«{lead.h1.texts[0].slice(0, 100)}»</span>}
-                  {lead.cms && <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded mt-1 inline-block">{lead.cms}</span>}
+                  {lead.cms && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded mt-1 inline-block font-medium ${
+                      (lead as any).cmsTier === 'constructor' ? 'bg-amber-500/15 text-amber-400' :
+                      (lead as any).cmsTier === 'enterprise' ? 'bg-blue-500/15 text-blue-400' :
+                      (lead as any).cmsTier === 'custom' ? 'bg-green-500/15 text-green-400' :
+                      (lead as any).cmsTier === 'framework' ? 'bg-purple-500/15 text-purple-400' :
+                      'bg-white/5 text-gray-500'
+                    }`}>
+                      {(lead as any).cmsTier === 'constructor' ? '🧱' : (lead as any).cmsTier === 'enterprise' ? '🏢' : (lead as any).cmsTier === 'custom' ? '⚡' : (lead as any).cmsTier === 'framework' ? '⚛️' : '📦'} {lead.cms}
+                    </span>
+                  )}
                 </td>
                 <td className="p-4">
                   <div className="flex flex-col gap-1">

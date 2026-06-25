@@ -55,6 +55,7 @@ export function KpModal({
       const res = await fetch("/api/secret-shopper/generate-kp", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          cms: (lead as any).cmsTier ? `${lead.cms} (${(lead as any).cmsTier})` : lead.cms,
           domain: lead.domain,
           issues: lead.problems,
           niche: lead.name,

@@ -72,7 +72,7 @@ export default function LeadRadarPage() {
         ssl: { valid: r.audit?.ssl, daysRemaining: r.audit?.ssl ? 90 : 0, grade: r.audit?.grade || "?" },
         score: r.audit?.score || 0, scorePercent: r.audit?.scorePercent || 50,
         problems: r.audit?.issues || [],
-        h1: r.audit?.h1, cms: r.audit?.cms, hotScore: r.audit?.hotScore || 50,
+        h1: r.audit?.h1, cms: r.audit?.cms, cmsTier: r.audit?.cmsTier, hotScore: r.audit?.hotScore || 50,
         contactName: r.audit?.contactName, gradeColor: r.audit?.gradeColor || "#10b981",
         phone: contact?.phone, email: contact?.email,
       };
@@ -111,7 +111,7 @@ export default function LeadRadarPage() {
       ssl: { valid: s.ssl_status === "ok", daysRemaining: s.ssl_days || 0, grade: s.ssl_grade || "?" },
       score: s.score || 0, scorePercent: Math.max(0, 100 - (s.score || 0) * 12),
       problems: typeof s.problems === "string" ? JSON.parse(s.problems) : (s.problems || []),
-      h1: null as any, cms: null, hotScore: s.hotScore || 50, contactName: null as any,
+      h1: null as any, cms: null, cmsTier: null as any, hotScore: s.hotScore || 50, contactName: null as any,
       gradeColor: (s.score || 0) <= 2 ? "#10b981" : (s.score || 0) <= 4 ? "#f59e0b" : "#ef4444",
       phone: s.phone, email: s.email,
     })));

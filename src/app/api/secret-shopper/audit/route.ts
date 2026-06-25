@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
           gradeColor: grade.color,
           scorePercent: scoreToPercent(audit.score),
           h1: audit.h1,
-          cms: audit.cms,
+          cms: audit.cms, cmsTier: audit.cmsTier,
           hotScore: audit.hotScore,
           contactName: audit.contactName,
         },

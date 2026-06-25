@@ -13,9 +13,9 @@ export interface WebsiteResult {
   score: number;
   h1: { count: number; texts: string[]; ok: boolean };
   cms: string | null;
+  cmsTier: string | null;
   hasPhone: boolean;
   contactName: string | null;
-  // Скоринг горячего лида (0-100)
   hotScore: number;
 }
 
@@ -23,16 +23,23 @@ const CURRENT_YEAR = new Date().getFullYear();
 const OUTDATED_CUTOFF = CURRENT_YEAR - 2;
 
 // CMS сигнатуры
-const CMS_SIGNATURES: Record<string, { name: string; patterns: RegExp[] }> = {
-  wordpress: { name: "WordPress", patterns: [/wp-content/, /wp-includes/, /wordpress/i] },
-  tilda: { name: "Tilda", patterns: [/tilda\.cc/, /tildacdn\.com/, /tilda\.ws/] },
-  bitrix: { name: "1C-Битрикс", patterns: [/bitrix/, /bx-panel/] },
-  joomla: { name: "Joomla", patterns: [/joomla/i, /com_content/] },
-  opencart: { name: "OpenCart", patterns: [/opencart/i, /catalog\/view/] },
-  wix: { name: "Wix", patterns: [/wix\.com/, /static\.wixstatic/] },
-  shopify: { name: "Shopify", patterns: [/shopify\.com/, /myshopify/] },
-  nextjs: { name: "Next.js", patterns: [/__NEXT/, /_next\/static/] },
-  react: { name: "React", patterns: [/react\/jsx-runtime/, /react\.development/] },
+const CMS_SIGNATURES: Record<string, { name: string; patterns: RegExp[]; tier: 'enterprise'|'cms'|'constructor'|'framework' }> = {
+  bitrix: { name: "1C-Битрикс", patterns: [/bitrix/, /bx-panel/, /bitrix24/], tier: 'enterprise' },
+  wordpress: { name: "WordPress", patterns: [/wp-content/, /wp-includes/, /wordpress/i], tier: 'cms' },
+  joomla: { name: "Joomla", patterns: [/joomla/i, /com_content/], tier: 'cms' },
+  drupal: { name: "Drupal", patterns: [/drupal/i, /sites\/default\/files/], tier: 'cms' },
+  modx: { name: "MODX", patterns: [/modx/i, /assets\/components/], tier: 'cms' },
+  opencart: { name: "OpenCart", patterns: [/opencart/i, /catalog\/view/], tier: 'cms' },
+  dle: { name: "DataLife Engine", patterns: [/engine\/classes/, /dle_/], tier: 'cms' },
+  tilda: { name: "Tilda", patterns: [/tilda\.cc/, /tildacdn\.com/, /tilda\.ws/, /tildawysiwyg/], tier: 'constructor' },
+  wix: { name: "Wix", patterns: [/wix\.com/, /static\.wixstatic/], tier: 'constructor' },
+  shopify: { name: "Shopify", patterns: [/shopify\.com/, /myshopify/], tier: 'constructor' },
+  insales: { name: "InSales", patterns: [/insales\.ru/, /insales/], tier: 'constructor' },
+  nextjs: { name: "Next.js", patterns: [/__NEXT/, /_next\/static/], tier: 'framework' },
+  react: { name: "React", patterns: [/react\/jsx-runtime/, /react\.development/, /react-dom/], tier: 'framework' },
+  vue: { name: "Vue.js", patterns: [/vue\.js/, /vue\/dist/], tier: 'framework' },
+  nuxt: { name: "Nuxt.js", patterns: [/__nuxt/, /_nuxt\//], tier: 'framework' },
+  laravel: { name: "Laravel", patterns: [/laravel/i, /livewire/], tier: 'framework' },
 };
 
 // Скоринг: баллы за проблемы
@@ -55,7 +62,7 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     responseTime: 0, statusCode: 0,
     issues: [], score: 0,
     h1: { count: 0, texts: [], ok: false },
-    cms: null, hasPhone: false,
+    cms: null, cmsTier: null as string|null, hasPhone: false,
     contactName: null,
     hotScore: 50, // начинаем с 50 (нейтрально)
   };
@@ -127,8 +134,14 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     for (const [key, cms] of Object.entries(CMS_SIGNATURES)) {
       if (cms.patterns.some(p => p.test(html))) {
         result.cms = cms.name;
+        result.cmsTier = cms.tier;
         break;
       }
+    }
+    // Нет CMS — возможно самописный сайт (это преимущество для нас!)
+    if (!result.cms && html.length > 500) {
+      result.cms = "Самописный";
+      result.cmsTier = "custom";
     }
 
     // ─── SSL ───────────────────────────────────────────────────

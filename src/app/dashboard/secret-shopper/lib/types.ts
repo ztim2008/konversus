@@ -1,6 +1,6 @@
 // Общие типы и константы для Lead Agent
 export interface Radar { id: string; city: string; niche: string; filters: string[]; lastCheck?: string; leadCount: number; active: boolean; }
-export interface Lead { id: string; domain: string; name: string; url: string; h1?: { count: number; texts: string[]; ok: boolean }; cms?: string | null; contactName?: string | null; sent?: boolean; status?: string; hotScore: number; ssl?: { valid: boolean; daysRemaining: number; grade: string }; score: number; scorePercent: number; phone?: string; email?: string; problems: string[]; gradeColor: string; }
+export interface Lead { id: string; domain: string; name: string; url: string; h1?: { count: number; texts: string[]; ok: boolean }; cms?: string | null; cmsTier?: string | null; contactName?: string | null; sent?: boolean; status?: string; hotScore: number; ssl?: { valid: boolean; daysRemaining: number; grade: string }; score: number; scorePercent: number; phone?: string; email?: string; problems: string[]; gradeColor: string; }
 export interface PipelineLead { id: string; domain: string; name: string; url: string; phone?: string; email?: string; status: string; opened: boolean; }
 export type EmailStatus = "idle" | "sending" | "checking" | "sent" | "error";
 export const NICHES = ["Стоматологии","Строительство","Кафе и рестораны","Автосервисы","Юристы","Клиники","Салоны красоты","Фитнес-клубы","Отели","Грузоперевозки","Интернет-магазины","Недвижимость","Бухгалтерия","Рекламные агентства","Туризм","Образование","Производство","IT-компании"];

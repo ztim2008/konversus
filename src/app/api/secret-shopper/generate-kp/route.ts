@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { generatePersonalizedKP } from "@/lib/lead-agent/ai-composer";
 
 export async function POST(req: NextRequest) {
-  const { domain, issues, niche, city, contactName } = await req.json();
+  const { domain, issues, niche, city, contactName, cms } = await req.json();
   if (!domain) return NextResponse.json({ error: "domain required" }, { status: 400 });
 
   try {
     const kp = await generatePersonalizedKP({
       domain,
       niche: niche || "бизнес",
+      cms: cms || "",
       city: city || "",
       issues: issues || [],
       contactName: contactName || "",
