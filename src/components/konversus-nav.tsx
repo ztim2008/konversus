@@ -22,20 +22,7 @@ const PRODUCTS = [
     badge: "Новое",
   },
   {
-    name: "SSL Doctor",
-    description: "AI-мониторинг SSL и безопасности сайта. Авто-восстановление сертификатов 24/7.",
-    href: "https://ssl.konversus.ru",
-    icon: Shield,
-    color: "#3b82f6",
-  },
   {
-    name: "SEO AI",
-    description: "Анализ позиций в Яндексе, ключевые слова, аудит сайта. Российский рынок.",
-    href: "https://seo.konversus.ru",
-    icon: Search,
-    color: "#8b5cf6",
-    badge: "Новое",
-  },
   {
     name: "Архитектор сайта",
     description: "AI-аудит сайта: SEO, скорость, безопасность. Умные рекомендации по росту.",
@@ -58,10 +45,9 @@ const PRODUCTS = [
     color: "#ec4899",
   },
   {
-    name: "Telegram-консультант",
+    name: "AI-консультант на сайт",
     description: "Клиенты пишут на сайте — вы отвечаете из Telegram. AI + человек без CRM.",
     href: "https://chat.konversus.ru",
-    icon: Globe,
     color: "#22c55e",
     badge: "Новое",
   },
