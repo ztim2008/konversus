@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  Menu, X, ChevronDown, Globe, Search, Shield, Zap,
-  ShoppingBag, FileText, ExternalLink, Layers
+  Menu, X, ChevronDown, Globe, Search, Zap,
+  ShoppingBag, ExternalLink, Layers, MessageCircle
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -21,8 +21,6 @@ const PRODUCTS = [
     color: "#22c55e",
     badge: "Новое",
   },
-  {
-  {
   {
     name: "Архитектор сайта",
     description: "AI-аудит сайта: SEO, скорость, безопасность. Умные рекомендации по росту.",
@@ -48,13 +46,14 @@ const PRODUCTS = [
     name: "AI-консультант на сайт",
     description: "Клиенты пишут на сайте — вы отвечаете из Telegram. AI + человек без CRM.",
     href: "https://chat.konversus.ru",
+    icon: MessageCircle,
     color: "#22c55e",
     badge: "Новое",
   },
   {
-    name: "Портфолио",
-    description: "Работы за 17 лет в digital. Брендинг, сайты, полиграфия.",
-    href: "/about",
+    name: "Портфолио Nordic",
+    description: "Скриншоты сервисов и сайтов на хостинге Nordic.",
+    href: "/portfolio",
     icon: Layers,
     color: "#14b8a6",
   },
@@ -169,6 +168,7 @@ export default function KonversusNav() {
               )}
             </div>
 
+            <NavLink href="/portfolio">Портфолио</NavLink>
             <NavLink href="/about">Обо мне</NavLink>
             <NavLink href="/docs">Документация</NavLink>
             <NavLink href="https://t.me/bilarius" external>Контакты</NavLink>
@@ -216,6 +216,7 @@ export default function KonversusNav() {
                 </a>
               ))}
             </MobileSection>
+            <MobileLink href="/portfolio" onClick={() => setMobileOpen(false)}>Портфолио</MobileLink>
             <MobileLink href="/about" onClick={() => setMobileOpen(false)}>Обо мне</MobileLink>
             <MobileLink href="/docs" onClick={() => setMobileOpen(false)}>Документация</MobileLink>
             <MobileLink href="https://t.me/bilarius" onClick={() => setMobileOpen(false)} external>Telegram @bilarius</MobileLink>

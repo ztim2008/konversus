@@ -87,16 +87,26 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Портфолио */}
-      <section className="border-b border-white/[0.06]">
+      {/* Портфолио дизайна */}
+      <section id="portfolio" className="border-b border-white/[0.06] scroll-mt-24">
           <div className="mx-auto max-w-4xl px-6 py-20">
             <div className="mb-12">
               <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-3">Портфолио</p>
               <h2 className="text-3xl font-bold text-white">Избранные работы</h2>
-              <p className="mt-3 text-sm text-gray-500">Нажмите на изображение чтобы увеличить · Стрелки для навигации · Esc для закрытия</p>
+              <p className="mt-3 text-sm text-gray-500">Дизайн и полиграфия · Нажмите на изображение чтобы увеличить</p>
+              <p className="mt-2 text-sm text-gray-500">
+                Живые сервисы и сайты на Nordic — на отдельной странице{" "}
+                <Link href="/portfolio" className="text-indigo-400 hover:text-indigo-300 font-semibold">
+                  /portfolio
+                </Link>
+                .
+              </p>
             </div>
             <PortfolioGallery />
-            <div className="mt-6 text-center">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+              <Link href="/portfolio" className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
+                <ArrowRight size={14} /> Сервисы Nordic со скриншотами
+              </Link>
               <a href="https://www.behance.net/timofeev_aleksey" target="_blank" rel="noopener" className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 font-semibold transition-colors">
                 <ExternalLink size={14} /> Больше работ на Behance
               </a>

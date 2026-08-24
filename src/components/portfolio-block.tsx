@@ -32,6 +32,12 @@ export function PortfolioBlock({ initialImages }: Props) {
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-slate-500">Портфолио</div>
           <div className="mt-1 text-2xl font-bold text-white">Последние клиенты</div>
+          <a
+            href="/portfolio"
+            className="mt-2 inline-block font-mono text-[10px] uppercase tracking-[0.18em] text-indigo-400 transition hover:text-indigo-300"
+          >
+            Сервисы и сайты со скриншотами →
+          </a>
         </div>
         <div className="flex items-center gap-4">
           <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300/60">Более 250+ клиентов</div>
