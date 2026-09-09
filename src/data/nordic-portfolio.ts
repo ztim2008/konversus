@@ -120,4 +120,26 @@ export const NORDIC_PORTFOLIO: NordicPortfolioItem[] = [
       "Хаб инструментов для Авито: баннеры, фоны, карточки, портфолио работ, Canvas-редактор и бесплатный SalesDoc — профиль доверия авитолога для отправки клиентам в мессенджерах.",
     image: "/portfolio/services/marketfon.jpg",
   },
+  {
+    id: "kupolcert",
+    title: "Купол — сертификация",
+    url: "https://kupolcert.ru",
+    external: true,
+    category: "site",
+    tag: "Сайт",
+    description:
+      "Сертификация и разрешительная документация: поможем определить нужные документы, сопроводим оформление от заявки до готового сертификата, декларации или СГР.",
+    image: "/portfolio/services/kupolcert.jpg",
+  },
+  {
+    id: "reverans",
+    title: "Художественная гимнастика для детей в Москве | Реверанс",
+    url: "https://reverans.online",
+    external: true,
+    category: "site",
+    tag: "Сайт",
+    description:
+      "Спортивный клуб художественной гимнастики Реверанс для детей от 3 лет в Москве. Индивидуальный подход, тренировки и соревнования.",
+    image: "/portfolio/services/reverans.jpg",
+  },
 ];

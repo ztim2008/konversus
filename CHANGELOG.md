@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-09
+
+### Портфолио — два клиентских сайта
+
+- в `/portfolio` добавлены карточки **Купол — сертификация** (`kupolcert.ru`) и **Реверанс** (`reverans.online`)
+- скриншоты первого экрана: `portfolio/services/kupolcert.jpg`, `portfolio/services/reverans.jpg`
+- каталог: `src/data/nordic-portfolio.ts`; захват: `scripts/capture-nordic-portfolio.mjs`
+- meta витрины: `portfolio/services/meta.json`
+
 ## 2026-05-27
 
 ### Удаление концептов и компаний (C-1)

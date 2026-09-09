@@ -21,6 +21,8 @@ const SITES = [
   { id: "proektmap", url: "https://proektmap.ru/" },
   { id: "prokuklyash", url: "https://prokuklyash.ru/" },
   { id: "marketfon", url: "https://xn----7sbptikgmuv.xn--p1ai/" },
+  { id: "kupolcert", url: "https://kupolcert.ru/" },
+  { id: "reverans", url: "https://reverans.online/" },
 ];
 
 (async () => {
