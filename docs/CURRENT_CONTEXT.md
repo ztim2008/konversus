@@ -7,13 +7,19 @@
 
 | Этап | Статус |
 |------|--------|
-| 0–4 | 🟩 |
-| 5 | 🟦 Ночной пайплайн + утренний дайджест |
+| 0–5 | 🟩 |
+| 6 | 🟦 Админка «Сегодня» — ручная отправка |
+
+## Nightly
+
+- `POST /api/lead-radar/nightly-run` + `LEAD_RADAR_CRON_SECRET`
+- Cron: `scripts/cron-lead-radar-nightly.sh` (06:00 МСК)
+- Проверка: 1 лид `prorabneva.ru` в `queued` + TG ok
 
 ## Фокус
 
-Этап 5 — nightly-run + Telegram дайджест (план дня).
+Этап 6 — UI очереди Отправить / Пропустить.
 
 ```bash
-npm run agent:loop -- --task lead_radar_telegram
+npm run agent:loop -- --task lead_radar_queue
 ```

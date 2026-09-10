@@ -181,6 +181,31 @@
       "id": "lib.kp_html",
       "type": "lib",
       "path": "src/lib/lead-agent/kp-html-template.ts"
+    },
+    {
+      "id": "lib.nightly_run",
+      "type": "lib",
+      "path": "src/lib/lead-radar/nightly-run.ts"
+    },
+    {
+      "id": "lib.day_picker",
+      "type": "lib",
+      "path": "src/lib/lead-radar/day-picker.ts"
+    },
+    {
+      "id": "lib.tg_digest",
+      "type": "lib",
+      "path": "src/lib/lead-radar/telegram-digest.ts"
+    },
+    {
+      "id": "app.api_nightly",
+      "type": "app",
+      "path": "src/app/api/lead-radar/nightly-run"
+    },
+    {
+      "id": "ops.cron_nightly",
+      "type": "ops",
+      "path": "scripts/cron-lead-radar-nightly.sh"
     }
   ],
   "edges": [
@@ -318,6 +343,36 @@
       "from": "app.api_secret_shopper",
       "to": "lib.kp_html",
       "type": "reads"
+    },
+    {
+      "from": "app.api_nightly",
+      "to": "lib.nightly_run",
+      "type": "reads"
+    },
+    {
+      "from": "lib.nightly_run",
+      "to": "lib.serper",
+      "type": "reads"
+    },
+    {
+      "from": "lib.nightly_run",
+      "to": "lib.deep_email",
+      "type": "reads"
+    },
+    {
+      "from": "lib.nightly_run",
+      "to": "lib.screenshot",
+      "type": "reads"
+    },
+    {
+      "from": "lib.nightly_run",
+      "to": "lib.tg_digest",
+      "type": "writes"
+    },
+    {
+      "from": "ops.cron_nightly",
+      "to": "app.api_nightly",
+      "type": "validates"
     }
   ],
   "taskPaths": {
@@ -358,8 +413,9 @@
     ],
     "lead_radar_telegram": [
       "doc.tz_auto",
-      "lib.telegram",
-      "app.api_lead_radar",
+      "lib.tg_digest",
+      "lib.nightly_run",
+      "app.api_nightly",
       "gate.harness"
     ],
     "lead_radar_daily_report": [
@@ -378,6 +434,14 @@
     ],
     "prod_restart": [
       "gate.build",
+      "gate.harness"
+    ],
+    "lead_radar_nightly": [
+      "doc.tz_auto",
+      "lib.day_picker",
+      "lib.nightly_run",
+      "app.api_nightly",
+      "ops.cron_nightly",
       "gate.harness"
     ]
   }

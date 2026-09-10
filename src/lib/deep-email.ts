@@ -62,10 +62,12 @@ function sameHost(a: string, baseHost: string): boolean {
 function isGoodEmail(email: string, siteHost: string): boolean {
   const e = email.toLowerCase();
   if (NOREPLY_RE.test(e)) return false;
+  if (/\.(png|jpe?g|gif|webp|svg|css|js|woff2?|map|ico)(\?|$)/i.test(e)) return false;
+  if (/@\d+x\./i.test(e)) return false; // retina assets like name@2x.webp
   const domain = e.split("@")[1] || "";
+  if (!domain || !domain.includes(".")) return false;
   if (EMAIL_BLACKLIST.some((b) => domain === b || domain.endsWith(`.${b}`))) return false;
   if (e.endsWith(".png") || e.endsWith(".jpg") || e.endsWith(".css") || e.endsWith(".js")) return false;
-  // предпочитаем корпоративный, но не режем чужие рабочие ящики жёстко
   void siteHost;
   return true;
 }
