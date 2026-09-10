@@ -118,18 +118,51 @@ export async function updateSiteStatus(id: string, status: string): Promise<void
   await db.query("UPDATE lead_radar_sites SET status = ? WHERE id = ?", [status, id]);
 }
 
+export async function getSiteById(id: string): Promise<any | null> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT s.*, r.city AS radar_city, r.niche AS radar_niche
+     FROM lead_radar_sites s
+     LEFT JOIN lead_radars r ON r.id = s.radar_id
+     WHERE s.id = ?
+     LIMIT 1`,
+    [id]
+  );
+  return (rows as any[])[0] || null;
+}
+
 /** Очередь «К отправке» за сегодня (или указанную дату). */
 export async function listQueuedSites(batchDate?: string): Promise<any[]> {
   const db = getDbPool();
   const date = batchDate || null;
   const [rows] = await db.query(
-    `SELECT * FROM lead_radar_sites
-     WHERE status = 'queued'
-       AND batch_date = COALESCE(?, CURDATE())
-     ORDER BY hot_score DESC, queued_at ASC`,
+    `SELECT s.*, r.city AS radar_city, r.niche AS radar_niche
+     FROM lead_radar_sites s
+     LEFT JOIN lead_radars r ON r.id = s.radar_id
+     WHERE s.status = 'queued'
+       AND s.batch_date = COALESCE(?, CURDATE())
+     ORDER BY s.hot_score DESC, s.queued_at ASC`,
     [date]
   );
   return rows as any[];
+}
+
+/** +1 к счётчику пачки дня. */
+export async function bumpBatchCounter(
+  batchDate: string,
+  field: "sent_count" | "skipped_count" | "replied_count"
+): Promise<void> {
+  const db = getDbPool();
+  const existing = await getBatchByDate(batchDate);
+  if (!existing) {
+    await upsertBatchPlan({ batchDate, queuedCount: 0 });
+  }
+  const allowed = ["sent_count", "skipped_count", "replied_count"] as const;
+  if (!allowed.includes(field)) return;
+  await db.query(
+    `UPDATE lead_radar_batches SET ${field} = ${field} + 1 WHERE batch_date = ?`,
+    [batchDate]
+  );
 }
 
 export async function countQueuedForDate(batchDate?: string): Promise<number> {
@@ -212,6 +245,27 @@ export async function getBatchByDate(batchDate: string): Promise<any | null> {
     [batchDate]
   );
   return (rows as any[])[0] || null;
+}
+
+/** История пачек (новые сверху). */
+export async function listBatches(limit = 30): Promise<any[]> {
+  const db = getDbPool();
+  const safeLimit = Math.min(Math.max(1, limit), 90);
+  const [rows] = await db.query(
+    `SELECT * FROM lead_radar_batches
+     ORDER BY batch_date DESC
+     LIMIT ${safeLimit}`
+  );
+  return rows as any[];
+}
+
+/** Сумма токенов по пачкам (для шапки дашборда). */
+export async function sumBatchTokens(): Promise<number> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT COALESCE(SUM(tokens_total), 0) AS t FROM lead_radar_batches`
+  );
+  return Number((rows as RowDataPacket[])[0]?.t ?? 0);
 }
 
 export async function updateSiteKp(params: {

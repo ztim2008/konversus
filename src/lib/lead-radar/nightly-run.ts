@@ -21,6 +21,7 @@ import {
 import {
   countQueuedForDate,
   createRadar,
+  listQueuedSites,
   upsertBatchPlan,
 } from "@/lib/data/lead-radar";
 import { getDbPool } from "@/lib/db";
@@ -28,7 +29,9 @@ import { getAllSettings } from "@/lib/data/settings";
 import { pickCityAndNiche, rememberCityNiche } from "@/lib/lead-radar/day-picker";
 import { sendMorningDigest } from "@/lib/lead-radar/telegram-digest";
 
-export const DAILY_QUEUE_LIMIT = 20;
+import { DAILY_QUEUE_LIMIT } from "@/lib/lead-radar/config";
+
+export { DAILY_QUEUE_LIMIT };
 const CONTACT_COOLDOWN_DAYS = 30;
 
 export type NightlyRunResult = {
@@ -137,6 +140,16 @@ export async function runNightlyLeadRadar(options?: {
   const batchDate = new Date().toISOString().slice(0, 10);
   const limit = Math.min(options?.limit ?? DAILY_QUEUE_LIMIT, DAILY_QUEUE_LIMIT);
   const skipped: Array<{ domain: string; reason: string }> = [];
+  const samples: Array<{
+    name: string;
+    domain: string;
+    platform?: string | null;
+    email?: string | null;
+    hotScore?: number;
+    screenshotUrl?: string | null;
+    kpSubject?: string | null;
+    kpHtml?: string | null;
+  }> = [];
 
   const already = await countQueuedForDate(batchDate);
   if (already >= limit) {
@@ -211,13 +224,6 @@ export async function runNightlyLeadRadar(options?: {
 
   let queued = already;
   let tokensTotal = 0;
-  const samples: Array<{
-    name: string;
-    domain: string;
-    platform?: string | null;
-    email?: string | null;
-    hotScore?: number;
-  }> = [];
 
   const publicOrigin = process.env.NEXT_PUBLIC_BASE_URL || "https://konversus.ru";
 
@@ -336,6 +342,9 @@ export async function runNightlyLeadRadar(options?: {
         platform: audit.cms,
         email: emailInfo.email,
         hotScore: audit.hotScore,
+        screenshotUrl: screenshotUrl || null,
+        kpSubject: subject || null,
+        kpHtml: htmlFinal || null,
       });
     } catch (err: any) {
       skipped.push({
@@ -353,9 +362,23 @@ export async function runNightlyLeadRadar(options?: {
   });
   await rememberCityNiche(city.id, niche);
 
-  let telegram: { ok: boolean; error?: string } = { ok: true };
+  let telegram: { ok: boolean; error?: string; photosSent?: number } = { ok: true };
   if (!options?.skipTelegram) {
     const settings = await getAllSettings();
+    const queuedRows = await listQueuedSites(batchDate);
+    const digestSamples =
+      queuedRows.length > 0
+        ? queuedRows.map((s: any) => ({
+            name: s.name,
+            domain: s.domain,
+            platform: s.platform,
+            email: s.email,
+            hotScore: s.hot_score ?? 0,
+            screenshotUrl: s.screenshot_url || null,
+            kpSubject: s.kp_subject || null,
+            kpHtml: s.kp_html || null,
+          }))
+        : samples;
     telegram = await sendMorningDigest({
       botToken: settings.telegram_bot_token,
       chatId: settings.telegram_chat_id,
@@ -365,8 +388,9 @@ export async function runNightlyLeadRadar(options?: {
       queuedCount: finalCount,
       limit,
       tokensTotal,
-      samples,
+      samples: digestSamples,
       adminUrl: `${publicOrigin}/dashboard/secret-shopper`,
+      publicOrigin,
     });
   }
 

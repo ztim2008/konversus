@@ -8,6 +8,8 @@ import { RadarList } from "./components/radar-list";
 import { LeadTable } from "./components/lead-table";
 import { PipelineTable } from "./components/pipeline-table";
 import { KpModal } from "./components/kp-modal";
+import { TodayQueue } from "./components/today-queue";
+import { BatchesStats } from "./components/batches-stats";
 
 export default function LeadRadarPage() {
   // ─── State ───
@@ -19,7 +21,7 @@ export default function LeadRadarPage() {
   const [newNiche, setNewNiche] = useState("Стоматологии");
   const [previewLead, setPreviewLead] = useState<Lead | null>(null);
   const [selectedRadarId, setSelectedRadarId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("radars");
+  const [activeTab, setActiveTab] = useState("today");
   const [pipelineLeads, setPipelineLeads] = useState<PipelineLead[]>([]);
   const [auditProgress, setAuditProgress] = useState("");
   const [followUps, setFollowUps] = useState<any[]>([]);
@@ -137,8 +139,35 @@ export default function LeadRadarPage() {
   }
 
   async function updatePipelineStatus(id: string, status: string) {
+    if (status === "replied") {
+      await fetch("/api/lead-radar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "mark-replied", siteId: id }),
+      });
+      setPipelineLeads((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, status: "replied" } : l))
+      );
+      return;
+    }
     await fetch("/api/lead-radar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "update-status", siteId: id, status }) });
     setPipelineLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+  }
+
+  async function markPipelineReplied(id: string) {
+    const res = await fetch("/api/lead-radar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "mark-replied", siteId: id }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "Не удалось отметить ответ");
+      return;
+    }
+    setPipelineLeads((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, status: "replied" } : l))
+    );
   }
 
   async function deletePipelineLead(id: string) {
@@ -163,15 +192,19 @@ export default function LeadRadarPage() {
             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
               <Radar size={28} className="text-indigo-400" /> Лид-радар
             </h1>
-            <p className="mt-2 text-sm text-gray-500">Поиск сайтов с проблемами. Google Maps + 2GIS. Сохранение в БД.</p>
+            <p className="mt-2 text-sm text-gray-500">Утро = план · день = ручная отправка · бренд писем lead-web.pro</p>
           </div>
-          <div className="flex gap-2 mb-4">
-            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📡 Радары</button>
-            <button onClick={loadPipeline} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>📋 Лиды в работе</button>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <button onClick={() => setActiveTab("today")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "today" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Сегодня</button>
+            <button onClick={() => setActiveTab("stats")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "stats" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Статистика</button>
+            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Радары</button>
+            <button onClick={loadPipeline} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Лиды в работе</button>
           </div>
-          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
-            <Plus size={18} /> Новый радар
-          </button>
+          {activeTab === "radars" && (
+            <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
+              <Plus size={18} /> Новый радар
+            </button>
+          )}
         </div>
 
         {/* Progress */}
@@ -183,6 +216,10 @@ export default function LeadRadarPage() {
         <RadarForm show={showAdd} onClose={() => setShowAdd(false)} newCity={newCity} setNewCity={setNewCity} newNiche={newNiche} setNewNiche={setNewNiche} onAdd={addRadar} loading={loading} />
 
         {/* Tabs */}
+        {activeTab === "today" && <TodayQueue />}
+
+        {activeTab === "stats" && <BatchesStats />}
+
         {activeTab === "radars" && (
           <>
             <RadarList radars={radars} selectedRadarId={selectedRadarId} onSelect={loadRadarSites} onDelete={deleteRadar} />
@@ -222,7 +259,12 @@ export default function LeadRadarPage() {
                 </div>
               </div>
             )}
-            <PipelineTable pipelineLeads={pipelineLeads} onStatusChange={updatePipelineStatus} onDelete={deletePipelineLead} />
+            <PipelineTable
+              pipelineLeads={pipelineLeads}
+              onStatusChange={updatePipelineStatus}
+              onDelete={deletePipelineLead}
+              onMarkReplied={markPipelineReplied}
+            />
           </>
         )}
 

@@ -198,6 +198,11 @@
       "path": "src/lib/lead-radar/telegram-digest.ts"
     },
     {
+      "id": "lib.send_queued",
+      "type": "lib",
+      "path": "src/lib/lead-radar/send-queued.ts"
+    },
+    {
       "id": "app.api_nightly",
       "type": "app",
       "path": "src/app/api/lead-radar/nightly-run"
@@ -206,6 +211,41 @@
       "id": "ops.cron_nightly",
       "type": "ops",
       "path": "scripts/cron-lead-radar-nightly.sh"
+    },
+    {
+      "id": "lib.daily_report",
+      "type": "lib",
+      "path": "src/lib/lead-radar/daily-report.ts"
+    },
+    {
+      "id": "app.api_daily_report",
+      "type": "app",
+      "path": "src/app/api/lead-radar/daily-report"
+    },
+    {
+      "id": "ops.cron_daily_report",
+      "type": "ops",
+      "path": "scripts/cron-lead-radar-daily-report.sh"
+    },
+    {
+      "id": "lib.mark_replied",
+      "type": "lib",
+      "path": "src/lib/lead-radar/mark-replied.ts"
+    },
+    {
+      "id": "app.api_reply_webhook",
+      "type": "app",
+      "path": "src/app/api/lead-radar/reply-webhook"
+    },
+    {
+      "id": "app.api_interest",
+      "type": "app",
+      "path": "src/app/api/lead-radar/interest"
+    },
+    {
+      "id": "lib.lead_radar_config",
+      "type": "lib",
+      "path": "src/lib/lead-radar/config.ts"
     }
   ],
   "edges": [
@@ -373,6 +413,66 @@
       "from": "ops.cron_nightly",
       "to": "app.api_nightly",
       "type": "validates"
+    },
+    {
+      "from": "app.api_lead_radar",
+      "to": "lib.send_queued",
+      "type": "writes"
+    },
+    {
+      "from": "lib.send_queued",
+      "to": "lib.lead_radar_data",
+      "type": "writes"
+    },
+    {
+      "from": "lib.send_queued",
+      "to": "lib.tg_digest",
+      "type": "writes"
+    },
+    {
+      "from": "app.api_daily_report",
+      "to": "lib.daily_report",
+      "type": "writes"
+    },
+    {
+      "from": "lib.daily_report",
+      "to": "lib.lead_radar_data",
+      "type": "writes"
+    },
+    {
+      "from": "lib.daily_report",
+      "to": "lib.tg_digest",
+      "type": "writes"
+    },
+    {
+      "from": "ops.cron_daily_report",
+      "to": "app.api_daily_report",
+      "type": "validates"
+    },
+    {
+      "from": "app.api_reply_webhook",
+      "to": "lib.mark_replied",
+      "type": "writes"
+    },
+    {
+      "from": "app.api_interest",
+      "to": "lib.mark_replied",
+      "type": "writes"
+    },
+    {
+      "from": "lib.mark_replied",
+      "to": "lib.lead_radar_data",
+      "type": "writes"
+    },
+    {
+      "from": "lib.mark_replied",
+      "to": "lib.tg_digest",
+      "type": "writes"
+    },
+    {
+      "from": "app.api_lead_radar",
+      "to": "lib.mark_replied",
+      "type": "writes"
     }
   ],
   "taskPaths": {
@@ -381,6 +481,8 @@
       "sql.lead_radar",
       "sql.lead_radar_auto",
       "lib.lead_radar_data",
+      "lib.send_queued",
+      "lib.tg_digest",
       "app.api_lead_radar",
       "app.ui_secret_shopper",
       "gate.harness"
@@ -415,21 +517,33 @@
       "doc.tz_auto",
       "lib.tg_digest",
       "lib.nightly_run",
+      "lib.daily_report",
       "app.api_nightly",
+      "app.api_daily_report",
+      "ops.cron_daily_report",
       "gate.harness"
     ],
     "lead_radar_daily_report": [
       "doc.tz_auto",
+      "lib.daily_report",
+      "lib.tg_digest",
       "lib.lead_radar_data",
-      "lib.telegram",
+      "lib.lead_radar_config",
+      "app.api_daily_report",
       "app.api_lead_radar",
+      "app.ui_secret_shopper",
+      "ops.cron_daily_report",
       "gate.harness"
     ],
     "lead_radar_replies": [
       "doc.tz_auto",
+      "lib.mark_replied",
+      "lib.tg_digest",
       "lib.lead_radar_data",
-      "lib.telegram",
+      "app.api_reply_webhook",
+      "app.api_interest",
       "app.api_lead_radar",
+      "app.ui_secret_shopper",
       "gate.harness"
     ],
     "prod_restart": [

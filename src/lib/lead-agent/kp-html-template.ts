@@ -46,16 +46,31 @@ function absoluteUrl(url: string | null | undefined, origin: string): string | n
 export function buildLeadWebCtaUrl(params: {
   leadId?: string | null;
   batchDate?: string;
+  /** Origin моста (konversus) — клик сначала фиксирует интерес */
+  bridgeOrigin?: string;
 }): string {
-  const u = new URL("https://lead-web.pro/");
-  u.searchParams.set("utm_source", "radar");
-  u.searchParams.set("utm_medium", "email");
-  u.searchParams.set(
-    "utm_campaign",
-    `batch_${params.batchDate || new Date().toISOString().slice(0, 10)}`
-  );
-  if (params.leadId) u.searchParams.set("lead", params.leadId);
-  return u.toString();
+  const batch =
+    params.batchDate || new Date().toISOString().slice(0, 10);
+  const dest = new URL("https://lead-web.pro/");
+  dest.searchParams.set("utm_source", "radar");
+  dest.searchParams.set("utm_medium", "email");
+  dest.searchParams.set("utm_campaign", `batch_${batch}`);
+  if (params.leadId) dest.searchParams.set("lead", params.leadId);
+
+  // Авто-канал этапа 8: клик по CTA → interest на konversus → replied + TG → редирект
+  if (params.leadId) {
+    const origin = (
+      params.bridgeOrigin ||
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      "https://konversus.ru"
+    ).replace(/\/$/, "");
+    const bridge = new URL(`${origin}/api/lead-radar/interest`);
+    bridge.searchParams.set("lead", params.leadId);
+    bridge.searchParams.set("batch", batch);
+    return bridge.toString();
+  }
+
+  return dest.toString();
 }
 
 export function buildKpSubject(companyName: string, domain: string): string {
@@ -70,6 +85,7 @@ export function renderLeadWebKpHtml(input: KpHtmlInput): string {
   const cta = buildLeadWebCtaUrl({
     leadId: input.leadId,
     batchDate: input.batchDate,
+    bridgeOrigin: origin,
   });
   const platform = input.platform?.trim();
   const issues = (input.issues || []).slice(0, 4);
@@ -115,7 +131,9 @@ ${issues
         <tr><td style="padding:24px 28px 8px;font-family:Arial,Helvetica,sans-serif;">
           <p style="margin:0 0 16px;font-size:13px;color:#78716c;">${metaBits.join(" · ")}</p>
           ${shotHtml}
+          <!--kp-body-->
           ${bodyHtml}
+          <!--/kp-body-->
           ${issuesBlock}
           <div style="margin-top:8px;">
             <a href="${escapeHtml(cta)}" style="display:inline-block;background:#1c1917;color:#fafaf9;text-decoration:none;padding:12px 22px;font-size:14px;font-weight:600;border-radius:2px;">

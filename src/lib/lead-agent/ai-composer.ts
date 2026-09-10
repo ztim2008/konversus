@@ -1,7 +1,9 @@
 /**
  * AI Composer — персонализированное КП под бренд lead-web.pro.
+ * Модель: DeepSeek через OpenRouter.
  */
 import { callOpenRouter } from "@/lib/ai/openrouter";
+import { getSetting } from "@/lib/data/settings";
 
 interface SiteSnapshot {
   url: string;
@@ -29,6 +31,18 @@ export type KpGenerateResult = {
   model: string;
   source: "ai" | "fallback";
 };
+
+const DEEPSEEK_MODEL = "deepseek/deepseek-chat";
+
+async function resolveOpenRouterKey(): Promise<string> {
+  const fromEnv = (process.env.OPENROUTER_API_KEY || "").trim();
+  if (fromEnv) return fromEnv;
+  try {
+    return (await getSetting("openrouter_api_key")).trim();
+  } catch {
+    return "";
+  }
+}
 
 async function fetchSite(url: string): Promise<SiteSnapshot> {
   const normalized = url.startsWith("http") ? url : `https://${url}`;
@@ -98,7 +112,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
   const subjectBase = ctx.domain.replace(/^www\./, "");
   const defaultSubject = `Посмотрел сайт ${subjectBase}: пара идей по заявкам`;
 
-  const apiKey = process.env.OPENROUTER_API_KEY || "";
+  const apiKey = await resolveOpenRouterKey();
   if (!apiKey) {
     return {
       subject: defaultSubject,
@@ -145,7 +159,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
       ],
       {
         apiKey,
-        model: "deepseek/deepseek-chat",
+        model: DEEPSEEK_MODEL,
         maxTokens: 800,
       }
     );
@@ -158,7 +172,8 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
       model: result.model,
       source: "ai",
     };
-  } catch {
+  } catch (err) {
+    console.error("[ai-composer] DeepSeek/OpenRouter error:", err);
     return {
       subject: defaultSubject,
       bodyText: fallbackBody(ctx),

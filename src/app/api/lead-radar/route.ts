@@ -13,9 +13,20 @@ import {
   countQueuedForDate,
   upsertBatchPlan,
   getBatchByDate,
+  listBatches,
+  sumBatchTokens,
 } from "@/lib/data/lead-radar";
+import { sendQueuedLead, skipQueuedLead } from "@/lib/lead-radar/send-queued";
+import { markLeadReplied } from "@/lib/lead-radar/mark-replied";
+import { collectDayFacts } from "@/lib/lead-radar/daily-report";
+import {
+  DAILY_QUEUE_LIMIT,
+  DAILY_REPORT_HOUR_MSK,
+  estimateUsd,
+  formatBatchDateRu,
+} from "@/lib/lead-radar/config";
 
-const DAILY_SEND_LIMIT = 20;
+const DAILY_SEND_LIMIT = DAILY_QUEUE_LIMIT;
 
 // Список радаров
 export async function GET() {
@@ -52,21 +63,104 @@ export async function POST(req: NextRequest) {
     const batchDate = body.batchDate as string | undefined;
     const sites = await listQueuedSites(batchDate);
     const queuedCount = await countQueuedForDate(batchDate);
-    const batch = batchDate
-      ? await getBatchByDate(batchDate)
-      : await getBatchByDate(new Date().toISOString().slice(0, 10));
+    const today = new Date().toISOString().slice(0, 10);
+    const batch = await getBatchByDate(batchDate || today);
     return NextResponse.json({
       sites,
       queuedCount,
       limit: DAILY_SEND_LIMIT,
       remaining: Math.max(0, DAILY_SEND_LIMIT - queuedCount),
       batch,
+      batchDate: batchDate || today,
     });
   }
 
+  if (body.action === "list-batches") {
+    const limit = typeof body.limit === "number" ? body.limit : 30;
+    const batches = await listBatches(limit);
+    const tokensAll = await sumBatchTokens();
+    const today = new Date().toISOString().slice(0, 10);
+    const live = await collectDayFacts(body.batchDate || today);
+    const rows = batches.map((b: any) => {
+      let dateIso: string;
+      if (b.batch_date instanceof Date) {
+        const d = b.batch_date;
+        dateIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      } else {
+        dateIso = String(b.batch_date).slice(0, 10);
+      }
+      const tokens = Number(b.tokens_total || 0);
+      return {
+        ...b,
+        batch_date: dateIso,
+        batch_date_ru: formatBatchDateRu(dateIso),
+        tokens_total: tokens,
+        usd_estimate: estimateUsd(tokens),
+        report_sent: !!b.report_sent_at,
+      };
+    });
+    return NextResponse.json({
+      ok: true,
+      batches: rows,
+      tokensAll,
+      usdAll: estimateUsd(tokensAll),
+      live,
+      liveUsd: estimateUsd(live.tokens),
+      config: {
+        dailyQueueLimit: DAILY_QUEUE_LIMIT,
+        dailyReportHourMsk: DAILY_REPORT_HOUR_MSK,
+      },
+    });
+  }
+
+  if (body.action === "send-queued") {
+    if (!body.siteId) {
+      return NextResponse.json({ error: "siteId required" }, { status: 400 });
+    }
+    const result = await sendQueuedLead({
+      siteId: body.siteId,
+      testMode: !!body.testMode,
+      skipTelegram: !!body.skipTelegram,
+    });
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: result.status || 500 }
+      );
+    }
+    return NextResponse.json(result);
+  }
+
   if (body.action === "skip-site") {
-    await updateSiteStatus(body.siteId, "skipped");
-    return NextResponse.json({ ok: true });
+    if (!body.siteId) {
+      return NextResponse.json({ error: "siteId required" }, { status: 400 });
+    }
+    const result = await skipQueuedLead(body.siteId);
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: result.status || 500 }
+      );
+    }
+    return NextResponse.json(result);
+  }
+
+  if (body.action === "mark-replied") {
+    if (!body.siteId) {
+      return NextResponse.json({ error: "siteId required" }, { status: 400 });
+    }
+    const result = await markLeadReplied({
+      siteId: body.siteId,
+      source: "manual",
+      skipTelegram: !!body.skipTelegram,
+    });
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: result.status || 500 }
+      );
+    }
+    return NextResponse.json(result);
   }
 
   if (body.action === "queue-site") {
