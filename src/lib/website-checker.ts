@@ -17,6 +17,10 @@ export interface WebsiteResult {
   hasPhone: boolean;
   contactName: string | null;
   hotScore: number;
+  /** Эвристики cookie / политика (не юрзаключение) */
+  privacyIssues: string[];
+  hasTitle: boolean;
+  hasDescription: boolean;
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -65,6 +69,9 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     cms: null, cmsTier: null as string|null, hasPhone: false,
     contactName: null,
     hotScore: 50, // начинаем с 50 (нейтрально)
+    privacyIssues: [],
+    hasTitle: false,
+    hasDescription: false,
   };
 
   if (!url?.trim()) {
@@ -188,6 +195,51 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(html)) {
       result.hotScore += HOT_SCORES.has_email;
     }
+
+    // ─── Title / description (базовый SEO) ─────────────────────
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    result.hasTitle = !!(titleMatch?.[1]?.trim());
+    if (!result.hasTitle) {
+      result.issues.push("нет title");
+      result.score += 1;
+      result.hotScore += 8;
+    }
+    result.hasDescription = /<meta[^>]+name=["']description["'][^>]+content=["'][^"']+["']/i.test(html)
+      || /<meta[^>]+content=["'][^"']+["'][^>]+name=["']description["']/i.test(html);
+    if (!result.hasDescription) {
+      result.issues.push("нет meta description");
+      result.score += 1;
+      result.hotScore += 5;
+    }
+
+    // ─── Cookie / политика (эвристики РФ) ──────────────────────
+    const lower = html.toLowerCase();
+    const hasPrivacyLink =
+      /href=["'][^"']*(privacy|politika|персональн|confidential|pdn)[^"']*["']/i.test(html)
+      || /политик[аи]\s+конфиденциальности/i.test(html);
+    const hasCookieBanner =
+      /cookie|куки|файлы cookie|мы используем cookie|согласие на обработку/i.test(html);
+    const hasAnalytics =
+      /mc\.yandex\.ru|metrika|googletagmanager|google-analytics|gtag\(/i.test(html);
+
+    if (!hasPrivacyLink) {
+      result.privacyIssues.push("нет явной ссылки на политику конфиденциальности");
+      result.issues.push("нет политики конфиденциальности (эвристика)");
+      result.score += 1;
+      result.hotScore += 10;
+    }
+    if (hasAnalytics && !hasCookieBanner) {
+      result.privacyIssues.push("аналитика на сайте без явного cookie/согласия (эвристика)");
+      result.issues.push("аналитика без явного cookie-баннера");
+      result.score += 1;
+      result.hotScore += 8;
+    }
+    if (!hasCookieBanner && hasAnalytics) {
+      // уже учтено выше
+    } else if (!hasCookieBanner) {
+      result.privacyIssues.push("не найден cookie-баннер / блок согласия");
+    }
+    void lower;
 
   
     // ─── LPR (имя владельца/директора) ───────────────────────────

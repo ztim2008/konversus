@@ -161,6 +161,21 @@
       "id": "app.api_search_serp",
       "type": "app",
       "path": "src/app/api/secret-shopper/search-serp"
+    },
+    {
+      "id": "lib.deep_email",
+      "type": "lib",
+      "path": "src/lib/deep-email.ts"
+    },
+    {
+      "id": "lib.screenshot",
+      "type": "lib",
+      "path": "src/lib/site-screenshot.ts"
+    },
+    {
+      "id": "app.api_enrich_site",
+      "type": "app",
+      "path": "src/app/api/secret-shopper/enrich-site"
     }
   ],
   "edges": [
@@ -268,6 +283,26 @@
       "from": "lib.serper",
       "to": "doc.tz_auto",
       "type": "reads"
+    },
+    {
+      "from": "app.api_enrich_site",
+      "to": "lib.website_checker",
+      "type": "reads"
+    },
+    {
+      "from": "app.api_enrich_site",
+      "to": "lib.deep_email",
+      "type": "reads"
+    },
+    {
+      "from": "app.api_enrich_site",
+      "to": "lib.screenshot",
+      "type": "reads"
+    },
+    {
+      "from": "lib.website_checker",
+      "to": "doc.tz_auto",
+      "type": "reads"
     }
   ],
   "taskPaths": {
@@ -292,7 +327,9 @@
     "lead_radar_audit": [
       "doc.tz_auto",
       "lib.website_checker",
-      "app.api_secret_shopper",
+      "lib.deep_email",
+      "lib.screenshot",
+      "app.api_enrich_site",
       "lib.lead_radar_data",
       "gate.harness"
     ],

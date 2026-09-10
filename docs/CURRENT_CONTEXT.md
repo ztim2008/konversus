@@ -1,31 +1,25 @@
 # CURRENT_CONTEXT — срез «сейчас»
 
 **Обновлено:** 2026-09-10  
-**Активный трек:** Лид-радар Auto ([LEAD-RADAR-AUTO-TZ.md](./LEAD-RADAR-AUTO-TZ.md))
+**Активный трек:** Лид-радар Auto
 
 ## Сейчас
 
 | Этап | Статус |
 |------|--------|
-| 0 Harness · Loop · Graph | 🟩 |
-| 1 Модель данных / очередь | 🟩 |
-| 2 SERP + фильтр компаний | 🟩 |
-| 3–9 | 🟦 → следующий **этап 3** (аудит + deep email + скрин) |
+| 0–3 | 🟩 |
+| 4 | 🟦 HTML-письмо lead-web.pro + AI-КП + скрин |
 
-## SERP
+## Git
 
-- Провайдер: **Serper.dev** (`SERPER_API_KEY` в `.env.local`)
-- API: `POST /api/secret-shopper/search-serp` `{ city, niche }`
-- Playwright — не используем в MVP
+- Локальный коммит этапов 0–2: `aacd170`
+- Push на `origin` (ztim2008/avitos) — **не прошёл** (нет доступа у bilarius1-tech)
+- Нужен доступ к репо или другой remote
 
-## География v1
+## Фокус
 
-СПб (bootstrap) → ротация Мск / Омск / В. Новгород · 1 город/утро
-
-## Фокус следующей сессии
-
-Этап 3: аудит + глубокий email + скриншот + запись `platform`.
+Этап 4 — красивое HTML-КП со скрином и CTA на lead-web.pro
 
 ```bash
-npm run agent:loop -- --task lead_radar_audit
+npm run agent:loop -- --task lead_radar_email
 ```

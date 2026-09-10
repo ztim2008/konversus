@@ -31,11 +31,14 @@ export async function POST(req: NextRequest) {
           scorePercent: scoreToPercent(audit.score),
           h1: audit.h1,
           cms: audit.cms, cmsTier: audit.cmsTier,
+          platform: audit.cms,
           hotScore: audit.hotScore,
           contactName: audit.contactName,
+          privacyIssues: audit.privacyIssues,
+          hasTitle: audit.hasTitle,
+          hasDescription: audit.hasDescription,
         },
-      });
-    } catch {
+      });    } catch {
       results.push({ domain: site.domain, name: site.name, audit: { issues: ["ошибка проверки"], score: 10, scorePercent: 0 } });
     }
 
