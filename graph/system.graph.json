@@ -176,6 +176,11 @@
       "id": "app.api_enrich_site",
       "type": "app",
       "path": "src/app/api/secret-shopper/enrich-site"
+    },
+    {
+      "id": "lib.kp_html",
+      "type": "lib",
+      "path": "src/lib/lead-agent/kp-html-template.ts"
     }
   ],
   "edges": [
@@ -303,6 +308,16 @@
       "from": "lib.website_checker",
       "to": "doc.tz_auto",
       "type": "reads"
+    },
+    {
+      "from": "lib.ai_composer",
+      "to": "lib.kp_html",
+      "type": "writes"
+    },
+    {
+      "from": "app.api_secret_shopper",
+      "to": "lib.kp_html",
+      "type": "reads"
     }
   ],
   "taskPaths": {
@@ -336,6 +351,7 @@
     "lead_radar_email": [
       "doc.tz_auto",
       "lib.ai_composer",
+      "lib.kp_html",
       "app.api_secret_shopper",
       "app.ui_secret_shopper",
       "gate.harness"

@@ -7,19 +7,13 @@
 
 | Этап | Статус |
 |------|--------|
-| 0–3 | 🟩 |
-| 4 | 🟦 HTML-письмо lead-web.pro + AI-КП + скрин |
-
-## Git
-
-- Локальный коммит этапов 0–2: `aacd170`
-- Push на `origin` (ztim2008/avitos) — **не прошёл** (нет доступа у bilarius1-tech)
-- Нужен доступ к репо или другой remote
+| 0–4 | 🟩 |
+| 5 | 🟦 Ночной пайплайн + утренний дайджест |
 
 ## Фокус
 
-Этап 4 — красивое HTML-КП со скрином и CTA на lead-web.pro
+Этап 5 — nightly-run + Telegram дайджест (план дня).
 
 ```bash
-npm run agent:loop -- --task lead_radar_email
+npm run agent:loop -- --task lead_radar_telegram
 ```

@@ -1,6 +1,5 @@
 /**
- * AI Composer — персонализированная генерация КП на основе анализа сайта.
- * Фетчит сайт → AI анализирует → пишет персональное предложение.
+ * AI Composer — персонализированное КП под бренд lead-web.pro.
  */
 import { callOpenRouter } from "@/lib/ai/openrouter";
 
@@ -12,31 +11,41 @@ interface SiteSnapshot {
   textContent: string;
 }
 
-interface KpContext {
+export interface KpContext {
   domain: string;
   niche: string;
   city: string;
   issues: string[];
   contactName?: string;
   cms?: string;
+  travel?: boolean;
 }
+
+export type KpGenerateResult = {
+  subject: string;
+  bodyText: string;
+  tokensIn: number;
+  tokensOut: number;
+  model: string;
+  source: "ai" | "fallback";
+};
 
 async function fetchSite(url: string): Promise<SiteSnapshot> {
   const normalized = url.startsWith("http") ? url : `https://${url}`;
   const res = await fetch(normalized, {
     signal: AbortSignal.timeout(10000),
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; KonversusBot/1.0)" },
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; LeadWebRadar/1.0)" },
   });
   const html = await res.text();
 
-  // Простой парсинг без библиотек
   const title = (html.match(/<title[^>]*>([^<]+)<\/title>/i) || [])[1]?.trim() || "";
-  const desc = (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) || 
-                html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i) || [])[1]?.trim() || "";
+  const desc =
+    (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i) ||
+      [])[1]?.trim() || "";
   const h1Matches = html.match(/<h1[^>]*>([^<]+)<\/h1>/gi) || [];
-  const h1 = h1Matches.map(h => h.replace(/<[^>]+>/g, "").trim()).filter(Boolean);
+  const h1 = h1Matches.map((h) => h.replace(/<[^>]+>/g, "").trim()).filter(Boolean);
 
-  // Извлекаем текст из body (первые 3000 символов)
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const body = bodyMatch ? bodyMatch[1] : html;
   const text = body
@@ -51,48 +60,63 @@ async function fetchSite(url: string): Promise<SiteSnapshot> {
   return { url: normalized, title, description: desc, h1, textContent: text };
 }
 
-const KP_SYSTEM_PROMPT = `Ты — Алексей Тимофеев, веб-разработчик и дизайнер с 17-летним опытом. 
-Ты помогаешь бизнесу расти через улучшение их сайтов и digital-присутствия.
+const KP_SYSTEM_PROMPT = `Ты пишешь исходящие письма от команды lead-web.pro (веб-разработка и заявки с сайта).
+Не упоминай Konversus. Бренд только lead-web.pro.
 
-Твоя задача: написать ПЕРСОНАЛИЗИРОВАННОЕ коммерческое предложение владельцу бизнеса.
+Задача: короткий персональный текст письма владельцу бизнеса (тело без HTML).
 
 ПРАВИЛА:
-1. НЕ используй шаблоны. Каждое письмо — уникальное.
-2. Анализируй конкретный сайт: чем компания занимается, кто их клиенты, что у них хорошо, что плохо.
-   Обрати внимание на CMS сайта: если Tilda/Wix — предложи переезд на нормальную платформу.
-   Если WordPress/Joomla — предложи обновление дизайна и ускорение.
-   Если самописный — отметь это как преимущество (значит серьёзный подход).
-   Если 1С-Битрикс — предложи доработку функционала.
-3. Найди 1-2 КОНКРЕТНЫЕ проблемы и предложи КОНКРЕТНОЕ решение.
-4. Пиши как живой человек, не как робот. Можно с лёгким юмором.
-5. Покажи что ты РЕАЛЬНО посмотрел их сайт — упомяни деталь, которую видно только при внимательном просмотре.
-6. Будь полезным: дай один бесплатный совет, даже если они не закажут.
-7. Объём: 150-250 слов.
-8. Не используй markdown, пиши простым текстом с переносами строк.
+1. Не шаблонничай — опирайся на факты сайта.
+2. Учти CMS/платформу: Tilda/Wix — аккуратно про рост и стабильность; WordPress — скорость/дизайн; Битрикс — доработки; самописный — как плюс зрелости.
+3. 1–2 конкретные проблемы и зачем это бьёт по заявкам.
+4. 1 мысль: как автоматизация или доработка сайта даст рост.
+5. Живой тон, без угроз и без «вы нарушаете закон». Про риски cookie/политики — мягко.
+6. Один бесплатный совет.
+7. 120–200 слов. Без markdown. Без темы письма в теле. Без блока контактов в конце (их добавит шаблон).
+8. Не описывай скриншот — он будет в письме отдельно.
 
-СТРУКТУРА ПИСЬМА:
-- Приветствие по имени (если нет имени — "Здравствуйте!")
-- 1 предложение: что посмотрел и что заметил (конкретная деталь с их сайта)
-- 1-2 предложения: какая проблема и почему это важно для их бизнеса
-- 1-2 предложения: что предлагаешь и за какой срок
-- 1 бесплатный совет
-- Контакты: @bilarius (Telegram), +7 921 201-32-52
-- Подпись: Алексей Тимофеев, Konversus · 17 лет в digital`;
+СТРУКТУРА:
+- Приветствие (по имени если есть, иначе «Здравствуйте!»)
+- Что посмотрели и одна конкретная деталь
+- Проблема → влияние на заявки
+- Что можем предложить коротко
+- Бесплатный совет
+- Мягкий переход: можно разобрать подробнее (без URL)`;
 
-export async function generatePersonalizedKP(ctx: KpContext): Promise<string> {
+function fallbackBody(ctx: KpContext): string {
+  const issues = (ctx.issues || []).slice(0, 3).join("; ") || "несколько точек роста по сайту";
+  return `Здравствуйте${ctx.contactName ? `, ${ctx.contactName}` : ""}!
+
+Посмотрели сайт ${ctx.domain}${ctx.city ? ` (${ctx.city})` : ""}${ctx.cms ? `, платформа ${ctx.cms}` : ""}. Заметили: ${issues}.
+
+Это часто снижает конверсию в заявки даже при хорошем трафике. Можем коротко разобрать, что поправить в первую очередь и где поможет автоматизация или доработка сайта.
+
+Кейсы по всей России — на lead-web.pro. Если откликнется — ответьте на письмо, подскажем без обязательства.`;
+}
+
+export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerateResult> {
+  const subjectBase = ctx.domain.replace(/^www\./, "");
+  const defaultSubject = `Посмотрел сайт ${subjectBase}: пара идей по заявкам`;
+
   const apiKey = process.env.OPENROUTER_API_KEY || "";
-  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
+  if (!apiKey) {
+    return {
+      subject: defaultSubject,
+      bodyText: fallbackBody(ctx),
+      tokensIn: 0,
+      tokensOut: 0,
+      model: "none",
+      source: "fallback",
+    };
+  }
 
-  // Фетчим сайт
   let snapshot: SiteSnapshot;
   try {
     snapshot = await fetchSite(ctx.domain);
-  } catch (err) {
-    // Если сайт не загрузился — используем минимум данных
+  } catch {
     snapshot = { url: ctx.domain, title: "", description: "", h1: [], textContent: "" };
   }
 
-  // Собираем контекст для AI
   const siteInfo = [
     `URL: ${snapshot.url}`,
     `Title: ${snapshot.title || "не найден"}`,
@@ -100,24 +124,54 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<string> {
     `H1: ${snapshot.h1.join(" | ") || "не найден"}`,
     `Текст сайта (фрагмент): ${snapshot.textContent.slice(0, 2500)}`,
     "",
-    `CMS: ${ctx.cms || "не определена"}`,
-    `Ниша (по справочнику): ${ctx.niche}`,
+    `CMS/платформа: ${ctx.cms || "не определена"}`,
+    `Ниша: ${ctx.niche}`,
     `Город: ${ctx.city}`,
+    `Выезд возможен: ${ctx.travel ? "да" : "нет (удалённо + кейсы РФ)"}`,
     `Найденные проблемы: ${ctx.issues.join(", ") || "мелкие недочёты"}`,
-    ctx.contactName ? `Имя контактного лица: ${ctx.contactName}` : "",
-  ].filter(Boolean).join("\n");
+    ctx.contactName ? `Имя: ${ctx.contactName}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
-  const result = await callOpenRouter(
-    [
-      { role: "system", content: KP_SYSTEM_PROMPT },
-      { role: "user", content: `Данные сайта для персонализированного КП:\n\n${siteInfo}` },
-    ],
-    {
-      apiKey,
-      model: "deepseek/deepseek-chat",
-      maxTokens: 800,
-    }
-  );
+  try {
+    const result = await callOpenRouter(
+      [
+        { role: "system", content: KP_SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Напиши только текст тела письма (без темы).\n\nДанные:\n\n${siteInfo}`,
+        },
+      ],
+      {
+        apiKey,
+        model: "deepseek/deepseek-chat",
+        maxTokens: 800,
+      }
+    );
 
-  return result.content.trim();
+    return {
+      subject: defaultSubject,
+      bodyText: result.content.trim(),
+      tokensIn: result.usage.promptTokens,
+      tokensOut: result.usage.completionTokens,
+      model: result.model,
+      source: "ai",
+    };
+  } catch {
+    return {
+      subject: defaultSubject,
+      bodyText: fallbackBody(ctx),
+      tokensIn: 0,
+      tokensOut: 0,
+      model: "none",
+      source: "fallback",
+    };
+  }
+}
+
+/** @deprecated используйте generatePersonalizedKP → bodyText */
+export async function generatePersonalizedKPText(ctx: KpContext): Promise<string> {
+  const r = await generatePersonalizedKP(ctx);
+  return r.bodyText;
 }
