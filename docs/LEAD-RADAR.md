@@ -205,6 +205,12 @@ git checkout checkpoint/day3-secret-shopper-start
 
 ## Дальнейшее развитие
 
+Актуальное полное ТЗ по автоматизации (утро / 20 шт / lead-web.pro / Telegram / Harness·Loop·Graph):
+
+→ **[LEAD-RADAR-AUTO-TZ.md](./LEAD-RADAR-AUTO-TZ.md)**
+
+Исторический бэклог:
+
 - [ ] Ежедневный автопоиск по расписанию
 - [ ] Telegram-уведомления о новых горячих лидах
 - [ ] Экспорт в CRM (AmoCRM, Bitrix24)

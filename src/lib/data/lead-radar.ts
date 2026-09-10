@@ -36,11 +36,32 @@ export async function deleteRadar(id: string): Promise<void> {
 
 // ─── Сайты ───────────────────────────────────────────────────────────────
 
-export async function saveRadarSites(radarId: string, sites: Array<{
-  domain: string; name: string; url: string;
-  ssl_status?: string; ssl_days?: number; ssl_grade?: string;
-  score?: number; phone?: string; email?: string; problems?: string[]; h1_text?: string | null;
-}>): Promise<number> {
+export type LeadSiteInput = {
+  domain: string;
+  name: string;
+  url: string;
+  ssl_status?: string;
+  ssl_days?: number;
+  ssl_grade?: string;
+  score?: number;
+  phone?: string;
+  email?: string;
+  problems?: string[];
+  h1_text?: string | null;
+  platform?: string | null;
+  source?: "serp" | "maps" | "manual";
+  serp_query?: string | null;
+  serp_position?: number | null;
+  privacy_issues?: string[];
+  screenshot_path?: string | null;
+  screenshot_url?: string | null;
+  email_source_url?: string | null;
+  hot_score?: number;
+  status?: string;
+  reject_reason?: string | null;
+};
+
+export async function saveRadarSites(radarId: string, sites: LeadSiteInput[]): Promise<number> {
   const db = getDbPool();
   let count = 0;
 
@@ -48,15 +69,29 @@ export async function saveRadarSites(radarId: string, sites: Array<{
     try {
       const id = randomUUID();
       await db.query(
-        `INSERT INTO lead_radar_sites (id, radar_id, domain, name, url, ssl_status, ssl_days, ssl_grade, score, phone, email, problems, h1_text)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, radarId, site.domain, site.name, site.url,
-         site.ssl_status || "unknown", site.ssl_days || null, site.ssl_grade || null,
-         site.score || 0, site.phone || null, site.email || null,
-         JSON.stringify(site.problems || []), site.h1_text || null]
+        `INSERT INTO lead_radar_sites (
+           id, radar_id, domain, name, url, ssl_status, ssl_days, ssl_grade, score,
+           phone, email, platform, source, serp_query, serp_position,
+           problems, privacy_issues, screenshot_path, screenshot_url, screenshot_at,
+           email_source_url, hot_score, status, reject_reason, h1_text
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id, radarId, site.domain, site.name, site.url,
+          site.ssl_status || "unknown", site.ssl_days || null, site.ssl_grade || null,
+          site.score || 0, site.phone || null, site.email || null,
+          site.platform || null, site.source || "maps", site.serp_query || null, site.serp_position ?? null,
+          JSON.stringify(site.problems || []),
+          site.privacy_issues ? JSON.stringify(site.privacy_issues) : null,
+          site.screenshot_path || null, site.screenshot_url || null,
+          site.screenshot_url ? new Date() : null,
+          site.email_source_url || null, site.hot_score ?? 0,
+          site.status || "new", site.reject_reason || null, site.h1_text || null,
+        ]
       );
       count++;
-    } catch {}
+    } catch {
+      /* duplicate / bad row — skip */
+    }
   }
 
   return count;
@@ -73,7 +108,146 @@ export async function listRadarSites(radarId: string): Promise<any[]> {
 
 export async function updateSiteStatus(id: string, status: string): Promise<void> {
   const db = getDbPool();
+  if (status === "queued") {
+    await db.query(
+      "UPDATE lead_radar_sites SET status = ?, queued_at = NOW(), batch_date = CURDATE() WHERE id = ?",
+      [status, id]
+    );
+    return;
+  }
   await db.query("UPDATE lead_radar_sites SET status = ? WHERE id = ?", [status, id]);
+}
+
+/** Очередь «К отправке» за сегодня (или указанную дату). */
+export async function listQueuedSites(batchDate?: string): Promise<any[]> {
+  const db = getDbPool();
+  const date = batchDate || null;
+  const [rows] = await db.query(
+    `SELECT * FROM lead_radar_sites
+     WHERE status = 'queued'
+       AND batch_date = COALESCE(?, CURDATE())
+     ORDER BY hot_score DESC, queued_at ASC`,
+    [date]
+  );
+  return rows as any[];
+}
+
+export async function countQueuedForDate(batchDate?: string): Promise<number> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT COUNT(*) AS c FROM lead_radar_sites
+     WHERE status = 'queued' AND batch_date = COALESCE(?, CURDATE())`,
+    [batchDate || null]
+  );
+  return Number((rows as RowDataPacket[])[0]?.c ?? 0);
+}
+
+export async function upsertBatchPlan(params: {
+  batchDate: string;
+  queuedCount: number;
+  tokensTotal?: number;
+}): Promise<string> {
+  const db = getDbPool();
+  const [existing] = await db.query(
+    "SELECT id FROM lead_radar_batches WHERE batch_date = ? LIMIT 1",
+    [params.batchDate]
+  );
+  const rows = existing as RowDataPacket[];
+  if (rows[0]?.id) {
+    await db.query(
+      `UPDATE lead_radar_batches
+       SET queued_count = ?, tokens_total = GREATEST(tokens_total, ?)
+       WHERE id = ?`,
+      [params.queuedCount, params.tokensTotal ?? 0, rows[0].id]
+    );
+    return String(rows[0].id);
+  }
+  const id = randomUUID();
+  await db.query(
+    `INSERT INTO lead_radar_batches (id, batch_date, queued_count, tokens_total)
+     VALUES (?, ?, ?, ?)`,
+    [id, params.batchDate, params.queuedCount, params.tokensTotal ?? 0]
+  );
+  return id;
+}
+
+export async function updateBatchFacts(params: {
+  batchDate: string;
+  sentCount: number;
+  skippedCount: number;
+  openedCount: number;
+  repliedCount: number;
+  bounceCount: number;
+  tokensTotal?: number;
+  markReportSent?: boolean;
+}): Promise<void> {
+  const db = getDbPool();
+  await db.query(
+    `UPDATE lead_radar_batches SET
+       sent_count = ?,
+       skipped_count = ?,
+       opened_count = ?,
+       replied_count = ?,
+       bounce_count = ?,
+       tokens_total = COALESCE(?, tokens_total),
+       report_sent_at = IF(?, NOW(), report_sent_at)
+     WHERE batch_date = ?`,
+    [
+      params.sentCount,
+      params.skippedCount,
+      params.openedCount,
+      params.repliedCount,
+      params.bounceCount,
+      params.tokensTotal ?? null,
+      params.markReportSent ? 1 : 0,
+      params.batchDate,
+    ]
+  );
+}
+
+export async function getBatchByDate(batchDate: string): Promise<any | null> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    "SELECT * FROM lead_radar_batches WHERE batch_date = ? LIMIT 1",
+    [batchDate]
+  );
+  return (rows as any[])[0] || null;
+}
+
+export async function updateSiteKp(params: {
+  siteId: string;
+  kpHtml: string;
+  kpSubject: string;
+  tokensIn?: number;
+  tokensOut?: number;
+}): Promise<void> {
+  const db = getDbPool();
+  await db.query(
+    `UPDATE lead_radar_sites
+     SET kp_html = ?, kp_subject = ?, kp_tokens_in = ?, kp_tokens_out = ?
+     WHERE id = ?`,
+    [
+      params.kpHtml,
+      params.kpSubject,
+      params.tokensIn ?? null,
+      params.tokensOut ?? null,
+      params.siteId,
+    ]
+  );
+}
+
+export async function updateSiteScreenshot(params: {
+  siteId: string;
+  path: string;
+  url: string;
+}): Promise<void> {
+  const db = getDbPool();
+  await db.query(
+    `UPDATE lead_radar_sites
+     SET screenshot_path = ?, screenshot_url = ?, screenshot_at = NOW()
+     WHERE id = ?`,
+    [params.path, params.url, params.siteId]
+  );
 }
 
 

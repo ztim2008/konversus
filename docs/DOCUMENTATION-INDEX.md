@@ -123,6 +123,29 @@ Exact UX-схема builder-а как product interaction system.
 - типовые ошибки и как их избежать,
 - контрольный чеклист перед деплоем.
 
+### [docs/LEAD-RADAR.md](docs/LEAD-RADAR.md)
+
+Текущая реализация Лид-радара (Maps/2GIS, аудит, КП, почта).
+
+### [docs/LEAD-RADAR-AUTO-TZ.md](docs/LEAD-RADAR-AUTO-TZ.md)
+
+**Полное ТЗ автоматизации Лид-радара** (этапы 0–9, статусы 🟦🟨🟩):
+
+- утренняя очередь ≤20, ручная отправка;
+- только сайты компаний (не статьи); глубокий поиск email;
+- скриншот сайта в КП и Telegram;
+- HTML-КП и CTA на lead-web.pro;
+- Telegram с напарником + ответы в админку;
+- утро = план / вечер = факт (daily-report);
+- внедрение Harness · Loop · Graph как этап 0.
+
+### Правила агента (Harness · Loop · Graph)
+
+- [AGENTS.md](../AGENTS.md)
+- [docs/CURRENT_CONTEXT.md](docs/CURRENT_CONTEXT.md)
+- [docs/guides/HARNESS.md](docs/guides/HARNESS.md) · [LOOP.md](docs/guides/LOOP.md) · [GRAPH.md](docs/guides/GRAPH.md)
+- [`graph/system.graph.json`](../graph/system.graph.json)
+
 ### [docs/TABLE-PARSER.md](docs/TABLE-PARSER.md)
 
 Встроенный инструмент для извлечения таблиц из любых источников.

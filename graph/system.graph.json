@@ -1,0 +1,331 @@
+{
+  "schemaVersion": 1,
+  "name": "konversus-lead-radar-auto",
+  "updated": "2026-09-10",
+  "policy": {
+    "selfRewrite": "owner-permission-required",
+    "note": "Менять типы узлов/рёбер и schemaVersion — только с явного разрешения владельца."
+  },
+  "nodes": [
+    {
+      "id": "doc.agents",
+      "type": "doc",
+      "path": "AGENTS.md",
+      "selfRewrite": true
+    },
+    {
+      "id": "doc.cursor_rule",
+      "type": "doc",
+      "path": ".cursor/rules/lead-radar-auto.mdc",
+      "selfRewrite": true
+    },
+    {
+      "id": "doc.current_context",
+      "type": "doc",
+      "path": "docs/CURRENT_CONTEXT.md"
+    },
+    {
+      "id": "doc.tz_auto",
+      "type": "doc",
+      "path": "docs/LEAD-RADAR-AUTO-TZ.md"
+    },
+    {
+      "id": "doc.lead_radar",
+      "type": "doc",
+      "path": "docs/LEAD-RADAR.md"
+    },
+    {
+      "id": "doc.harness",
+      "type": "doc",
+      "path": "docs/guides/HARNESS.md"
+    },
+    {
+      "id": "doc.loop",
+      "type": "doc",
+      "path": "docs/guides/LOOP.md"
+    },
+    {
+      "id": "doc.graph_guide",
+      "type": "doc",
+      "path": "docs/guides/GRAPH.md"
+    },
+    {
+      "id": "doc.devlog",
+      "type": "doc",
+      "path": "docs/devlog"
+    },
+    {
+      "id": "doc.index",
+      "type": "doc",
+      "path": "docs/DOCUMENTATION-INDEX.md"
+    },
+    {
+      "id": "lib.website_checker",
+      "type": "lib",
+      "path": "src/lib/website-checker.ts"
+    },
+    {
+      "id": "lib.lead_radar_data",
+      "type": "lib",
+      "path": "src/lib/data/lead-radar.ts"
+    },
+    {
+      "id": "lib.ai_composer",
+      "type": "lib",
+      "path": "src/lib/lead-agent/ai-composer.ts"
+    },
+    {
+      "id": "lib.telegram",
+      "type": "lib",
+      "path": "src/lib/lead-hunter/telegram.ts"
+    },
+    {
+      "id": "lib.db",
+      "type": "lib",
+      "path": "src/lib/db.ts"
+    },
+    {
+      "id": "app.api_lead_radar",
+      "type": "app",
+      "path": "src/app/api/lead-radar"
+    },
+    {
+      "id": "app.api_secret_shopper",
+      "type": "app",
+      "path": "src/app/api/secret-shopper"
+    },
+    {
+      "id": "app.ui_secret_shopper",
+      "type": "app",
+      "path": "src/app/dashboard/secret-shopper"
+    },
+    {
+      "id": "sql.lead_radar",
+      "type": "sql",
+      "path": "sql/004_lead_radar_mysql.sql"
+    },
+    {
+      "id": "gate.harness",
+      "type": "gate",
+      "command": "npm run harness:check"
+    },
+    {
+      "id": "gate.loop",
+      "type": "gate",
+      "command": "npm run agent:loop"
+    },
+    {
+      "id": "gate.build",
+      "type": "gate",
+      "command": "npm run build"
+    },
+    {
+      "id": "ops.scripts_harness",
+      "type": "ops",
+      "path": "scripts/harness-check.mjs",
+      "selfRewrite": true
+    },
+    {
+      "id": "ops.scripts_loop",
+      "type": "ops",
+      "path": "scripts/agent-loop.mjs",
+      "selfRewrite": true
+    },
+    {
+      "id": "graph.self",
+      "type": "doc",
+      "path": "graph/system.graph.json",
+      "selfRewrite": true
+    },
+    {
+      "id": "sql.lead_radar_auto",
+      "type": "sql",
+      "path": "sql/005_lead_radar_auto.sql"
+    },
+    {
+      "id": "lib.serper",
+      "type": "lib",
+      "path": "src/lib/serper-client.ts"
+    },
+    {
+      "id": "lib.company_filter",
+      "type": "lib",
+      "path": "src/lib/company-site-filter.ts"
+    },
+    {
+      "id": "lib.geo",
+      "type": "lib",
+      "path": "src/lib/lead-radar-geo.ts"
+    },
+    {
+      "id": "app.api_search_serp",
+      "type": "app",
+      "path": "src/app/api/secret-shopper/search-serp"
+    }
+  ],
+  "edges": [
+    {
+      "from": "doc.harness",
+      "to": "doc.agents",
+      "type": "reads"
+    },
+    {
+      "from": "doc.loop",
+      "to": "doc.harness",
+      "type": "reads"
+    },
+    {
+      "from": "doc.loop",
+      "to": "doc.graph_guide",
+      "type": "reads"
+    },
+    {
+      "from": "doc.agents",
+      "to": "doc.current_context",
+      "type": "reads"
+    },
+    {
+      "from": "doc.agents",
+      "to": "doc.tz_auto",
+      "type": "reads"
+    },
+    {
+      "from": "doc.cursor_rule",
+      "to": "doc.agents",
+      "type": "reads"
+    },
+    {
+      "from": "gate.harness",
+      "to": "graph.self",
+      "type": "validates"
+    },
+    {
+      "from": "gate.loop",
+      "to": "gate.harness",
+      "type": "validates"
+    },
+    {
+      "from": "app.api_lead_radar",
+      "to": "lib.lead_radar_data",
+      "type": "writes"
+    },
+    {
+      "from": "app.api_secret_shopper",
+      "to": "lib.website_checker",
+      "type": "reads"
+    },
+    {
+      "from": "app.api_secret_shopper",
+      "to": "lib.ai_composer",
+      "type": "reads"
+    },
+    {
+      "from": "app.ui_secret_shopper",
+      "to": "app.api_lead_radar",
+      "type": "reads"
+    },
+    {
+      "from": "lib.lead_radar_data",
+      "to": "lib.db",
+      "type": "reads"
+    },
+    {
+      "from": "lib.lead_radar_data",
+      "to": "sql.lead_radar",
+      "type": "reads"
+    },
+    {
+      "from": "lib.telegram",
+      "to": "app.api_secret_shopper",
+      "type": "writes"
+    },
+    {
+      "from": "graph.self",
+      "to": "doc.tz_auto",
+      "type": "reads"
+    },
+    {
+      "from": "lib.lead_radar_data",
+      "to": "sql.lead_radar_auto",
+      "type": "reads"
+    },
+    {
+      "from": "app.api_search_serp",
+      "to": "lib.serper",
+      "type": "reads"
+    },
+    {
+      "from": "app.api_search_serp",
+      "to": "lib.company_filter",
+      "type": "reads"
+    },
+    {
+      "from": "app.api_search_serp",
+      "to": "lib.geo",
+      "type": "reads"
+    },
+    {
+      "from": "lib.serper",
+      "to": "doc.tz_auto",
+      "type": "reads"
+    }
+  ],
+  "taskPaths": {
+    "lead_radar_queue": [
+      "doc.tz_auto",
+      "sql.lead_radar",
+      "sql.lead_radar_auto",
+      "lib.lead_radar_data",
+      "app.api_lead_radar",
+      "app.ui_secret_shopper",
+      "gate.harness"
+    ],
+    "lead_radar_serp": [
+      "doc.tz_auto",
+      "lib.geo",
+      "lib.serper",
+      "lib.company_filter",
+      "app.api_search_serp",
+      "lib.lead_radar_data",
+      "gate.harness"
+    ],
+    "lead_radar_audit": [
+      "doc.tz_auto",
+      "lib.website_checker",
+      "app.api_secret_shopper",
+      "lib.lead_radar_data",
+      "gate.harness"
+    ],
+    "lead_radar_email": [
+      "doc.tz_auto",
+      "lib.ai_composer",
+      "app.api_secret_shopper",
+      "app.ui_secret_shopper",
+      "gate.harness"
+    ],
+    "lead_radar_telegram": [
+      "doc.tz_auto",
+      "lib.telegram",
+      "app.api_lead_radar",
+      "gate.harness"
+    ],
+    "lead_radar_daily_report": [
+      "doc.tz_auto",
+      "lib.lead_radar_data",
+      "lib.telegram",
+      "app.api_lead_radar",
+      "gate.harness"
+    ],
+    "lead_radar_replies": [
+      "doc.tz_auto",
+      "lib.lead_radar_data",
+      "lib.telegram",
+      "app.api_lead_radar",
+      "gate.harness"
+    ],
+    "prod_restart": [
+      "gate.build",
+      "gate.harness"
+    ]
+  }
+}

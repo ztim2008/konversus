@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "harness:check": "node scripts/harness-check.mjs",
+    "agent:loop": "node scripts/agent-loop.mjs"
   },
   "dependencies": {
     "@tiptap/extension-code-block-lowlight": "^3.23.6",

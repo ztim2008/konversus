@@ -1,0 +1,41 @@
+---
+description: konversus Lead Radar Auto — Harness/Loop/Graph + кодекс агента
+alwaysApply: true
+---
+
+# konversus.ru — правило разработки
+
+## Продукт
+
+- Лид-радар Auto: утро = план (~20), день = ручная отправка, вечер = факт.
+- Исходящий бренд писем: **lead-web.pro**.
+- Рынок: **Россия**. UI/КП/Telegram/docs — **RU**.
+- Кодекс: https://proektmap.ru/agent-engineering/rules (адаптация в docs/guides/HARNESS.md)
+- ТЗ: docs/LEAD-RADAR-AUTO-TZ.md (статусы 🟦🟨🟩)
+
+## Источник правды
+
+1. docs/CURRENT_CONTEXT.md
+2. graph/system.graph.json (taskPaths)
+3. docs/guides/HARNESS.md · LOOP.md · GRAPH.md
+4. docs/LEAD-RADAR-AUTO-TZ.md
+5. AGENTS.md
+
+## Инварианты
+
+- Только сайты компаний (не статьи/агрегаторы).
+- Глубокий email + скриншот обязательны для queued.
+- Нет автоотправки без кнопки человека.
+- ERROR gate: `npm run harness:check` — не обходить.
+- Self-rewrite (AGENTS, this rule, graph schema, harness scripts) — **только с разрешения владельца**.
+- Инкремент: один шаг → проверка → (коммит по запросу). Не выдумывать факты.
+- Секреты и `.env` не коммитить.
+
+## Цикл
+
+```bash
+npm run agent:loop -- --task lead_radar_queue
+npm run harness:check
+```
+
+После шага: sync graph при новых сущностях; запись в docs/devlog; обновить статус этапа в ТЗ.
