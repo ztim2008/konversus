@@ -20,7 +20,7 @@ function authorize(req: NextRequest): boolean {
 /**
  * POST /api/lead-radar/nightly-run
  * Auth: Bearer LEAD_RADAR_CRON_SECRET | ?secret= | x-cron-secret
- * Body optional: { city, niche, limit, skipTelegram, skipScreenshot, dryRun }
+ * Body optional: { city, niche, vertical, limit, skipTelegram, skipScreenshot, dryRun }
  */
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     const result = await runNightlyLeadRadar({
       city: typeof body.city === "string" ? body.city : undefined,
       niche: typeof body.niche === "string" ? body.niche : undefined,
+      vertical: typeof body.vertical === "string" ? body.vertical : undefined,
       limit: typeof body.limit === "number" ? body.limit : undefined,
       skipTelegram: !!body.skipTelegram,
       skipScreenshot: !!body.skipScreenshot,
@@ -61,11 +62,13 @@ export async function GET(req: NextRequest) {
   try {
     const city = req.nextUrl.searchParams.get("city") || undefined;
     const niche = req.nextUrl.searchParams.get("niche") || undefined;
+    const vertical = req.nextUrl.searchParams.get("vertical") || undefined;
     const dryRun = req.nextUrl.searchParams.get("dryRun") === "1";
     const skipTelegram = req.nextUrl.searchParams.get("skipTelegram") === "1";
     const result = await runNightlyLeadRadar({
       city,
       niche,
+      vertical,
       dryRun,
       skipTelegram,
     });

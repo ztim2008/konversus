@@ -70,6 +70,7 @@ export async function markLeadReplied(params: {
       email: site.email,
       source: params.source || "manual",
       screenshotUrl: site.screenshot_url,
+      screenshotPath: site.screenshot_path,
       publicOrigin,
       adminUrl: `${publicOrigin.replace(/\/$/, "")}/dashboard/secret-shopper`,
     });

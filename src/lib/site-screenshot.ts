@@ -1,8 +1,15 @@
 /**
  * Скриншот above-the-fold через Playwright.
+ *
+ * Файлы: public/uploads/lead-screenshots/
+ * Публичный URL: /uploads/lead-screenshots/...
+ *
+ * Важно: nginx root = корень проекта (не public/), а Next кэширует
+ * список public/ при старте. Поэтому держим symlink uploads → public/uploads,
+ * чтобы jpg сразу отдавались nginx без рестарта Next (иначе TG 404).
  */
 import "server-only";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, lstat, symlink } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -16,6 +23,22 @@ export type ScreenshotResult = {
 const UPLOAD_DIR = join(process.cwd(), "public", "uploads", "lead-screenshots");
 const PUBLIC_PREFIX = "/uploads/lead-screenshots";
 
+/** Nginx try_files ищет $root/uploads/..., не public/uploads/... */
+async function ensureUploadsSymlinkForNginx(): Promise<void> {
+  const linkPath = join(process.cwd(), "uploads");
+  try {
+    const st = await lstat(linkPath);
+    if (st.isSymbolicLink() || st.isDirectory()) return;
+  } catch {
+    /* нет — создаём */
+  }
+  try {
+    await symlink("public/uploads", linkPath);
+  } catch {
+    /* гонка / нет прав — не валим скриншот */
+  }
+}
+
 export async function captureSiteScreenshot(params: {
   pageUrl: string;
   siteId?: string;
@@ -24,6 +47,7 @@ export async function captureSiteScreenshot(params: {
   try {
     const { chromium } = await import("playwright");
     await mkdir(UPLOAD_DIR, { recursive: true });
+    await ensureUploadsSymlinkForNginx();
 
     const id = (params.siteId || randomUUID()).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || randomUUID();
     const filename = `${id}-${Date.now()}.jpg`;

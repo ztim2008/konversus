@@ -10,6 +10,7 @@ import { PipelineTable } from "./components/pipeline-table";
 import { KpModal } from "./components/kp-modal";
 import { TodayQueue } from "./components/today-queue";
 import { BatchesStats } from "./components/batches-stats";
+import { RouletteSettings } from "./components/roulette-settings";
 
 export default function LeadRadarPage() {
   // ─── State ───
@@ -194,18 +195,27 @@ export default function LeadRadarPage() {
             </h1>
             <p className="mt-2 text-sm text-gray-500">Утро = план · день = ручная отправка · бренд писем lead-web.pro</p>
           </div>
-          <div className="flex gap-2 mb-4 flex-wrap">
-            <button onClick={() => setActiveTab("today")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "today" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Сегодня</button>
-            <button onClick={() => setActiveTab("stats")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "stats" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Статистика</button>
-            <button onClick={() => setActiveTab("radars")} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Радары</button>
-            <button onClick={loadPipeline} className={"px-4 py-2 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Лиды в работе</button>
-          </div>
-          {activeTab === "radars" && (
-            <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
-              <Plus size={18} /> Новый радар
-            </button>
-          )}
-        </div>
+          <div className="flex flex-col gap-2 mb-4 items-end">
+            <div className="flex gap-1.5 flex-wrap justify-end items-center">
+              <span className="text-[10px] uppercase tracking-wide text-gray-600 mr-1">День</span>
+              <button onClick={() => setActiveTab("today")} className={"px-3 py-1.5 rounded-lg text-sm font-semibold " + (activeTab === "today" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Сегодня</button>
+              <button onClick={() => setActiveTab("stats")} className={"px-3 py-1.5 rounded-lg text-sm font-semibold " + (activeTab === "stats" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Статистика</button>
+            </div>
+            <div className="flex gap-1.5 flex-wrap justify-end items-center">
+              <span className="text-[10px] uppercase tracking-wide text-gray-600 mr-1">Настройки</span>
+              <button onClick={() => setActiveTab("roulette")} className={"px-3 py-1.5 rounded-lg text-sm font-semibold " + (activeTab === "roulette" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Рулетка</button>
+              <button onClick={() => setActiveTab("radars")} className={"px-3 py-1.5 rounded-lg text-sm font-semibold " + (activeTab === "radars" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Радары <span className="text-[10px] opacity-70 font-normal">legacy</span></button>
+            </div>
+            <div className="flex gap-1.5 flex-wrap justify-end items-center">
+              <span className="text-[10px] uppercase tracking-wide text-gray-600 mr-1">CRM</span>
+              <button onClick={loadPipeline} className={"px-3 py-1.5 rounded-lg text-sm font-semibold " + (activeTab === "pipeline" ? "bg-indigo-600 text-white" : "bg-white/5 text-gray-400")}>Лиды в работе</button>
+            </div>
+            {activeTab === "radars" && (
+              <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
+                <Plus size={16} /> Новый радар
+              </button>
+            )}
+          </div>        </div>
 
         {/* Progress */}
         {auditProgress && (
@@ -220,8 +230,22 @@ export default function LeadRadarPage() {
 
         {activeTab === "stats" && <BatchesStats />}
 
+        {activeTab === "roulette" && <RouletteSettings />}
+
         {activeTab === "radars" && (
           <>
+            <div className="mb-4 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+              <strong className="font-semibold">Старый поиск · не крутит утро.</strong>{" "}
+              Ночная пачка и вкладка «Сегодня» идут из{" "}
+              <button
+                type="button"
+                onClick={() => setActiveTab("roulette")}
+                className="underline hover:text-white"
+              >
+                Рулетки
+              </button>
+              . Здесь — ручной Maps/поиск по городу×нише.
+            </div>
             <RadarList radars={radars} selectedRadarId={selectedRadarId} onSelect={loadRadarSites} onDelete={deleteRadar} />
             <LeadTable leads={leads} onPreviewKp={setPreviewLead} onDelete={deleteLead} />
           </>
@@ -231,7 +255,10 @@ export default function LeadRadarPage() {
           <>
             {followUps.length > 0 && (
               <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <h3 className="text-sm font-semibold text-amber-400 mb-3">⏰ Напоминания ({followUps.length})</h3>
+                <h3 className="text-sm font-semibold text-amber-400 mb-3">Напоминания ({followUps.length})</h3>
+                <p className="text-xs text-amber-200/70 mb-3">
+                  Шаблона «Напомнить» пока нет — откройте лид в таблице и отметьте ответ вручную.
+                </p>
                 <div className="flex flex-col gap-2">
                   {followUps.map((fu: any) => (
                     <div key={fu.id} className="flex items-center justify-between text-xs">
@@ -240,20 +267,6 @@ export default function LeadRadarPage() {
                         <span className="text-gray-500 ml-2">{fu.domain}</span>
                         <span className="text-amber-400 ml-2">{fu.daysSinceContact} дн. назад</span>
                       </div>
-                      <button
-                        onClick={() => {
-                          setPreviewLead({
-                            id: fu.id, domain: fu.domain, name: fu.name, url: fu.url,
-                            email: fu.email, phone: fu.phone,
-                            problems: [], score: 0, scorePercent: 0, hotScore: 0, gradeColor: "#f59e0b",
-                            contactName: null,
-                          });
-                          // Pre-fill KP with follow-up template
-                        }}
-                        className="text-xs text-amber-400 hover:text-amber-300 font-semibold"
-                      >
-                        📩 Напомнить
-                      </button>
                     </div>
                   ))}
                 </div>

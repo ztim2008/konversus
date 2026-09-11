@@ -9,9 +9,14 @@ import {
   createFollowUp,
   updateSiteStatus,
   bumpBatchCounter,
+  countQueuedForDate,
+  upsertBatchPlan,
 } from "@/lib/data/lead-radar";
 import { getAllSettings } from "@/lib/data/settings";
-import { sendSentNotification } from "@/lib/lead-radar/telegram-digest";
+import {
+  sendSentNotification,
+  sendSkipNotification,
+} from "@/lib/lead-radar/telegram-digest";
 
 export type SendQueuedResult =
   | {
@@ -101,7 +106,10 @@ export async function sendQueuedLead(params: {
     if (!testMode) {
       await createFollowUp({ siteId: site.id, type: "email" });
       await updateSiteStatus(site.id, "contacted");
-      await bumpBatchCounter(toBatchDate(site.batch_date), "sent_count");
+      const batchDate = toBatchDate(site.batch_date);
+      await bumpBatchCounter(batchDate, "sent_count");
+      const queuedCount = await countQueuedForDate(batchDate);
+      await upsertBatchPlan({ batchDate, queuedCount });
 
       if (!params.skipTelegram) {
         const settings = await getAllSettings();
@@ -113,6 +121,7 @@ export async function sendQueuedLead(params: {
           platform: site.platform,
           email: site.email,
           screenshotUrl: site.screenshot_url,
+          screenshotPath: site.screenshot_path,
           kpSubject: site.kp_subject,
           kpHtml: site.kp_html,
           publicOrigin:
@@ -135,16 +144,40 @@ export async function sendQueuedLead(params: {
   }
 }
 
-export async function skipQueuedLead(siteId: string): Promise<
-  | { ok: true }
+export async function skipQueuedLead(params: {
+  siteId: string;
+  skipTelegram?: boolean;
+}): Promise<
+  | {
+      ok: true;
+      queuedCount: number;
+      telegram: { ok: boolean; error?: string };
+    }
   | { ok: false; error: string; status?: number }
 > {
-  const site = await getSiteById(siteId);
+  const site = await getSiteById(params.siteId);
   if (!site) return { ok: false, error: "site_not_found", status: 404 };
   if (site.status !== "queued") {
     return { ok: false, error: "not_queued", status: 409 };
   }
-  await updateSiteStatus(siteId, "skipped");
-  await bumpBatchCounter(toBatchDate(site.batch_date), "skipped_count");
-  return { ok: true };
+  await updateSiteStatus(params.siteId, "skipped");
+  const batchDate = toBatchDate(site.batch_date);
+  await bumpBatchCounter(batchDate, "skipped_count");
+  const queuedCount = await countQueuedForDate(batchDate);
+  await upsertBatchPlan({ batchDate, queuedCount });
+
+  let telegram: { ok: boolean; error?: string } = { ok: true };
+  if (!params.skipTelegram) {
+    const settings = await getAllSettings();
+    telegram = await sendSkipNotification({
+      botToken: settings.telegram_bot_token,
+      chatId: settings.telegram_chat_id,
+      name: site.name,
+      domain: site.domain,
+      platform: site.platform,
+      queuedRemaining: queuedCount,
+    });
+  }
+
+  return { ok: true, queuedCount, telegram };
 }

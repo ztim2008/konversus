@@ -5,7 +5,7 @@ import { Phone, Mail, ExternalLink } from "lucide-react";
 const PRODUCTS = [
   { name: "Ловец лидов", href: "https://leads.konversus.ru", ext: true },
   { name: "Архитектор сайта", href: "/architect" },
-  { name: "Тайный покупатель", href: "/dashboard/secret-shopper" },
+  { name: "Лид-радар", href: "/dashboard/secret-shopper" },
   { name: "AI-консультант на сайт", href: "https://chat.konversus.ru", ext: true },
   { name: "Конструктор сайтов", href: "https://nordic-builder.ru", ext: true },
 ];

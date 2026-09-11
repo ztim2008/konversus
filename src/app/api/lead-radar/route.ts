@@ -18,15 +18,26 @@ import {
 } from "@/lib/data/lead-radar";
 import { sendQueuedLead, skipQueuedLead } from "@/lib/lead-radar/send-queued";
 import { markLeadReplied } from "@/lib/lead-radar/mark-replied";
+import { enqueueUrlToQueue } from "@/lib/lead-radar/enqueue-url";
 import { collectDayFacts } from "@/lib/lead-radar/daily-report";
 import {
   DAILY_QUEUE_LIMIT,
   DAILY_REPORT_HOUR_MSK,
   estimateUsd,
   formatBatchDateRu,
+  getDailyQueueLimit,
+  getManualRespectsLimit,
+  saveRadarRuntimeSettings,
 } from "@/lib/lead-radar/config";
+import { getRouletteAdminState } from "@/lib/lead-radar/day-picker";
+import {
+  GEO_CITIES_V1,
+  findCityByName,
+  getVertical,
+} from "@/lib/lead-radar-geo";
+import { getSetting } from "@/lib/data/settings";
 
-const DAILY_SEND_LIMIT = DAILY_QUEUE_LIMIT;
+export const maxDuration = 300;
 
 // Список радаров
 export async function GET() {
@@ -63,15 +74,33 @@ export async function POST(req: NextRequest) {
     const batchDate = body.batchDate as string | undefined;
     const sites = await listQueuedSites(batchDate);
     const queuedCount = await countQueuedForDate(batchDate);
+    const limit = await getDailyQueueLimit();
     const today = new Date().toISOString().slice(0, 10);
     const batch = await getBatchByDate(batchDate || today);
+    const lastCityId = await getSetting("lead_radar_last_city_id");
+    const lastNiche = await getSetting("lead_radar_last_niche");
+    const lastVertical = await getSetting("lead_radar_last_vertical");
+    const cityFromSettings =
+      GEO_CITIES_V1.find((c) => c.id === lastCityId)?.name ||
+      findCityByName(lastCityId)?.name ||
+      "";
+    const first = sites[0] as
+      | { radar_city?: string; radar_niche?: string }
+      | undefined;
+    const verticalLabel = getVertical(lastVertical)?.labelRu || "";
     return NextResponse.json({
       sites,
       queuedCount,
-      limit: DAILY_SEND_LIMIT,
-      remaining: Math.max(0, DAILY_SEND_LIMIT - queuedCount),
+      limit,
+      remaining: Math.max(0, limit - queuedCount),
       batch,
       batchDate: batchDate || today,
+      dayPlan: {
+        city: first?.radar_city || cityFromSettings || "",
+        niche: first?.radar_niche || lastNiche || "",
+        vertical: verticalLabel,
+        verticalId: lastVertical || "",
+      },
     });
   }
 
@@ -81,6 +110,7 @@ export async function POST(req: NextRequest) {
     const tokensAll = await sumBatchTokens();
     const today = new Date().toISOString().slice(0, 10);
     const live = await collectDayFacts(body.batchDate || today);
+    const dailyQueueLimit = await getDailyQueueLimit();
     const rows = batches.map((b: any) => {
       let dateIso: string;
       if (b.batch_date instanceof Date) {
@@ -107,10 +137,52 @@ export async function POST(req: NextRequest) {
       live,
       liveUsd: estimateUsd(live.tokens),
       config: {
-        dailyQueueLimit: DAILY_QUEUE_LIMIT,
+        dailyQueueLimit,
         dailyReportHourMsk: DAILY_REPORT_HOUR_MSK,
+        defaultDailyQueueLimit: DAILY_QUEUE_LIMIT,
       },
     });
+  }
+
+  if (body.action === "get-roulette-settings") {
+    const [state, dailyQueueLimit, manualRespectsLimit] = await Promise.all([
+      getRouletteAdminState(),
+      getDailyQueueLimit(),
+      getManualRespectsLimit(),
+    ]);
+    return NextResponse.json({
+      ok: true,
+      dailyQueueLimit,
+      manualRespectsLimit,
+      cities: GEO_CITIES_V1,
+      ...state,
+      help: {
+        skipFreesSlot: true,
+        sendFreesSlot: true,
+        note:
+          "Лимит считает сайты со статусом «в очереди». Пропуск и отправка снимают лид с очереди — место освобождается. Ночной авто дольёт до лимита.",
+      },
+    });
+  }
+
+  if (body.action === "save-roulette-settings") {
+    const weights =
+      body.weights && typeof body.weights === "object"
+        ? (body.weights as Record<string, number>)
+        : undefined;
+    const saved = await saveRadarRuntimeSettings({
+      dailyQueueLimit:
+        typeof body.dailyQueueLimit === "number"
+          ? body.dailyQueueLimit
+          : undefined,
+      manualRespectsLimit:
+        typeof body.manualRespectsLimit === "boolean"
+          ? body.manualRespectsLimit
+          : undefined,
+      weights,
+    });
+    const state = await getRouletteAdminState();
+    return NextResponse.json({ ok: true, ...saved, ...state });
   }
 
   if (body.action === "send-queued") {
@@ -135,7 +207,10 @@ export async function POST(req: NextRequest) {
     if (!body.siteId) {
       return NextResponse.json({ error: "siteId required" }, { status: 400 });
     }
-    const result = await skipQueuedLead(body.siteId);
+    const result = await skipQueuedLead({
+      siteId: body.siteId,
+      skipTelegram: !!body.skipTelegram,
+    });
     if (!result.ok) {
       return NextResponse.json(
         { error: result.error },
@@ -163,11 +238,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   }
 
+  if (body.action === "enqueue-url") {
+    const url = typeof body.url === "string" ? body.url : "";
+    if (!url.trim()) {
+      return NextResponse.json({ error: "url required" }, { status: 400 });
+    }
+    const result = await enqueueUrlToQueue({
+      url,
+      city: typeof body.city === "string" ? body.city : undefined,
+      niche: typeof body.niche === "string" ? body.niche : undefined,
+      name: typeof body.name === "string" ? body.name : undefined,
+      force: !!body.force,
+      skipTelegram: !!body.skipTelegram,
+      skipScreenshot: !!body.skipScreenshot,
+    });
+    if (!result.ok) {
+      const status =
+        result.reason === "duplicate"
+          ? 409
+          : result.reason === "bad_url"
+            ? 400
+            : 422;
+      return NextResponse.json(result, { status });
+    }
+    return NextResponse.json(result);
+  }
+
   if (body.action === "queue-site") {
+    const limit = await getDailyQueueLimit();
     const queuedCount = await countQueuedForDate(body.batchDate);
-    if (queuedCount >= DAILY_SEND_LIMIT) {
+    if (queuedCount >= limit) {
       return NextResponse.json(
-        { error: "daily_limit", limit: DAILY_SEND_LIMIT, queuedCount },
+        { error: "daily_limit", limit, queuedCount },
         { status: 409 }
       );
     }
@@ -175,7 +277,7 @@ export async function POST(req: NextRequest) {
     const batchDate = body.batchDate || new Date().toISOString().slice(0, 10);
     const nextCount = await countQueuedForDate(batchDate);
     await upsertBatchPlan({ batchDate, queuedCount: nextCount });
-    return NextResponse.json({ ok: true, queuedCount: nextCount, limit: DAILY_SEND_LIMIT });
+    return NextResponse.json({ ok: true, queuedCount: nextCount, limit });
   }
 
   if (body.action === "update-check") {

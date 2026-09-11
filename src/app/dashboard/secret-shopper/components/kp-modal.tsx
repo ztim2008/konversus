@@ -162,6 +162,10 @@ export function KpModal({
           <button onClick={onClose} className="text-gray-500 hover:text-white">✕</button>
         </div>
         <div className="p-6">
+          <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">
+            Это <strong>не</strong> очередь Auto («Сегодня»). Письмо уйдёт через старый контур.
+            Для утренней пачки используйте вкладку «Сегодня» → Отправить.
+          </div>
           <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/[0.06]">
             <div className="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center text-white font-bold text-sm">LW</div>
             <div><p className="font-bold text-white">lead-web.pro</p><p className="text-xs text-gray-400">веб-разработка · заявки с сайта</p></div>

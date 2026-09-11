@@ -136,19 +136,24 @@ ${issues
           <!--/kp-body-->
           ${issuesBlock}
           <div style="margin-top:8px;">
-            <a href="${escapeHtml(cta)}" style="display:inline-block;background:#1c1917;color:#fafaf9;text-decoration:none;padding:12px 22px;font-size:14px;font-weight:600;border-radius:2px;">
-              Разобрать подробнее на lead-web.pro
+            <a href="tel:+79238240461" style="display:inline-block;background:#1c1917;color:#fafaf9;text-decoration:none;padding:14px 24px;font-size:17px;font-weight:700;border-radius:2px;letter-spacing:0.01em;">
+              Позвонить: +7 (923) 824-04-61
             </a>
           </div>
-          <p style="margin:14px 0 0;font-size:12px;color:#a8a29e;line-height:1.4;">
+          <p style="margin:12px 0 0;font-size:13px;color:#57534e;line-height:1.45;">
+            Игорь · веб-разработчик lead-web.pro<br/>
+            <a href="${escapeHtml(cta)}" style="color:#78716c;font-size:12px;text-decoration:underline;">Сайт lead-web.pro — дополнительно</a>
+          </p>
+          <p style="margin:10px 0 0;font-size:12px;color:#a8a29e;line-height:1.4;">
             Или ответьте на это письмо — подскажем по сайту без обязательства.
           </p>
         </td></tr>
-        <tr><td style="padding:18px 28px;background:#fafaf9;border-top:1px solid #e7e5e4;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#57534e;line-height:1.5;">
-          Команда <strong style="color:#1c1917;">lead-web.pro</strong><br/>
-          <a href="https://lead-web.pro/" style="color:#1c1917;">lead-web.pro</a>
-          · <a href="mailto:leadweb@yandex.ru" style="color:#1c1917;">leadweb@yandex.ru</a>
-          · <a href="tel:+79238240461" style="color:#1c1917;">+7 (923) 824-04-61</a>
+        <tr><td style="padding:18px 28px;background:#fafaf9;border-top:1px solid #e7e5e4;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#57534e;line-height:1.55;">
+          <strong style="display:block;font-size:14px;color:#1c1917;margin-bottom:4px;">Игорь</strong>
+          веб-разработчик · lead-web.pro<br/>
+          <a href="tel:+79238240461" style="display:inline-block;margin-top:6px;font-size:16px;font-weight:700;color:#1c1917;text-decoration:none;">+7 (923) 824-04-61</a><br/>
+          <a href="${escapeHtml(cta)}" style="color:#a8a29e;font-size:11px;text-decoration:underline;">lead-web.pro</a>
+          · <a href="mailto:leadweb@yandex.ru" style="color:#a8a29e;font-size:11px;">leadweb@yandex.ru</a>
         </td></tr>
       </table>
     </td></tr>

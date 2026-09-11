@@ -203,6 +203,11 @@
       "path": "src/lib/lead-radar/send-queued.ts"
     },
     {
+      "id": "lib.enqueue_url",
+      "type": "lib",
+      "path": "src/lib/lead-radar/enqueue-url.ts"
+    },
+    {
       "id": "app.api_nightly",
       "type": "app",
       "path": "src/app/api/lead-radar/nightly-run"
@@ -473,6 +478,21 @@
       "from": "app.api_lead_radar",
       "to": "lib.mark_replied",
       "type": "writes"
+    },
+    {
+      "from": "app.api_lead_radar",
+      "to": "lib.enqueue_url",
+      "type": "writes"
+    },
+    {
+      "from": "lib.enqueue_url",
+      "to": "lib.screenshot",
+      "type": "calls"
+    },
+    {
+      "from": "lib.enqueue_url",
+      "to": "lib.tg_digest",
+      "type": "calls"
     }
   ],
   "taskPaths": {
@@ -482,6 +502,7 @@
       "sql.lead_radar_auto",
       "lib.lead_radar_data",
       "lib.send_queued",
+      "lib.enqueue_url",
       "lib.tg_digest",
       "app.api_lead_radar",
       "app.ui_secret_shopper",

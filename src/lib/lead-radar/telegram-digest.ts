@@ -2,6 +2,9 @@
  * Telegram: утренний план (текст + фото + КП), отправка, вечерний факт.
  */
 import "server-only";
+import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { basename, join } from "node:path";
 
 const PHOTO_LIMIT = 5;
 /** Лимит Telegram sendMessage — оставляем запас. */
@@ -22,6 +25,8 @@ export type DigestSample = {
   email?: string | null;
   hotScore?: number;
   screenshotUrl?: string | null;
+  /** Абсолютный путь на диске — предпочтительнее URL (без 404 Next/nginx). */
+  screenshotPath?: string | null;
   kpSubject?: string | null;
   kpHtml?: string | null;
   kpText?: string | null;
@@ -33,6 +38,8 @@ export async function sendMorningDigest(params: {
   batchDate: string;
   city: string;
   niche: string;
+  /** Вертикаль рулетки B (стройка / ремонт / …). */
+  vertical?: string;
   queuedCount: number;
   limit: number;
   tokensTotal: number;
@@ -70,6 +77,9 @@ export async function sendMorningDigest(params: {
   const text =
     `📋 *Пачка ${dd}*\n` +
     `Город: *${escapeMd(city)}*\n` +
+    (params.vertical
+      ? `Вертикаль: *${escapeMd(params.vertical)}*\n`
+      : "") +
     `Ниша: *${escapeMd(niche)}*\n` +
     `Готово к отправке: *${queuedCount}/${limit}*\n` +
     `Токены AI: ~${tokensTotal}\n\n` +
@@ -115,7 +125,81 @@ export async function sendMorningDigest(params: {
     if (cardOk.kp) kpSent++;
   }
 
+  const rest = Math.max(0, queuedCount - photoLimit);
+  if (rest > 0) {
+    await sendPlainText({
+      botToken,
+      chatId,
+      text: `📎 Ещё ${rest} в админке → ${adminUrl}`,
+    });
+  }
+
   return { ok: true, photosSent, kpSent };
+}
+
+/**
+ * Уведомление: сайт добавлен в очередь вручную.
+ */
+export async function sendManualEnqueueNotification(params: {
+  botToken: string;
+  chatId: string;
+  name: string;
+  domain: string;
+  platform?: string | null;
+  email?: string | null;
+  screenshotUrl?: string | null;
+  screenshotPath?: string | null;
+  kpSubject?: string | null;
+  kpHtml?: string | null;
+  publicOrigin?: string;
+  overLimit?: boolean;
+  queuedCount?: number;
+  limit?: number;
+}): Promise<{ ok: boolean; error?: string }> {
+  const {
+    botToken,
+    chatId,
+    publicOrigin,
+    overLimit,
+    queuedCount,
+    limit,
+    ...rest
+  } = params;
+
+  if (!botToken || !chatId) {
+    return { ok: false, error: "telegram not configured" };
+  }
+
+  const warn =
+    overLimit && queuedCount != null && limit != null
+      ? `\n⚠️ В очереди ${queuedCount} (лимит авто ${limit}) — ручной режим`
+      : "";
+
+  await sendPlainText({
+    botToken,
+    chatId,
+    text: `➕ Ручной лид добавлен в «Сегодня»${warn}`,
+  });
+
+  const card = await sendLeadCardToTelegram({
+    botToken,
+    chatId,
+    publicOrigin,
+    prefix: "1",
+    mode: "plan",
+    sample: {
+      name: rest.name,
+      domain: rest.domain,
+      platform: rest.platform,
+      email: rest.email,
+      screenshotUrl: rest.screenshotUrl,
+      screenshotPath: rest.screenshotPath,
+      kpSubject: rest.kpSubject,
+      kpHtml: rest.kpHtml,
+    },
+  });
+
+  return card.ok ? { ok: true } : { ok: false, error: "telegram send failed" };
 }
 
 /**
@@ -129,6 +213,7 @@ export async function sendSentNotification(params: {
   platform?: string | null;
   email: string;
   screenshotUrl?: string | null;
+  screenshotPath?: string | null;
   kpSubject?: string | null;
   kpHtml?: string | null;
   kpText?: string | null;
@@ -152,6 +237,7 @@ export async function sendSentNotification(params: {
       platform: rest.platform,
       email: rest.email,
       screenshotUrl: rest.screenshotUrl,
+      screenshotPath: rest.screenshotPath,
       kpSubject: rest.kpSubject,
       kpHtml: rest.kpHtml,
       kpText: rest.kpText,
@@ -159,6 +245,34 @@ export async function sendSentNotification(params: {
   });
 
   return card.ok ? { ok: true } : { ok: false, error: "telegram send failed" };
+}
+
+/**
+ * Короткое уведомление о ручном пропуске (слот очереди свободен).
+ */
+export async function sendSkipNotification(params: {
+  botToken: string;
+  chatId: string;
+  name: string;
+  domain: string;
+  platform?: string | null;
+  queuedRemaining?: number;
+}): Promise<{ ok: boolean; error?: string }> {
+  const { botToken, chatId, name, domain, platform, queuedRemaining } = params;
+
+  if (!botToken || !chatId) {
+    return { ok: false, error: "telegram not configured" };
+  }
+
+  const plat = platform ? ` · ${platform}` : "";
+  const left =
+    queuedRemaining != null ? `\nОсталось в очереди: ${queuedRemaining}` : "";
+  const text =
+    `⏭ Пропуск: ${name || domain}${plat}\n` +
+    `https://${domain}\n` +
+    `Слот свободен${left}`;
+
+  return sendPlainText({ botToken, chatId, text });
 }
 
 /**
@@ -173,6 +287,7 @@ export async function sendReplyNotification(params: {
   email?: string | null;
   source?: string;
   screenshotUrl?: string | null;
+  screenshotPath?: string | null;
   publicOrigin?: string;
   adminUrl?: string;
 }): Promise<{ ok: boolean; error?: string }> {
@@ -185,6 +300,7 @@ export async function sendReplyNotification(params: {
     email,
     source,
     screenshotUrl,
+    screenshotPath,
     publicOrigin,
     adminUrl,
   } = params;
@@ -202,16 +318,16 @@ export async function sendReplyNotification(params: {
     `🔥 Ответ/заявка: ${name || domain}${plat}${mail}${src}\n` +
     `https://${domain}${admin}`;
 
+  const localPath = resolveLocalScreenshotPath(screenshotPath, screenshotUrl);
   const absoluteShot = absolutePublicUrl(screenshotUrl, publicOrigin);
-  if (absoluteShot) {
-    const ok = await sendPhoto({
-      botToken,
-      chatId,
-      photo: absoluteShot,
-      caption,
-    });
-    if (ok) return { ok: true };
-  }
+  const ok = await sendPhoto({
+    botToken,
+    chatId,
+    photoUrl: absoluteShot,
+    localPath,
+    caption,
+  });
+  if (ok) return { ok: true };
 
   return sendPlainText({ botToken, chatId, text: caption });
 }
@@ -383,15 +499,18 @@ async function sendLeadCardToTelegram(params: {
       : `${prefix}. ${sample.name || sample.domain}${plat}${mail}\nhttps://${sample.domain}`;
 
   let photo = false;
+  const localPath = resolveLocalScreenshotPath(
+    sample.screenshotPath,
+    sample.screenshotUrl
+  );
   const absoluteShot = absolutePublicUrl(sample.screenshotUrl, publicOrigin);
-  if (absoluteShot) {
-    photo = await sendPhoto({
-      botToken,
-      chatId,
-      photo: absoluteShot,
-      caption: title.slice(0, 1024),
-    });
-  }
+  photo = await sendPhoto({
+    botToken,
+    chatId,
+    photoUrl: absoluteShot,
+    localPath,
+    caption: title.slice(0, 1024),
+  });
 
   if (!photo) {
     await sendPlainText({ botToken, chatId, text: title });
@@ -425,19 +544,54 @@ function truncate(text: string, max: number): string {
 async function sendPhoto(params: {
   botToken: string;
   chatId: string;
-  photo: string;
   caption: string;
+  /** Локальный jpeg — предпочтительно (Telegram не ходит на наш URL). */
+  localPath?: string | null;
+  /** Публичный URL — запасной вариант. */
+  photoUrl?: string | null;
 }): Promise<boolean> {
-  const res = await fetch(`https://api.telegram.org/bot${params.botToken}/sendPhoto`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: params.chatId,
-      photo: params.photo,
-      caption: params.caption.slice(0, 1024),
-    }),
-    signal: AbortSignal.timeout(20_000),
-  });
+  const caption = params.caption.slice(0, 1024);
+
+  if (params.localPath && existsSync(params.localPath)) {
+    try {
+      const buf = await readFile(params.localPath);
+      const form = new FormData();
+      form.append("chat_id", params.chatId);
+      form.append("caption", caption);
+      form.append(
+        "photo",
+        new Blob([new Uint8Array(buf)], { type: "image/jpeg" }),
+        basename(params.localPath) || "screenshot.jpg"
+      );
+      const res = await fetch(
+        `https://api.telegram.org/bot${params.botToken}/sendPhoto`,
+        {
+          method: "POST",
+          body: form,
+          signal: AbortSignal.timeout(30_000),
+        }
+      );
+      if (res.ok) return true;
+    } catch {
+      /* fallback на URL */
+    }
+  }
+
+  if (!params.photoUrl) return false;
+
+  const res = await fetch(
+    `https://api.telegram.org/bot${params.botToken}/sendPhoto`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: params.chatId,
+        photo: params.photoUrl,
+        caption,
+      }),
+      signal: AbortSignal.timeout(20_000),
+    }
+  );
   return res.ok;
 }
 
@@ -460,6 +614,35 @@ async function sendPlainText(params: {
     return { ok: false, error: await res.text() };
   }
   return { ok: true };
+}
+
+/** Путь на диске: явный path или public/ + относительный screenshot_url. */
+export function resolveLocalScreenshotPath(
+  path?: string | null,
+  url?: string | null
+): string | null {
+  if (path && existsSync(path)) return path;
+  if (!url) return null;
+
+  let pathname = url;
+  if (/^https?:\/\//i.test(url)) {
+    try {
+      pathname = new URL(url).pathname;
+    } catch {
+      return null;
+    }
+  }
+  if (!pathname.startsWith("/")) return null;
+
+  const rel = pathname.replace(/^\//, "");
+  const candidates = [
+    join(process.cwd(), "public", rel),
+    join(process.cwd(), rel),
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  return null;
 }
 
 function absolutePublicUrl(

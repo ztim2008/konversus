@@ -29,9 +29,9 @@ import { getAllSettings } from "@/lib/data/settings";
 import { pickCityAndNiche, rememberCityNiche } from "@/lib/lead-radar/day-picker";
 import { sendMorningDigest } from "@/lib/lead-radar/telegram-digest";
 
-import { DAILY_QUEUE_LIMIT } from "@/lib/lead-radar/config";
+import { getDailyQueueLimit } from "@/lib/lead-radar/config";
 
-export { DAILY_QUEUE_LIMIT };
+export { DAILY_QUEUE_LIMIT } from "@/lib/lead-radar/config";
 const CONTACT_COOLDOWN_DAYS = 30;
 
 export type NightlyRunResult = {
@@ -39,6 +39,8 @@ export type NightlyRunResult = {
   batchDate: string;
   city: string;
   niche: string;
+  vertical?: string;
+  verticalId?: string;
   pickReason: string;
   radarId: string;
   serpRaw: number;
@@ -132,13 +134,15 @@ async function insertQueuedSite(row: {
 export async function runNightlyLeadRadar(options?: {
   city?: string;
   niche?: string;
+  vertical?: string;
   limit?: number;
   skipTelegram?: boolean;
   skipScreenshot?: boolean;
   dryRun?: boolean;
 }): Promise<NightlyRunResult> {
   const batchDate = new Date().toISOString().slice(0, 10);
-  const limit = Math.min(options?.limit ?? DAILY_QUEUE_LIMIT, DAILY_QUEUE_LIMIT);
+  const configuredLimit = await getDailyQueueLimit();
+  const limit = Math.min(options?.limit ?? configuredLimit, configuredLimit);
   const skipped: Array<{ domain: string; reason: string }> = [];
   const samples: Array<{
     name: string;
@@ -147,6 +151,7 @@ export async function runNightlyLeadRadar(options?: {
     email?: string | null;
     hotScore?: number;
     screenshotUrl?: string | null;
+    screenshotPath?: string | null;
     kpSubject?: string | null;
     kpHtml?: string | null;
   }> = [];
@@ -171,15 +176,17 @@ export async function runNightlyLeadRadar(options?: {
   }
 
   const need = limit - already;
-  const { city, niche, reason } = await pickCityAndNiche({
-    city: options?.city,
-    niche: options?.niche,
-  });
+  const { city, niche, reason, verticalId, verticalLabel } =
+    await pickCityAndNiche({
+      city: options?.city,
+      niche: options?.niche,
+      vertical: options?.vertical,
+    });
 
   const radarId = await createRadar({
     city: city.name,
     niche,
-    filters: ["serp", "auto"],
+    filters: ["serp", "auto", verticalId],
   });
 
   const query = buildCompanySerpQuery(niche, city.name);
@@ -343,6 +350,7 @@ export async function runNightlyLeadRadar(options?: {
         email: emailInfo.email,
         hotScore: audit.hotScore,
         screenshotUrl: screenshotUrl || null,
+        screenshotPath: screenshotPath || null,
         kpSubject: subject || null,
         kpHtml: htmlFinal || null,
       });
@@ -360,7 +368,7 @@ export async function runNightlyLeadRadar(options?: {
     queuedCount: finalCount,
     tokensTotal,
   });
-  await rememberCityNiche(city.id, niche);
+  await rememberCityNiche(city.id, niche, verticalId);
 
   let telegram: { ok: boolean; error?: string; photosSent?: number } = { ok: true };
   if (!options?.skipTelegram) {
@@ -375,6 +383,7 @@ export async function runNightlyLeadRadar(options?: {
             email: s.email,
             hotScore: s.hot_score ?? 0,
             screenshotUrl: s.screenshot_url || null,
+            screenshotPath: s.screenshot_path || null,
             kpSubject: s.kp_subject || null,
             kpHtml: s.kp_html || null,
           }))
@@ -385,6 +394,7 @@ export async function runNightlyLeadRadar(options?: {
       batchDate,
       city: city.name,
       niche,
+      vertical: verticalLabel,
       queuedCount: finalCount,
       limit,
       tokensTotal,
@@ -399,6 +409,8 @@ export async function runNightlyLeadRadar(options?: {
     batchDate,
     city: city.name,
     niche,
+    vertical: verticalLabel,
+    verticalId,
     pickReason: reason,
     radarId,
     serpRaw: serp.organic.length,

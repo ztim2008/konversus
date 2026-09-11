@@ -65,6 +65,17 @@ export function BatchesStats() {
     load();
   }, [load]);
 
+  const weekBars = (() => {
+    const rows = [...batches].slice(0, 7).reverse();
+    const max = Math.max(
+      1,
+      ...rows.map((b) =>
+        Math.max(Number(b.queued_count || 0), Number(b.sent_count || 0))
+      )
+    );
+    return { rows, max };
+  })();
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -95,7 +106,9 @@ export function BatchesStats() {
           <div className="text-2xl font-semibold text-white mt-1">
             {config?.dailyQueueLimit ?? 20}
           </div>
-          <div className="text-xs text-gray-500 mt-1">лидов в день (код)</div>
+          <div className="text-xs text-gray-500 mt-1">
+            настраивается во вкладке «Рулетка»
+          </div>
         </div>
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
           <div className="text-xs text-gray-500 uppercase tracking-wide">Токены всего</div>
@@ -130,6 +143,56 @@ export function BatchesStats() {
               value={`${live.tokens.toLocaleString("ru-RU")}`}
               sub={`~$${liveUsd.toFixed(3)}`}
             />
+          </div>
+        </div>
+      )}
+
+      {!loading && weekBars.rows.length > 0 && (
+        <div className="mb-6 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-white">
+              План → отправлено (до 7 дней)
+            </h3>
+            <div className="flex gap-3 text-[10px] text-gray-500">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-sm bg-indigo-400/70" />{" "}
+                план
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-sm bg-emerald-400/80" />{" "}
+                отпр.
+              </span>
+            </div>
+          </div>
+          <div className="flex items-end gap-2 h-28">
+            {weekBars.rows.map((b) => {
+              const queued = Number(b.queued_count || 0);
+              const sent = Number(b.sent_count || 0);
+              const qH = Math.max(4, Math.round((queued / weekBars.max) * 100));
+              const sH = Math.max(sent > 0 ? 4 : 0, Math.round((sent / weekBars.max) * 100));
+              const label = (b.batch_date_ru || "").slice(0, 5);
+              return (
+                <div
+                  key={b.batch_date}
+                  className="flex-1 flex flex-col items-center gap-1 min-w-0"
+                  title={`${b.batch_date_ru}: план ${queued}, отпр. ${sent}`}
+                >
+                  <div className="w-full h-24 flex items-end justify-center gap-0.5">
+                    <div
+                      className="w-[42%] rounded-t bg-indigo-400/70"
+                      style={{ height: `${qH}%` }}
+                    />
+                    <div
+                      className="w-[42%] rounded-t bg-emerald-400/80"
+                      style={{ height: `${sH}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-gray-500 truncate w-full text-center">
+                    {label}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -193,8 +256,9 @@ export function BatchesStats() {
       )}
 
       <p className="mt-4 text-xs text-gray-600">
-        Агрегаторы и статьи отсекаются фильтром компаний (blacklist в коде). Лимит{" "}
-        {config?.dailyQueueLimit ?? 20} применяется в nightly и в API очереди.
+        Агрегаторы и статьи отсекаются фильтром компаний. Лимит{" "}
+        {config?.dailyQueueLimit ?? 20} — из вкладки «Рулетка» (nightly и
+        очередь).
       </p>
     </div>
   );

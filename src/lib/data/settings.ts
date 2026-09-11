@@ -65,6 +65,11 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   // ── Lead Hunter / Telegram ──
   telegram_bot_token: "",
   telegram_chat_id: "",
+
+  // ── Lead Radar Auto ──
+  lead_radar_daily_queue_limit: "20",
+  lead_radar_manual_respects_limit: "0",
+  lead_radar_vertical_weights: "",
 };
 
 export async function getAllSettings(): Promise<Record<string, string>> {

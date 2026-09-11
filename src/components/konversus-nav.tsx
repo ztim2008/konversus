@@ -36,8 +36,8 @@ const PRODUCTS = [
     color: "#f97316",
   },
   {
-    name: "Тайный покупатель",
-    description: "AI-поиск клиентов. Авто-аудит сайтов, генерация КП, email-рассылки.",
+    name: "Лид-радар",
+    description: "Утренняя очередь лидов lead-web.pro: аудит, КП, ручная отправка, Telegram.",
     href: "/dashboard/secret-shopper",
     icon: ShoppingBag,
     color: "#ec4899",
