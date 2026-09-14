@@ -333,6 +333,27 @@ export async function sendReplyNotification(params: {
 }
 
 /**
+ * Короткий дайджест автоотправки (без фото на каждое письмо).
+ */
+export async function sendPlainAutoSendDigest(params: {
+  botToken: string;
+  chatId: string;
+  sentNow: number;
+  sentToday: number;
+  sentLimit: number;
+  queuedLeft: number;
+}): Promise<{ ok: boolean; error?: string }> {
+  const { botToken, chatId, sentNow, sentToday, sentLimit, queuedLeft } = params;
+  if (!botToken || !chatId) {
+    return { ok: false, error: "telegram not configured" };
+  }
+  const text =
+    `📤 Автоотправка: +${sentNow}\n` +
+    `Сегодня ${sentToday}/${sentLimit} · в очереди ${queuedLeft}`;
+  return sendPlainText({ botToken, chatId, text });
+}
+
+/**
  * Вечерняя сводка (факт дня).
  */
 export async function sendEveningReport(params: {

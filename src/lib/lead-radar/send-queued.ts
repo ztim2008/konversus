@@ -1,5 +1,5 @@
 /**
- * Ручная отправка лида из очереди «Сегодня» (human-in-the-loop).
+ * Отправка лида из очереди (ручная кнопка или авто-конвейер).
  */
 import "server-only";
 import nodemailer from "nodemailer";
@@ -17,6 +17,10 @@ import {
   sendSentNotification,
   sendSkipNotification,
 } from "@/lib/lead-radar/telegram-digest";
+import {
+  countSentForBatchDate,
+  getDailySendLimit,
+} from "@/lib/lead-radar/config";
 
 export type SendQueuedResult =
   | {
@@ -67,6 +71,19 @@ export async function sendQueuedLead(params: {
   }
   if (!site.kp_html || !site.kp_subject) {
     return { ok: false, error: "no_kp", status: 400 };
+  }
+
+  if (!params.testMode) {
+    const batchDate = toBatchDate(site.batch_date);
+    const sentToday = await countSentForBatchDate(batchDate);
+    const sendLimit = await getDailySendLimit();
+    if (sentToday >= sendLimit) {
+      return {
+        ok: false,
+        error: `daily_send_limit_${sendLimit}`,
+        status: 429,
+      };
+    }
   }
 
   const testMode = !!params.testMode;

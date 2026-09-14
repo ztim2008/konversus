@@ -67,7 +67,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   telegram_chat_id: "",
 
   // ── Lead Radar Auto ──
-  lead_radar_daily_queue_limit: "20",
+  lead_radar_daily_queue_limit: "40",
+  lead_radar_daily_send_limit: "40",
+  lead_radar_auto_send_enabled: "1",
   lead_radar_manual_respects_limit: "0",
   lead_radar_vertical_weights: "",
 };

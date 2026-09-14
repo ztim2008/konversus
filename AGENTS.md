@@ -25,13 +25,14 @@ Machine IDs, код, env keys — EN.
 ## Можно
 
 - Задачи по `graph.taskPaths` + инкремент (правка → `npm run harness:check`).  
-- Развивать Лид-радар Auto строго по этапам ТЗ.  
+- Развивать Лид-радар Auto строго по этапам ТЗ / CURRENT_CONTEXT.  
+- Конвейер: сбор ≤40 · автоотправка каплями · kill-switch в «Рулетка».  
 - Обновлять статусы 🟦🟨🟩 в ТЗ и `CURRENT_CONTEXT` после DoD.  
 - Писать `docs/devlog/YYYY-MM.md`.
 
 ## Нельзя
 
-- Автоотправка писем без ручной кнопки (пока ТЗ так фиксирует).  
+- Снимать kill-switch / лимит отправки без запроса владельца.  
 - Статьи/агрегаторы/соцсети как лиды.  
 - Обходить ERROR `harness:check`.  
 - Self-rewrite (`AGENTS.md`, `.cursor/rules/*`, schema Graph, scripts harness/loop) без явного «разрешаю self-rewrite».  
@@ -45,6 +46,7 @@ Machine IDs, код, env keys — EN.
 |--------|------|
 | Harness / Loop / Graph | [guides/HARNESS.md](docs/guides/HARNESS.md) · [LOOP](docs/guides/LOOP.md) · [GRAPH](docs/guides/GRAPH.md) |
 | ТЗ Auto (этапы) | [LEAD-RADAR-AUTO-TZ.md](docs/LEAD-RADAR-AUTO-TZ.md) |
+| День-поток / 40 | [plans/2026-09-day-flow-40.md](docs/plans/2026-09-day-flow-40.md) |
 | Текущий радар | [LEAD-RADAR.md](docs/LEAD-RADAR.md) |
 | Журнал | [docs/devlog/](docs/devlog/) |
 
@@ -66,10 +68,12 @@ Machine IDs, код, env keys — EN.
 ```bash
 npm run harness:check
 npm run agent:loop -- --task lead_radar_queue
+# или lead_radar_auto_send / lead_radar_nightly
 npm run build
 # pm2 restart — имя процесса уточнять на сервере (часто konversus-fpb)
 ```
 
 ## Формула дня радара
 
-`УТРО = ПЛАН · ДЕНЬ = РУЧНАЯ ОТПРАВКА · ВЕЧЕР = ФАКТ`
+`УТРО = СБОР · ДЕНЬ = АВТОSEND≤40 · ВЕЧЕР = ФАКТ`  
+(Ручной Send/Skip и kill-switch в админке остаются.)

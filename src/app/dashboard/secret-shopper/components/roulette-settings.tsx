@@ -25,7 +25,9 @@ export function RouletteSettings() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
-  const [dailyLimit, setDailyLimit] = useState(20);
+  const [dailyLimit, setDailyLimit] = useState(40);
+  const [dailySendLimit, setDailySendLimit] = useState(40);
+  const [autoSendEnabled, setAutoSendEnabled] = useState(true);
   const [manualRespectsLimit, setManualRespectsLimit] = useState(false);
   const [verticals, setVerticals] = useState<VerticalRow[]>([]);
   const [preview, setPreview] = useState<PreviewRow[]>([]);
@@ -59,7 +61,9 @@ export function RouletteSettings() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Ошибка загрузки");
-      setDailyLimit(data.dailyQueueLimit ?? 20);
+      setDailyLimit(data.dailyQueueLimit ?? 40);
+      setDailySendLimit(data.dailySendLimit ?? 40);
+      setAutoSendEnabled(data.autoSendEnabled !== false);
       setManualRespectsLimit(!!data.manualRespectsLimit);
       setVerticals(data.verticals || []);
       setPreview(data.preview || []);
@@ -104,6 +108,8 @@ export function RouletteSettings() {
         body: JSON.stringify({
           action: "save-roulette-settings",
           dailyQueueLimit: dailyLimit,
+          dailySendLimit,
+          autoSendEnabled,
           manualRespectsLimit,
           weights,
         }),
@@ -111,11 +117,13 @@ export function RouletteSettings() {
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Ошибка сохранения");
       setDailyLimit(data.dailyQueueLimit ?? dailyLimit);
+      setDailySendLimit(data.dailySendLimit ?? dailySendLimit);
+      setAutoSendEnabled(data.autoSendEnabled !== false);
       setManualRespectsLimit(!!data.manualRespectsLimit);
       setVerticals(data.verticals || verticals);
       setPreview(data.preview || []);
       setRibbon(data.ribbon || []);
-      setInfo("Сохранено. Ночной прогон возьмёт новые веса и лимит.");
+      setInfo("Сохранено. Утро доберёт очередь, автоотправка — по бюджету дня.");
     } catch (e: any) {
       setError(e?.message || "Ошибка сохранения");
     } finally {
@@ -173,9 +181,9 @@ export function RouletteSettings() {
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 space-y-4">
-          <h3 className="text-sm font-semibold text-white">Лимит очереди</h3>
+          <h3 className="text-sm font-semibold text-white">Очередь и отправка</h3>
           <label className="block text-xs text-gray-500">
-            Максимум лидов со статусом «в очереди» (авто ночью дольёт до этого числа)
+            Макс. в очереди (утро / добор днём)
             <input
               type="number"
               min={1}
@@ -185,6 +193,28 @@ export function RouletteSettings() {
               className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
             />
           </label>
+          <label className="block text-xs text-gray-500">
+            Бюджет отправки в день (авто + ручная)
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={dailySendLimit}
+              onChange={(e) => setDailySendLimit(Number(e.target.value) || 1)}
+              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
+            />
+          </label>
+          <label className="flex items-start gap-2 text-xs text-gray-400">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={autoSendEnabled}
+              onChange={(e) => setAutoSendEnabled(e.target.checked)}
+            />
+            <span>
+              Автоотправка без кнопки (конвейер, 1 письмо / 15 мин · 09–18 МСК)
+            </span>
+          </label>
           <label className="flex items-start gap-2 text-xs text-gray-400">
             <input
               type="checkbox"
@@ -193,19 +223,16 @@ export function RouletteSettings() {
               onChange={(e) => setManualRespectsLimit(e.target.checked)}
             />
             <span>
-              Ручной URL тоже уважает лимит (иначе можно добавлять сверх — удобно
-              для гипотез)
+              Ручной URL тоже уважает лимит очереди
             </span>
           </label>
           <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-200/90 space-y-1">
             <p>
-              <strong>Пропустить</strong> → лид уходит из очереди →{" "}
-              <strong>место освобождается</strong> (можно добавить другой / авто
-              дольёт).
+              Kill-switch: снимите галку «Автоотправка» — письма перестанут уходить
+              сами, очередь останется.
             </p>
             <p>
-              <strong>Отправить</strong> → то же: статус больше не «queued», слот
-              свободен.
+              <strong>Пропуск</strong> в админке по-прежнему убирает лид до автоотправки.
             </p>
           </div>
         </div>

@@ -1,34 +1,28 @@
 # CURRENT_CONTEXT — срез «сейчас»
 
-**Обновлено:** 2026-09-11 (закрытие дня)  
-**Активный трек:** Лид-радар Auto — тестирование оператором · следующий фокус: день как поток (не пачка)  
-**День:** MVP 0–9 🟩 · ручной URL 🟩 · рулетка B 🟩 · UX 1–4 TG 🟩
+**Обновлено:** 2026-09-14 (закрытие дня)  
+**Активный трек:** конвейер **40/день** · автоотправка 🟩 · наблюдение 🟨 до ~17–18.09  
+**День закрыт:** конвейер в проде · self-rewrite правил · без коммита-ожидания оператора
 
 ## Сейчас
 
 | Тема | Статус |
 |------|--------|
-| MVP Auto 0–9 | 🟩 |
-| Ручной URL + рулетка B + лимит | 🟩 |
-| UX волны 1–3 + TG skip/ещё N | 🟩 |
-| Голос Игоря в КП (тел. главный) | 🟩 |
-| TG inline Send/Skip | 🟦 [бэклог](plans/2026-09-lead-radar-tg-inline-backlog.md) |
-| Mobile «Сегодня» | 🟦 |
-| День как непрерывный поток (не пачка) | 🟦 следующий анализ |
+| MVP Auto 0–9 + UX + рулетка + URL | 🟩 |
+| Конвейер 40 + auto-send + day-wave | 🟩 |
+| AGENTS / cursor rule под конвейер | 🟩 |
+| Наблюдение 2–3 дня | 🟨 ~15–17.09 |
+
+## Следующая сессия (после окна)
+
+Разбор: sent / opened / replied / bounce · SMTP · нужна ли правка темпа/лимита.
 
 ## Инфра
 
-- App: `konversus-fpb` :3010 · админка `/dashboard/secret-shopper`
-- Планы: [UX](plans/2026-09-lead-radar-ux-ui.md) · [рулетка](plans/2026-09-lead-radar-niche-roulette.md) · [TG inline](plans/2026-09-lead-radar-tg-inline-backlog.md)
-- Промпт след. сессии: [docs/prompts/2026-09-12-day-flow-automation-analysis.md](prompts/2026-09-12-day-flow-automation-analysis.md)
+- App: `konversus-fpb` :3010  
+- План: [docs/plans/2026-09-day-flow-40.md](plans/2026-09-day-flow-40.md)  
+- Kill-switch: Рулетка → «Автоотправка»
 
-## Команды
+## Формула
 
-```bash
-npm run harness:check
-pm2 restart konversus-fpb --update-env
-```
-
-## Формула дня (пока)
-
-`УТРО = ПЛАН · ДЕНЬ = РУЧНАЯ ОТПРАВКА · ВЕЧЕР = ФАКТ`
+`УТРО = СБОР · ДЕНЬ = АВТОSEND≤40 · ВЕЧЕР = ФАКТ`

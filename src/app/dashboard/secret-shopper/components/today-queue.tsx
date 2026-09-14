@@ -77,7 +77,10 @@ export function TodayQueue() {
   const [testMode, setTestMode] = useState(false);
   const [batchDate, setBatchDate] = useState("");
   const [queuedCount, setQueuedCount] = useState(0);
-  const [queueLimit, setQueueLimit] = useState(20);
+  const [queueLimit, setQueueLimit] = useState(40);
+  const [sendLimit, setSendLimit] = useState(40);
+  const [sentToday, setSentToday] = useState(0);
+  const [autoSendEnabled, setAutoSendEnabled] = useState(true);
   const [batch, setBatch] = useState<any>(null);
   const [dayPlan, setDayPlan] = useState<DayPlan>({});
 
@@ -126,7 +129,14 @@ export function TodayQueue() {
       if (!res.ok) throw new Error(data.error || "Ошибка загрузки");
       setSites(data.sites || []);
       setQueuedCount(data.queuedCount || 0);
-      setQueueLimit(data.limit || 20);
+      setQueueLimit(data.limit || 40);
+      setSendLimit(data.sendLimit || 40);
+      setSentToday(
+        typeof data.sentToday === "number"
+          ? data.sentToday
+          : Number(data.batch?.sent_count || 0)
+      );
+      setAutoSendEnabled(data.autoSendEnabled !== false);
       setBatch(data.batch || null);
       setBatchDate(data.batchDate || "");
       setDayPlan(data.dayPlan || {});
@@ -333,7 +343,7 @@ export function TodayQueue() {
     ? batchDate.split("-").reverse().join(".")
     : "сегодня";
 
-  const sentCount = Number(batch?.sent_count || 0);
+  const sentCount = sentToday;
   const skippedCount = Number(batch?.skipped_count || 0);
   const planBits = [dayPlan.city, dayPlan.vertical, dayPlan.niche].filter(
     Boolean
@@ -374,11 +384,17 @@ export function TodayQueue() {
               {queuedCount}/{queueLimit}
             </span>
             <span className="mx-1.5 text-gray-600">·</span>
-            отправлено <span className="text-emerald-400">{sentCount}</span>
+            отправлено{" "}
+            <span className="text-emerald-400">
+              {sentCount}/{sendLimit}
+            </span>
             <span className="mx-1.5 text-gray-600">·</span>
             пропуск <span className="text-amber-400/90">{skippedCount}</span>
           </p>
           <p className="text-[11px] text-gray-600 mt-1">
+            {autoSendEnabled
+              ? "Автоотправка: по 1 письму каждые 15 мин · 09–18 МСК · "
+              : "Автоотправка выкл · "}
             Клавиши: ↑↓ / j k · Enter превью · S отправить · X пропуск
           </p>
         </div>

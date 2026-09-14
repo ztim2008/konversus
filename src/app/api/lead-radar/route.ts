@@ -26,7 +26,10 @@ import {
   estimateUsd,
   formatBatchDateRu,
   getDailyQueueLimit,
+  getDailySendLimit,
+  getAutoSendEnabled,
   getManualRespectsLimit,
+  countSentForBatchDate,
   saveRadarRuntimeSettings,
 } from "@/lib/lead-radar/config";
 import { getRouletteAdminState } from "@/lib/lead-radar/day-picker";
@@ -75,8 +78,12 @@ export async function POST(req: NextRequest) {
     const sites = await listQueuedSites(batchDate);
     const queuedCount = await countQueuedForDate(batchDate);
     const limit = await getDailyQueueLimit();
+    const sendLimit = await getDailySendLimit();
+    const autoSendEnabled = await getAutoSendEnabled();
     const today = new Date().toISOString().slice(0, 10);
-    const batch = await getBatchByDate(batchDate || today);
+    const dateKey = batchDate || today;
+    const batch = await getBatchByDate(dateKey);
+    const sentToday = await countSentForBatchDate(dateKey);
     const lastCityId = await getSetting("lead_radar_last_city_id");
     const lastNiche = await getSetting("lead_radar_last_niche");
     const lastVertical = await getSetting("lead_radar_last_vertical");
@@ -92,9 +99,13 @@ export async function POST(req: NextRequest) {
       sites,
       queuedCount,
       limit,
+      sendLimit,
+      sentToday,
+      autoSendEnabled,
       remaining: Math.max(0, limit - queuedCount),
+      remainingSend: Math.max(0, sendLimit - sentToday),
       batch,
-      batchDate: batchDate || today,
+      batchDate: dateKey,
       dayPlan: {
         city: first?.radar_city || cityFromSettings || "",
         niche: first?.radar_niche || lastNiche || "",
@@ -138,6 +149,8 @@ export async function POST(req: NextRequest) {
       liveUsd: estimateUsd(live.tokens),
       config: {
         dailyQueueLimit,
+        dailySendLimit: await getDailySendLimit(),
+        autoSendEnabled: await getAutoSendEnabled(),
         dailyReportHourMsk: DAILY_REPORT_HOUR_MSK,
         defaultDailyQueueLimit: DAILY_QUEUE_LIMIT,
       },
@@ -145,14 +158,24 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === "get-roulette-settings") {
-    const [state, dailyQueueLimit, manualRespectsLimit] = await Promise.all([
+    const [
+      state,
+      dailyQueueLimit,
+      dailySendLimit,
+      autoSendEnabled,
+      manualRespectsLimit,
+    ] = await Promise.all([
       getRouletteAdminState(),
       getDailyQueueLimit(),
+      getDailySendLimit(),
+      getAutoSendEnabled(),
       getManualRespectsLimit(),
     ]);
     return NextResponse.json({
       ok: true,
       dailyQueueLimit,
+      dailySendLimit,
+      autoSendEnabled,
       manualRespectsLimit,
       cities: GEO_CITIES_V1,
       ...state,
@@ -160,7 +183,7 @@ export async function POST(req: NextRequest) {
         skipFreesSlot: true,
         sendFreesSlot: true,
         note:
-          "Лимит считает сайты со статусом «в очереди». Пропуск и отправка снимают лид с очереди — место освобождается. Ночной авто дольёт до лимита.",
+          "Очередь — заготовки. Отправка — бюджет дня (авто каждые 15 мин в 09–18 МСК). Пропуск снимает с очереди.",
       },
     });
   }
@@ -174,6 +197,14 @@ export async function POST(req: NextRequest) {
       dailyQueueLimit:
         typeof body.dailyQueueLimit === "number"
           ? body.dailyQueueLimit
+          : undefined,
+      dailySendLimit:
+        typeof body.dailySendLimit === "number"
+          ? body.dailySendLimit
+          : undefined,
+      autoSendEnabled:
+        typeof body.autoSendEnabled === "boolean"
+          ? body.autoSendEnabled
           : undefined,
       manualRespectsLimit:
         typeof body.manualRespectsLimit === "boolean"

@@ -7,11 +7,13 @@ alwaysApply: true
 
 ## Продукт
 
-- Лид-радар Auto: утро = план (~20), день = ручная отправка, вечер = факт.
+- Лид-радар Auto: **конвейер** — утро = сбор (≤40), день = автоотправка каплями (бюджет sent≤40), вечер = факт.
+- Kill-switch и лимиты — вкладка «Рулетка»; ручной Send/Skip в «Сегодня» остаются.
 - Исходящий бренд писем: **lead-web.pro**.
 - Рынок: **Россия**. UI/КП/Telegram/docs — **RU**.
 - Кодекс: https://proektmap.ru/agent-engineering/rules (адаптация в docs/guides/HARNESS.md)
 - ТЗ: docs/LEAD-RADAR-AUTO-TZ.md (статусы 🟦🟨🟩)
+- План потока: docs/plans/2026-09-day-flow-40.md
 
 ## Источник правды
 
@@ -25,7 +27,7 @@ alwaysApply: true
 
 - Только сайты компаний (не статьи/агрегаторы).
 - Глубокий email + скриншот обязательны для queued.
-- Нет автоотправки без кнопки человека.
+- Автоотправка **разрешена** (конвейер); не снимать kill-switch / дневной лимит sent без запроса владельца.
 - ERROR gate: `npm run harness:check` — не обходить.
 - Self-rewrite (AGENTS, this rule, graph schema, harness scripts) — **только с разрешения владельца**.
 - Инкремент: один шаг → проверка → (коммит по запросу). Не выдумывать факты.
@@ -35,6 +37,7 @@ alwaysApply: true
 
 ```bash
 npm run agent:loop -- --task lead_radar_queue
+# или: lead_radar_auto_send · lead_radar_nightly
 npm run harness:check
 ```
 

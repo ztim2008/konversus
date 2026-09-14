@@ -251,6 +251,26 @@
       "id": "lib.lead_radar_config",
       "type": "lib",
       "path": "src/lib/lead-radar/config.ts"
+    },
+    {
+      "id": "lib.auto_send",
+      "type": "lib",
+      "path": "src/lib/lead-radar/auto-send.ts"
+    },
+    {
+      "id": "app.api_auto_send",
+      "type": "app",
+      "path": "src/app/api/lead-radar/auto-send"
+    },
+    {
+      "id": "ops.cron_auto_send",
+      "type": "ops",
+      "path": "scripts/cron-lead-radar-auto-send.sh"
+    },
+    {
+      "id": "ops.cron_day_wave",
+      "type": "ops",
+      "path": "scripts/cron-lead-radar-day-wave.sh"
     }
   ],
   "edges": [
@@ -420,6 +440,36 @@
       "type": "validates"
     },
     {
+      "from": "ops.cron_day_wave",
+      "to": "app.api_nightly",
+      "type": "validates"
+    },
+    {
+      "from": "ops.cron_auto_send",
+      "to": "app.api_auto_send",
+      "type": "validates"
+    },
+    {
+      "from": "app.api_auto_send",
+      "to": "lib.auto_send",
+      "type": "reads"
+    },
+    {
+      "from": "lib.auto_send",
+      "to": "lib.send_queued",
+      "type": "writes"
+    },
+    {
+      "from": "lib.auto_send",
+      "to": "lib.lead_radar_config",
+      "type": "reads"
+    },
+    {
+      "from": "lib.auto_send",
+      "to": "lib.tg_digest",
+      "type": "writes"
+    },
+    {
       "from": "app.api_lead_radar",
       "to": "lib.send_queued",
       "type": "writes"
@@ -577,6 +627,17 @@
       "lib.nightly_run",
       "app.api_nightly",
       "ops.cron_nightly",
+      "ops.cron_day_wave",
+      "gate.harness"
+    ],
+    "lead_radar_auto_send": [
+      "doc.tz_auto",
+      "lib.lead_radar_config",
+      "lib.auto_send",
+      "lib.send_queued",
+      "lib.tg_digest",
+      "app.api_auto_send",
+      "ops.cron_auto_send",
       "gate.harness"
     ]
   }

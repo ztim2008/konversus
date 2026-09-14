@@ -3,15 +3,20 @@
  */
 import "server-only";
 import { getSetting, setManySetting } from "@/lib/data/settings";
+import { getDbPool } from "@/lib/db";
+import type { RowDataPacket } from "mysql2";
 import {
   VERTICALS_V2,
   type VerticalId,
 } from "@/lib/lead-radar-geo";
 
-/** Дефолт, если в settings пусто. */
-export const DAILY_QUEUE_LIMIT = 20;
+/** Дефолт очереди и отправки (конвейер 40/день). */
+export const DAILY_QUEUE_LIMIT = 40;
+export const DAILY_SEND_LIMIT = 40;
 
 export const SETTING_DAILY_QUEUE_LIMIT = "lead_radar_daily_queue_limit";
+export const SETTING_DAILY_SEND_LIMIT = "lead_radar_daily_send_limit";
+export const SETTING_AUTO_SEND_ENABLED = "lead_radar_auto_send_enabled";
 export const SETTING_VERTICAL_WEIGHTS = "lead_radar_vertical_weights";
 export const SETTING_MANUAL_RESPECTS_LIMIT = "lead_radar_manual_respects_limit";
 
@@ -20,6 +25,10 @@ export const HOT_SCORE_PREVIEW_MIN = 0;
 
 /** Вечерний отчёт по умолчанию (МСК). */
 export const DAILY_REPORT_HOUR_MSK = 21;
+
+/** Окно автоотправки (час МСК, включительно). 9:00–18:59 → ~40 слотов ×15 мин. */
+export const AUTO_SEND_WINDOW_START_HOUR_MSK = 9;
+export const AUTO_SEND_WINDOW_END_HOUR_MSK = 18;
 
 /** Оценка $ за 1M токенов DeepSeek via OpenRouter (blended). */
 export const USD_PER_MILLION_TOKENS = 0.2;
@@ -39,9 +48,49 @@ export async function getDailyQueueLimit(): Promise<number> {
   return Math.min(100, Math.max(1, n));
 }
 
+export async function getDailySendLimit(): Promise<number> {
+  const raw = (await getSetting(SETTING_DAILY_SEND_LIMIT)).trim();
+  const n = Number.parseInt(raw || String(DAILY_SEND_LIMIT), 10);
+  if (!Number.isFinite(n) || n < 1) return DAILY_SEND_LIMIT;
+  return Math.min(100, Math.max(1, n));
+}
+
+/** По умолчанию включено (конвейер). Выкл: setting = 0/false. */
+export async function getAutoSendEnabled(): Promise<boolean> {
+  const raw = (await getSetting(SETTING_AUTO_SEND_ENABLED)).trim().toLowerCase();
+  if (!raw) return true;
+  return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
+}
+
 export async function getManualRespectsLimit(): Promise<boolean> {
   const raw = (await getSetting(SETTING_MANUAL_RESPECTS_LIMIT)).trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
+}
+
+/** Сейчас в окне автоотправки по Москве? */
+export function isAutoSendWindowMsk(now = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Moscow",
+    hour: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  return (
+    hour >= AUTO_SEND_WINDOW_START_HOUR_MSK &&
+    hour <= AUTO_SEND_WINDOW_END_HOUR_MSK
+  );
+}
+
+/** Сколько писем уже ушло за batch_date (contacted+). */
+export async function countSentForBatchDate(batchDate?: string): Promise<number> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT COUNT(*) AS c FROM lead_radar_sites
+     WHERE status IN ('contacted','replied','won')
+       AND batch_date = COALESCE(?, CURDATE())`,
+    [batchDate || null]
+  );
+  return Number((rows as RowDataPacket[])[0]?.c ?? 0);
 }
 
 export async function getVerticalWeights(): Promise<VerticalWeights> {
@@ -65,10 +114,14 @@ export async function getVerticalWeights(): Promise<VerticalWeights> {
 
 export async function saveRadarRuntimeSettings(params: {
   dailyQueueLimit?: number;
+  dailySendLimit?: number;
+  autoSendEnabled?: boolean;
   manualRespectsLimit?: boolean;
   weights?: Partial<VerticalWeights>;
 }): Promise<{
   dailyQueueLimit: number;
+  dailySendLimit: number;
+  autoSendEnabled: boolean;
   manualRespectsLimit: boolean;
   weights: VerticalWeights;
 }> {
@@ -78,6 +131,18 @@ export async function saveRadarRuntimeSettings(params: {
   if (typeof params.dailyQueueLimit === "number") {
     dailyQueueLimit = Math.min(100, Math.max(1, Math.floor(params.dailyQueueLimit)));
     patch[SETTING_DAILY_QUEUE_LIMIT] = String(dailyQueueLimit);
+  }
+
+  let dailySendLimit = await getDailySendLimit();
+  if (typeof params.dailySendLimit === "number") {
+    dailySendLimit = Math.min(100, Math.max(1, Math.floor(params.dailySendLimit)));
+    patch[SETTING_DAILY_SEND_LIMIT] = String(dailySendLimit);
+  }
+
+  let autoSendEnabled = await getAutoSendEnabled();
+  if (typeof params.autoSendEnabled === "boolean") {
+    autoSendEnabled = params.autoSendEnabled;
+    patch[SETTING_AUTO_SEND_ENABLED] = autoSendEnabled ? "1" : "0";
   }
 
   let manualRespectsLimit = await getManualRespectsLimit();
@@ -104,7 +169,13 @@ export async function saveRadarRuntimeSettings(params: {
     await setManySetting(patch);
   }
 
-  return { dailyQueueLimit, manualRespectsLimit, weights };
+  return {
+    dailyQueueLimit,
+    dailySendLimit,
+    autoSendEnabled,
+    manualRespectsLimit,
+    weights,
+  };
 }
 
 export function estimateUsd(tokens: number): number {
