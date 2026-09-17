@@ -23,6 +23,7 @@ const SITES = [
   { id: "marketfon", url: "https://xn----7sbptikgmuv.xn--p1ai/" },
   { id: "kupolcert", url: "https://kupolcert.ru/" },
   { id: "reverans", url: "https://reverans.online/" },
+  { id: "cmdpodolsk", url: "https://cmdpodolsk.ru/" },
 ];
 
 (async () => {

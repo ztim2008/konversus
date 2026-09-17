@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-17
+
+### Портфолио — медицинский центр CMD
+
+- в `/portfolio` добавлена карточка **Медицинский центр Алтея — Подольск** (`cmdpodolsk.ru`)
+- скриншот первого экрана: `portfolio/services/cmdpodolsk.jpg`
+- каталог: `src/data/nordic-portfolio.ts`; захват: `scripts/capture-nordic-portfolio.mjs`
+- meta витрины: `portfolio/services/meta.json`
+
 ## 2026-09-09
 
 ### Портфолио — два клиентских сайта

@@ -142,4 +142,15 @@ export const NORDIC_PORTFOLIO: NordicPortfolioItem[] = [
       "Спортивный клуб художественной гимнастики Реверанс для детей от 3 лет в Москве. Индивидуальный подход, тренировки и соревнования.",
     image: "/portfolio/services/reverans.jpg",
   },
+  {
+    id: "cmdpodolsk",
+    title: "Медицинский центр Алтея - Подольск",
+    url: "https://cmdpodolsk.ru",
+    external: true,
+    category: "site",
+    tag: "Сайт",
+    description:
+      "Высокоточная диагностика, комфортное лечение, все виды анализов и получение справок в одном месте.",
+    image: "/portfolio/services/cmdpodolsk.jpg",
+  },
 ];
