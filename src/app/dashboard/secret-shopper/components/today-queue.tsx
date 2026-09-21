@@ -393,7 +393,7 @@ export function TodayQueue() {
           </p>
           <p className="text-[11px] text-gray-600 mt-1">
             {autoSendEnabled
-              ? "Автоотправка: по 1 письму каждые 15 мин · 09–18 МСК · "
+              ? "Автоотправка: каплями 09–21 МСК · сбор DeepSeek / 30 мин · "
               : "Автоотправка выкл · "}
             Клавиши: ↑↓ / j k · Enter превью · S отправить · X пропуск
           </p>

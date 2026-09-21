@@ -1,6 +1,6 @@
 /**
- * Ночной пайплайн Лид-радар Auto:
- * SERP → фильтр → enrich → KP → queued (≤20) → batch → Telegram дайджест.
+ * Пайплайн сбора Лид-радар Auto:
+ * волны SERP → фильтр → enrich → KP → queued (до бюджета sent) → Telegram.
  */
 import "server-only";
 import { randomUUID } from "node:crypto";
@@ -29,10 +29,45 @@ import { getAllSettings } from "@/lib/data/settings";
 import { pickCityAndNiche, rememberCityNiche } from "@/lib/lead-radar/day-picker";
 import { sendMorningDigest } from "@/lib/lead-radar/telegram-digest";
 
-import { getDailyQueueLimit } from "@/lib/lead-radar/config";
+import {
+  COLLECT_MAX_ROUNDS_DEFAULT,
+  countSentForBatchDate,
+  getCollectPerTick,
+  getDailyQueueLimit,
+  getDailySendLimit,
+  mskDateISO,
+} from "@/lib/lead-radar/config";
 
 export { DAILY_QUEUE_LIMIT } from "@/lib/lead-radar/config";
 const CONTACT_COOLDOWN_DAYS = 30;
+
+/** Сколько держать в очереди: не больше лимита очереди и не больше остатка бюджета sent. */
+export async function resolveCollectTarget(options?: {
+  batchDate?: string;
+  limit?: number;
+}): Promise<{
+  batchDate: string;
+  queueLimit: number;
+  sendLimit: number;
+  sent: number;
+  queued: number;
+  target: number;
+  need: number;
+}> {
+  const batchDate = options?.batchDate || mskDateISO();
+  const queueLimit = await getDailyQueueLimit();
+  const sendLimit = await getDailySendLimit();
+  const cap =
+    typeof options?.limit === "number"
+      ? Math.min(queueLimit, Math.max(1, Math.floor(options.limit)))
+      : queueLimit;
+  const sent = await countSentForBatchDate(batchDate);
+  const queued = await countQueuedForDate(batchDate);
+  const remainingSend = Math.max(0, sendLimit - sent);
+  const target = Math.min(cap, remainingSend);
+  const need = Math.max(0, target - queued);
+  return { batchDate, queueLimit: cap, sendLimit, sent, queued, target, need };
+}
 
 export type NightlyRunResult = {
   ok: boolean;
@@ -131,6 +166,19 @@ async function insertQueuedSite(row: {
   return id;
 }
 
+export type CollectRunResult = NightlyRunResult & {
+  rounds: number;
+  target: number;
+  sentToday: number;
+  roundResults: Array<{
+    niche: string;
+    city: string;
+    queuedDelta: number;
+    serpRaw: number;
+    candidates: number;
+  }>;
+};
+
 export async function runNightlyLeadRadar(options?: {
   city?: string;
   niche?: string;
@@ -139,10 +187,18 @@ export async function runNightlyLeadRadar(options?: {
   skipTelegram?: boolean;
   skipScreenshot?: boolean;
   dryRun?: boolean;
+  /** Не слать TG (для внутренних раундов мульти-сбора). */
+  suppressTelegram?: boolean;
+  /** Жёсткий потолок новых КП за этот раунд (DeepSeek). */
+  maxEnqueuePerRound?: number;
 }): Promise<NightlyRunResult> {
-  const batchDate = new Date().toISOString().slice(0, 10);
-  const configuredLimit = await getDailyQueueLimit();
-  const limit = Math.min(options?.limit ?? configuredLimit, configuredLimit);
+  const budget = await resolveCollectTarget({ limit: options?.limit });
+  const batchDate = budget.batchDate;
+  const limit = budget.target;
+  const perTickCap =
+    typeof options?.maxEnqueuePerRound === "number"
+      ? Math.max(1, Math.floor(options.maxEnqueuePerRound))
+      : await getCollectPerTick();
   const skipped: Array<{ domain: string; reason: string }> = [];
   const samples: Array<{
     name: string;
@@ -156,14 +212,14 @@ export async function runNightlyLeadRadar(options?: {
     kpHtml?: string | null;
   }> = [];
 
-  const already = await countQueuedForDate(batchDate);
-  if (already >= limit) {
+  const already = budget.queued;
+  if (budget.need <= 0) {
     return {
       ok: true,
       batchDate,
       city: options?.city || "",
       niche: options?.niche || "",
-      pickReason: "idempotent",
+      pickReason: budget.sent >= budget.sendLimit ? "send_budget_done" : "idempotent",
       radarId: "",
       serpRaw: 0,
       candidates: 0,
@@ -175,7 +231,7 @@ export async function runNightlyLeadRadar(options?: {
     };
   }
 
-  const need = limit - already;
+  const need = Math.min(budget.need, perTickCap);
   const { city, niche, reason, verticalId, verticalLabel } =
     await pickCityAndNiche({
       city: options?.city,
@@ -236,7 +292,8 @@ export async function runNightlyLeadRadar(options?: {
 
   for (const cand of candidates) {
     if (queued >= limit) break;
-    if (samples.length >= need && queued - already >= need) break;
+    if (queued - already >= need) break;
+    if (samples.length >= need) break;
 
     try {
       if (options?.dryRun) {
@@ -371,7 +428,7 @@ export async function runNightlyLeadRadar(options?: {
   await rememberCityNiche(city.id, niche, verticalId);
 
   let telegram: { ok: boolean; error?: string; photosSent?: number } = { ok: true };
-  if (!options?.skipTelegram) {
+  if (!options?.skipTelegram && !options?.suppressTelegram) {
     const settings = await getAllSettings();
     const queuedRows = await listQueuedSites(batchDate);
     const digestSamples =
@@ -420,5 +477,134 @@ export async function runNightlyLeadRadar(options?: {
     tokensTotal,
     telegram,
     alreadyHad: already,
+  };
+}
+
+/**
+ * Мульти-раундовый сбор: крутит рулетку ниш, пока очередь не дойдёт до
+ * min(queueLimit, remainingSendBudget) или пока раунды не исчерпаны.
+ */
+export async function runLeadRadarCollect(options?: {
+  city?: string;
+  niche?: string;
+  vertical?: string;
+  limit?: number;
+  skipTelegram?: boolean;
+  skipScreenshot?: boolean;
+  dryRun?: boolean;
+  maxRounds?: number;
+  maxEnqueuePerRound?: number;
+}): Promise<CollectRunResult> {
+  const maxRounds = Math.min(
+    12,
+    Math.max(1, options?.maxRounds ?? COLLECT_MAX_ROUNDS_DEFAULT)
+  );
+  const perRound =
+    typeof options?.maxEnqueuePerRound === "number"
+      ? options.maxEnqueuePerRound
+      : await getCollectPerTick();
+  const roundResults: CollectRunResult["roundResults"] = [];
+  let last: NightlyRunResult | null = null;
+  let tokensTotal = 0;
+  let emptyStreak = 0;
+  let rounds = 0;
+
+  for (let i = 0; i < maxRounds; i++) {
+    const before = await resolveCollectTarget({ limit: options?.limit });
+    if (before.need <= 0) break;
+
+    rounds++;
+    const roundOpts =
+      i === 0
+        ? options
+        : {
+            skipScreenshot: options?.skipScreenshot,
+            dryRun: options?.dryRun,
+            limit: options?.limit,
+          };
+
+    const result = await runNightlyLeadRadar({
+      ...roundOpts,
+      maxEnqueuePerRound: perRound,
+      suppressTelegram: true,
+      skipTelegram: true,
+    });
+    last = result;
+    tokensTotal += result.tokensTotal || 0;
+
+    const afterQueued = result.queued;
+    const queuedDelta = Math.max(0, afterQueued - before.queued);
+    roundResults.push({
+      niche: result.niche,
+      city: result.city,
+      queuedDelta,
+      serpRaw: result.serpRaw,
+      candidates: result.candidates,
+    });
+
+    if (queuedDelta <= 0) {
+      emptyStreak++;
+      if (emptyStreak >= 2) break;
+    } else {
+      emptyStreak = 0;
+    }
+  }
+
+  const finalBudget = await resolveCollectTarget({ limit: options?.limit });
+  const batchDate = finalBudget.batchDate;
+  const publicOrigin = process.env.NEXT_PUBLIC_BASE_URL || "https://konversus.ru";
+
+  let telegram: { ok: boolean; error?: string; photosSent?: number } = { ok: true };
+  if (!options?.skipTelegram) {
+    const settings = await getAllSettings();
+    const queuedRows = await listQueuedSites(batchDate);
+    const digestSamples = queuedRows.map((s: any) => ({
+      name: s.name,
+      domain: s.domain,
+      platform: s.platform,
+      email: s.email,
+      hotScore: s.hot_score ?? 0,
+      screenshotUrl: s.screenshot_url || null,
+      screenshotPath: s.screenshot_path || null,
+      kpSubject: s.kp_subject || null,
+      kpHtml: s.kp_html || null,
+    }));
+    const niches = [...new Set(roundResults.map((r) => r.niche).filter(Boolean))];
+    telegram = await sendMorningDigest({
+      botToken: settings.telegram_bot_token,
+      chatId: settings.telegram_chat_id,
+      batchDate,
+      city: last?.city || niches[0] || "—",
+      niche: niches.length ? niches.join(" · ") : last?.niche || "—",
+      vertical: last?.vertical,
+      queuedCount: finalBudget.queued,
+      limit: finalBudget.target || finalBudget.queueLimit,
+      tokensTotal,
+      samples: digestSamples,
+      adminUrl: `${publicOrigin}/dashboard/secret-shopper`,
+      publicOrigin,
+    });
+  }
+
+  return {
+    ok: true,
+    batchDate,
+    city: last?.city || "",
+    niche: last?.niche || "",
+    vertical: last?.vertical,
+    verticalId: last?.verticalId,
+    pickReason: last?.pickReason || (rounds === 0 ? "idempotent" : "multi_round"),
+    radarId: last?.radarId || "",
+    serpRaw: roundResults.reduce((a, r) => a + r.serpRaw, 0),
+    candidates: roundResults.reduce((a, r) => a + r.candidates, 0),
+    queued: finalBudget.queued,
+    skipped: last?.skipped || [],
+    tokensTotal,
+    telegram,
+    alreadyHad: roundResults[0] ? undefined : finalBudget.queued,
+    rounds,
+    target: finalBudget.target,
+    sentToday: finalBudget.sent,
+    roundResults,
   };
 }

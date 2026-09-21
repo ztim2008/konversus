@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runNightlyLeadRadar } from "@/lib/lead-radar/nightly-run";
+import { runLeadRadarCollect } from "@/lib/lead-radar/nightly-run";
 
-export const maxDuration = 300;
+/** Самохост: капля сбора (1 ниша × N КП). Cron бьёт в :3010. */
+export const maxDuration = 900;
 
 function authorize(req: NextRequest): boolean {
   const secret = process.env.LEAD_RADAR_CRON_SECRET || process.env.CRON_SECRET || "";
   if (!secret) {
-    // без секрета разрешаем только на localhost (ручной тест)
     const host = req.headers.get("host") || "";
     return host.startsWith("127.0.0.1") || host.startsWith("localhost");
   }
@@ -20,7 +20,7 @@ function authorize(req: NextRequest): boolean {
 /**
  * POST /api/lead-radar/nightly-run
  * Auth: Bearer LEAD_RADAR_CRON_SECRET | ?secret= | x-cron-secret
- * Body optional: { city, niche, vertical, limit, skipTelegram, skipScreenshot, dryRun }
+ * Body: { city, niche, vertical, limit, maxRounds, skipTelegram, skipScreenshot, dryRun }
  */
 export async function POST(req: NextRequest) {
   if (!authorize(req)) {
@@ -35,11 +35,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await runNightlyLeadRadar({
+    const result = await runLeadRadarCollect({
       city: typeof body.city === "string" ? body.city : undefined,
       niche: typeof body.niche === "string" ? body.niche : undefined,
       vertical: typeof body.vertical === "string" ? body.vertical : undefined,
       limit: typeof body.limit === "number" ? body.limit : undefined,
+      maxRounds: typeof body.maxRounds === "number" ? body.maxRounds : undefined,
       skipTelegram: !!body.skipTelegram,
       skipScreenshot: !!body.skipScreenshot,
       dryRun: !!body.dryRun,
@@ -65,12 +66,15 @@ export async function GET(req: NextRequest) {
     const vertical = req.nextUrl.searchParams.get("vertical") || undefined;
     const dryRun = req.nextUrl.searchParams.get("dryRun") === "1";
     const skipTelegram = req.nextUrl.searchParams.get("skipTelegram") === "1";
-    const result = await runNightlyLeadRadar({
+    const maxRoundsRaw = req.nextUrl.searchParams.get("maxRounds");
+    const maxRounds = maxRoundsRaw ? Number(maxRoundsRaw) : undefined;
+    const result = await runLeadRadarCollect({
       city,
       niche,
       vertical,
       dryRun,
       skipTelegram,
+      maxRounds: Number.isFinite(maxRounds) ? maxRounds : undefined,
     });
     return NextResponse.json(result);
   } catch (err: any) {

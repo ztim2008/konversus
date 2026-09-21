@@ -28,6 +28,8 @@ import {
   getDailyQueueLimit,
   getDailySendLimit,
   getAutoSendEnabled,
+  getAutoSendIntervalMin,
+  getCollectPerTick,
   getManualRespectsLimit,
   countSentForBatchDate,
   saveRadarRuntimeSettings,
@@ -164,12 +166,16 @@ export async function POST(req: NextRequest) {
       dailySendLimit,
       autoSendEnabled,
       manualRespectsLimit,
+      autoSendIntervalMin,
+      collectPerTick,
     ] = await Promise.all([
       getRouletteAdminState(),
       getDailyQueueLimit(),
       getDailySendLimit(),
       getAutoSendEnabled(),
       getManualRespectsLimit(),
+      getAutoSendIntervalMin(),
+      getCollectPerTick(),
     ]);
     return NextResponse.json({
       ok: true,
@@ -177,13 +183,15 @@ export async function POST(req: NextRequest) {
       dailySendLimit,
       autoSendEnabled,
       manualRespectsLimit,
+      autoSendIntervalMin,
+      collectPerTick,
       cities: GEO_CITIES_V1,
       ...state,
       help: {
         skipFreesSlot: true,
         sendFreesSlot: true,
         note:
-          "Очередь — заготовки. Отправка — бюджет дня (авто каждые 15 мин в 09–18 МСК). Пропуск снимает с очереди.",
+          "Спокойный темп: сбор ~2 КП / 30 мин (DeepSeek) · отправка 1 / 15 или 30 мин · окно 09–21 МСК. Лимит 40 — потолок.",
       },
     });
   }
@@ -209,6 +217,14 @@ export async function POST(req: NextRequest) {
       manualRespectsLimit:
         typeof body.manualRespectsLimit === "boolean"
           ? body.manualRespectsLimit
+          : undefined,
+      autoSendIntervalMin:
+        typeof body.autoSendIntervalMin === "number"
+          ? body.autoSendIntervalMin
+          : undefined,
+      collectPerTick:
+        typeof body.collectPerTick === "number"
+          ? body.collectPerTick
           : undefined,
       weights,
     });

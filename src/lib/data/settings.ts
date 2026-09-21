@@ -71,6 +71,8 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   lead_radar_daily_send_limit: "40",
   lead_radar_auto_send_enabled: "1",
   lead_radar_manual_respects_limit: "0",
+  lead_radar_auto_send_interval_min: "30",
+  lead_radar_collect_per_tick: "2",
   lead_radar_vertical_weights: "",
 };
 

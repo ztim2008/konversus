@@ -15,7 +15,7 @@ import {
   type GeoCity,
   type VerticalId,
 } from "@/lib/lead-radar-geo";
-import { getVerticalWeights } from "@/lib/lead-radar/config";
+import { getVerticalWeights, mskDateISO } from "@/lib/lead-radar/config";
 
 const KEY_LAST_CITY = "lead_radar_last_city_id";
 const KEY_LAST_NICHE = "lead_radar_last_niche";
@@ -35,7 +35,7 @@ export type DayPick = {
 };
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return mskDateISO();
 }
 
 function daysBetween(a: string, b: string): number {

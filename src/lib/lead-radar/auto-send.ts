@@ -1,6 +1,6 @@
 /**
  * Автоотправка очереди (конвейер): каплями до дневного лимита sent.
- * Human-in-the-loop снят решением владельца 2026-09-14.
+ * Темп: 15 или 30 мин (setting) — cron стучится чаще, API сам пропускает рано.
  */
 import "server-only";
 import {
@@ -8,11 +8,15 @@ import {
   countQueuedForDate,
 } from "@/lib/data/lead-radar";
 import { getAllSettings } from "@/lib/data/settings";
+import { getDbPool } from "@/lib/db";
+import type { RowDataPacket } from "mysql2";
 import {
   getDailySendLimit,
   getAutoSendEnabled,
+  getAutoSendIntervalMin,
   isAutoSendWindowMsk,
   countSentForBatchDate,
+  mskDateISO,
 } from "@/lib/lead-radar/config";
 import { sendQueuedLead } from "@/lib/lead-radar/send-queued";
 import { sendPlainAutoSendDigest } from "@/lib/lead-radar/telegram-digest";
@@ -30,14 +34,24 @@ export type AutoSendResult = {
   succeeded: number;
   failed: Array<{ siteId: string; domain?: string; error: string }>;
   queuedLeft: number;
+  intervalMin?: number;
   telegram?: { ok: boolean; error?: string };
   skippedReason?: string;
 };
 
-function todayIso(): string {
-  // batch_date в БД = календарный день сервера/CURDATE; для отчётов используем UTC date
-  // как и nightly (ISO slice). Для окна МСК — отдельно.
-  return new Date().toISOString().slice(0, 10);
+async function minutesSinceLastContact(batchDate: string): Promise<number | null> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT TIMESTAMPDIFF(MINUTE, MAX(contacted_at), NOW()) AS m
+     FROM lead_radar_sites
+     WHERE batch_date = ?
+       AND status IN ('contacted','replied','won')
+       AND contacted_at IS NOT NULL`,
+    [batchDate]
+  );
+  const m = (rows as RowDataPacket[])[0]?.m;
+  if (m == null) return null;
+  return Number(m);
 }
 
 /**
@@ -49,11 +63,14 @@ export async function runAutoSendDrip(options?: {
   skipTelegram?: boolean;
   /** Игнорировать окно часов (только для ручного теста). */
   ignoreWindow?: boolean;
+  /** Игнорировать интервал 15/30 (ручной тест). */
+  ignoreInterval?: boolean;
 }): Promise<AutoSendResult> {
-  const batchDate = todayIso();
+  const batchDate = mskDateISO();
   const sentLimit = await getDailySendLimit();
   const enabled = await getAutoSendEnabled();
   const inWindow = isAutoSendWindowMsk(new Date());
+  const intervalMin = await getAutoSendIntervalMin();
   const perRun = Math.min(5, Math.max(1, options?.perRun ?? 1));
 
   const sentBefore = await countSentForBatchDate(batchDate);
@@ -70,6 +87,7 @@ export async function runAutoSendDrip(options?: {
     succeeded: 0,
     failed: [],
     queuedLeft: await countQueuedForDate(batchDate),
+    intervalMin,
   };
 
   if (!enabled && !options?.force) {
@@ -80,6 +98,16 @@ export async function runAutoSendDrip(options?: {
   }
   if (sentBefore >= sentLimit) {
     return { ...base, skippedReason: "daily_send_limit", remainingBudget: 0 };
+  }
+
+  if (!options?.ignoreInterval && !options?.force) {
+    const since = await minutesSinceLastContact(batchDate);
+    if (since != null && since < intervalMin) {
+      return {
+        ...base,
+        skippedReason: `interval_${intervalMin}m`,
+      };
+    }
   }
 
   const budget = Math.min(perRun, sentLimit - sentBefore);
@@ -94,7 +122,7 @@ export async function runAutoSendDrip(options?: {
     base.attempted++;
     const result = await sendQueuedLead({
       siteId: site.id,
-      skipTelegram: true, // не спамим TG на каждое письмо
+      skipTelegram: true,
     });
     if (result.ok) {
       succeeded++;
@@ -136,6 +164,7 @@ export async function runAutoSendDrip(options?: {
     succeeded,
     failed,
     queuedLeft,
+    intervalMin,
     telegram,
   };
 }

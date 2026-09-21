@@ -19,6 +19,10 @@ export const SETTING_DAILY_SEND_LIMIT = "lead_radar_daily_send_limit";
 export const SETTING_AUTO_SEND_ENABLED = "lead_radar_auto_send_enabled";
 export const SETTING_VERTICAL_WEIGHTS = "lead_radar_vertical_weights";
 export const SETTING_MANUAL_RESPECTS_LIMIT = "lead_radar_manual_respects_limit";
+/** Интервал автоотправки: 15 | 30 (минуты). */
+export const SETTING_AUTO_SEND_INTERVAL_MIN = "lead_radar_auto_send_interval_min";
+/** Сколько новых КП (DeepSeek) за один тик сбора. */
+export const SETTING_COLLECT_PER_TICK = "lead_radar_collect_per_tick";
 
 /** Минимальный hotScore для приоритета в TG-превью (не жёсткий gate очереди). */
 export const HOT_SCORE_PREVIEW_MIN = 0;
@@ -26,9 +30,27 @@ export const HOT_SCORE_PREVIEW_MIN = 0;
 /** Вечерний отчёт по умолчанию (МСК). */
 export const DAILY_REPORT_HOUR_MSK = 21;
 
-/** Окно автоотправки (час МСК, включительно). 9:00–18:59 → ~40 слотов ×15 мин. */
+/**
+ * Окно автоотправки (час МСК, включительно).
+ * Спокойный темп 30 мин: 09–21 → ~26 слотов; полный 15 мин: 09–18 → ~40.
+ */
 export const AUTO_SEND_WINDOW_START_HOUR_MSK = 9;
-export const AUTO_SEND_WINDOW_END_HOUR_MSK = 18;
+export const AUTO_SEND_WINDOW_END_HOUR_MSK = 21;
+
+/** Спокойный дефолт: 1 ниша × N КП за тик, без утреннего залпа. */
+export const COLLECT_MAX_ROUNDS_DEFAULT = 1;
+export const COLLECT_PER_TICK_DEFAULT = 2;
+export const AUTO_SEND_INTERVAL_MIN_DEFAULT = 30;
+
+/** Календарная дата пачки по Москве (YYYY-MM-DD). */
+export function mskDateISO(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Moscow",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
 
 /** Оценка $ за 1M токенов DeepSeek via OpenRouter (blended). */
 export const USD_PER_MILLION_TOKENS = 0.2;
@@ -60,6 +82,21 @@ export async function getAutoSendEnabled(): Promise<boolean> {
   const raw = (await getSetting(SETTING_AUTO_SEND_ENABLED)).trim().toLowerCase();
   if (!raw) return true;
   return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
+}
+
+/** 15 или 30 минут между автописьмами. */
+export async function getAutoSendIntervalMin(): Promise<15 | 30> {
+  const raw = (await getSetting(SETTING_AUTO_SEND_INTERVAL_MIN)).trim();
+  const n = Number.parseInt(raw || String(AUTO_SEND_INTERVAL_MIN_DEFAULT), 10);
+  return n <= 15 ? 15 : 30;
+}
+
+/** Сколько новых КП за один тик сбора (DeepSeek). */
+export async function getCollectPerTick(): Promise<number> {
+  const raw = (await getSetting(SETTING_COLLECT_PER_TICK)).trim();
+  const n = Number.parseInt(raw || String(COLLECT_PER_TICK_DEFAULT), 10);
+  if (!Number.isFinite(n) || n < 1) return COLLECT_PER_TICK_DEFAULT;
+  return Math.min(10, Math.max(1, n));
 }
 
 export async function getManualRespectsLimit(): Promise<boolean> {
@@ -117,12 +154,16 @@ export async function saveRadarRuntimeSettings(params: {
   dailySendLimit?: number;
   autoSendEnabled?: boolean;
   manualRespectsLimit?: boolean;
+  autoSendIntervalMin?: number;
+  collectPerTick?: number;
   weights?: Partial<VerticalWeights>;
 }): Promise<{
   dailyQueueLimit: number;
   dailySendLimit: number;
   autoSendEnabled: boolean;
   manualRespectsLimit: boolean;
+  autoSendIntervalMin: 15 | 30;
+  collectPerTick: number;
   weights: VerticalWeights;
 }> {
   const patch: Record<string, string> = {};
@@ -151,6 +192,18 @@ export async function saveRadarRuntimeSettings(params: {
     patch[SETTING_MANUAL_RESPECTS_LIMIT] = manualRespectsLimit ? "1" : "0";
   }
 
+  let autoSendIntervalMin = await getAutoSendIntervalMin();
+  if (typeof params.autoSendIntervalMin === "number") {
+    autoSendIntervalMin = params.autoSendIntervalMin <= 15 ? 15 : 30;
+    patch[SETTING_AUTO_SEND_INTERVAL_MIN] = String(autoSendIntervalMin);
+  }
+
+  let collectPerTick = await getCollectPerTick();
+  if (typeof params.collectPerTick === "number") {
+    collectPerTick = Math.min(10, Math.max(1, Math.floor(params.collectPerTick)));
+    patch[SETTING_COLLECT_PER_TICK] = String(collectPerTick);
+  }
+
   let weights = await getVerticalWeights();
   if (params.weights) {
     weights = { ...weights };
@@ -174,6 +227,8 @@ export async function saveRadarRuntimeSettings(params: {
     dailySendLimit,
     autoSendEnabled,
     manualRespectsLimit,
+    autoSendIntervalMin,
+    collectPerTick,
     weights,
   };
 }

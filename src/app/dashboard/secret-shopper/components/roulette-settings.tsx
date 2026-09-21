@@ -29,6 +29,8 @@ export function RouletteSettings() {
   const [dailySendLimit, setDailySendLimit] = useState(40);
   const [autoSendEnabled, setAutoSendEnabled] = useState(true);
   const [manualRespectsLimit, setManualRespectsLimit] = useState(false);
+  const [autoSendIntervalMin, setAutoSendIntervalMin] = useState<15 | 30>(30);
+  const [collectPerTick, setCollectPerTick] = useState(2);
   const [verticals, setVerticals] = useState<VerticalRow[]>([]);
   const [preview, setPreview] = useState<PreviewRow[]>([]);
   const [ribbon, setRibbon] = useState<Array<{ id: string; labelRu: string }>>(
@@ -65,6 +67,8 @@ export function RouletteSettings() {
       setDailySendLimit(data.dailySendLimit ?? 40);
       setAutoSendEnabled(data.autoSendEnabled !== false);
       setManualRespectsLimit(!!data.manualRespectsLimit);
+      setAutoSendIntervalMin(data.autoSendIntervalMin === 15 ? 15 : 30);
+      setCollectPerTick(Number(data.collectPerTick) || 2);
       setVerticals(data.verticals || []);
       setPreview(data.preview || []);
       setRibbon(data.ribbon || []);
@@ -111,6 +115,8 @@ export function RouletteSettings() {
           dailySendLimit,
           autoSendEnabled,
           manualRespectsLimit,
+          autoSendIntervalMin,
+          collectPerTick,
           weights,
         }),
       });
@@ -120,10 +126,16 @@ export function RouletteSettings() {
       setDailySendLimit(data.dailySendLimit ?? dailySendLimit);
       setAutoSendEnabled(data.autoSendEnabled !== false);
       setManualRespectsLimit(!!data.manualRespectsLimit);
+      setAutoSendIntervalMin(data.autoSendIntervalMin === 15 ? 15 : 30);
+      setCollectPerTick(Number(data.collectPerTick) || collectPerTick);
       setVerticals(data.verticals || verticals);
       setPreview(data.preview || []);
       setRibbon(data.ribbon || []);
-      setInfo("Сохранено. Утро доберёт очередь, автоотправка — по бюджету дня.");
+      setInfo(
+        data.autoSendIntervalMin === 15
+          ? "Сохранено. Темп 15 мин → до ~40 писем в день."
+          : "Сохранено. Спокойный темп 30 мин → ~24–26 писем в окне 09–21; DeepSeek без утреннего залпа."
+      );
     } catch (e: any) {
       setError(e?.message || "Ошибка сохранения");
     } finally {
@@ -204,6 +216,32 @@ export function RouletteSettings() {
               className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
             />
           </label>
+          <label className="block text-xs text-gray-500">
+            Интервал автоотправки
+            <select
+              value={autoSendIntervalMin}
+              onChange={(e) =>
+                setAutoSendIntervalMin(
+                  Number(e.target.value) === 15 ? 15 : 30
+                )
+              }
+              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
+            >
+              <option value={30}>Спокойный · 1 письмо / 30 мин (~24–26/день)</option>
+              <option value={15}>Конвейер · 1 письмо / 15 мин (~40/день)</option>
+            </select>
+          </label>
+          <label className="block text-xs text-gray-500">
+            КП за тик сбора (DeepSeek), каждые 30 мин
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={collectPerTick}
+              onChange={(e) => setCollectPerTick(Number(e.target.value) || 1)}
+              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
+            />
+          </label>
           <label className="flex items-start gap-2 text-xs text-gray-400">
             <input
               type="checkbox"
@@ -212,7 +250,7 @@ export function RouletteSettings() {
               onChange={(e) => setAutoSendEnabled(e.target.checked)}
             />
             <span>
-              Автоотправка без кнопки (конвейер, 1 письмо / 15 мин · 09–18 МСК)
+              Автоотправка без кнопки (окно 09–21 МСК · сбор каплями каждые 30 мин)
             </span>
           </label>
           <label className="flex items-start gap-2 text-xs text-gray-400">
