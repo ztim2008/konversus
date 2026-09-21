@@ -130,6 +130,8 @@ export async function sendQueuedLead(params: {
 
       if (!params.skipTelegram) {
         const settings = await getAllSettings();
+        const sentToday = await countSentForBatchDate(batchDate);
+        const sendLimit = await getDailySendLimit();
         telegram = await sendSentNotification({
           botToken: settings.telegram_bot_token,
           chatId: settings.telegram_chat_id,
@@ -141,6 +143,7 @@ export async function sendQueuedLead(params: {
           screenshotPath: site.screenshot_path,
           kpSubject: site.kp_subject,
           kpHtml: site.kp_html,
+          pulseLine: `Сегодня ${sentToday}/${sendLimit} · в очереди ${queuedCount}`,
           publicOrigin:
             process.env.NEXT_PUBLIC_BASE_URL ||
             process.env.NEXT_PUBLIC_SITE_URL ||

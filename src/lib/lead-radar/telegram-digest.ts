@@ -203,7 +203,7 @@ export async function sendManualEnqueueNotification(params: {
 }
 
 /**
- * Уведомление об ручной отправке (+ фото + текст КП).
+ * Уведомление об отправке (+ фото + текст КП) — ручной Send и автокапля.
  */
 export async function sendSentNotification(params: {
   botToken: string;
@@ -218,8 +218,10 @@ export async function sendSentNotification(params: {
   kpHtml?: string | null;
   kpText?: string | null;
   publicOrigin?: string;
+  /** Пульс дня: «Сегодня 12/40 · в очереди 8» */
+  pulseLine?: string;
 }): Promise<{ ok: boolean; error?: string }> {
-  const { botToken, chatId, publicOrigin, ...rest } = params;
+  const { botToken, chatId, publicOrigin, pulseLine, ...rest } = params;
 
   if (!botToken || !chatId) {
     return { ok: false, error: "telegram not configured" };
@@ -231,6 +233,7 @@ export async function sendSentNotification(params: {
     publicOrigin,
     prefix: "✅",
     mode: "sent",
+    pulseLine,
     sample: {
       name: rest.name,
       domain: rest.domain,
@@ -510,13 +513,16 @@ async function sendLeadCardToTelegram(params: {
   prefix: string;
   mode: "plan" | "sent";
   sample: DigestSample;
+  pulseLine?: string;
 }): Promise<{ ok: boolean; photo: boolean; kp: boolean }> {
-  const { botToken, chatId, publicOrigin, prefix, mode, sample } = params;
+  const { botToken, chatId, publicOrigin, prefix, mode, sample, pulseLine } =
+    params;
   const plat = sample.platform ? ` · ${sample.platform}` : "";
   const mail = sample.email ? `\n📧 ${sample.email}` : "";
+  const pulse = pulseLine ? `\n${pulseLine}` : "";
   const title =
     mode === "sent"
-      ? `${prefix} Отправлено: ${sample.name || sample.domain}${plat}${mail}\nhttps://${sample.domain}`
+      ? `${prefix} Отправлено: ${sample.name || sample.domain}${plat}${mail}\nhttps://${sample.domain}${pulse}`
       : `${prefix}. ${sample.name || sample.domain}${plat}${mail}\nhttps://${sample.domain}`;
 
   let photo = false;

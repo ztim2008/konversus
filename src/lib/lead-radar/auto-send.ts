@@ -1,13 +1,13 @@
 /**
  * Автоотправка очереди (конвейер): каплями до дневного лимита sent.
- * Темп: 15 или 30 мин (setting) — cron стучится чаще, API сам пропускает рано.
+ * Клиенту — письмо; вам в TG — скрин + email + текст КП + пульс N/40.
+ * Вечерний итог — отдельный daily-report.
  */
 import "server-only";
 import {
   listQueuedSites,
   countQueuedForDate,
 } from "@/lib/data/lead-radar";
-import { getAllSettings } from "@/lib/data/settings";
 import { getDbPool } from "@/lib/db";
 import type { RowDataPacket } from "mysql2";
 import {
@@ -19,7 +19,6 @@ import {
   mskDateISO,
 } from "@/lib/lead-radar/config";
 import { sendQueuedLead } from "@/lib/lead-radar/send-queued";
-import { sendPlainAutoSendDigest } from "@/lib/lead-radar/telegram-digest";
 
 export type AutoSendResult = {
   ok: true;
@@ -117,15 +116,18 @@ export async function runAutoSendDrip(options?: {
 
   const failed: AutoSendResult["failed"] = [];
   let succeeded = 0;
+  let lastTelegram: { ok: boolean; error?: string } | undefined;
 
   for (const site of slice) {
     base.attempted++;
+    // Клиенту письмо + вам в TG карточка (скрин, email, текст КП, пульс)
     const result = await sendQueuedLead({
       siteId: site.id,
-      skipTelegram: true,
+      skipTelegram: !!options?.skipTelegram,
     });
     if (result.ok) {
       succeeded++;
+      if (result.telegram) lastTelegram = result.telegram;
     } else {
       failed.push({
         siteId: site.id,
@@ -137,19 +139,6 @@ export async function runAutoSendDrip(options?: {
 
   const sentAfter = await countSentForBatchDate(batchDate);
   const queuedLeft = await countQueuedForDate(batchDate);
-
-  let telegram: { ok: boolean; error?: string } | undefined;
-  if (succeeded > 0 && !options?.skipTelegram) {
-    const settings = await getAllSettings();
-    telegram = await sendPlainAutoSendDigest({
-      botToken: settings.telegram_bot_token,
-      chatId: settings.telegram_chat_id,
-      sentNow: succeeded,
-      sentToday: sentAfter,
-      sentLimit,
-      queuedLeft,
-    });
-  }
 
   return {
     ok: true,
@@ -165,6 +154,6 @@ export async function runAutoSendDrip(options?: {
     failed,
     queuedLeft,
     intervalMin,
-    telegram,
+    telegram: lastTelegram,
   };
 }
