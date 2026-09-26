@@ -9,7 +9,8 @@ export type RejectReason =
   | "article_url"
   | "article_title"
   | "social"
-  | "no_domain";
+  | "no_domain"
+  | "weak_hosting";
 
 const BLACKLIST_DOMAINS = new Set([
   // каталоги / агрегаторы
@@ -33,6 +34,7 @@ const BLACKLIST_DOMAINS = new Set([
   "cataloxy.ru",
   "spr.ru",
   "yp.ru",
+  "domclick.ru",
   // маркетплейсы
   "wildberries.ru",
   "ozon.ru",
@@ -70,6 +72,28 @@ const BLACKLIST_DOMAINS = new Set([
   "linkedin.com",
 ]);
 
+/** Бесплатные/конструкторские хосты без своего домена — чаще микро-бригада. */
+const WEAK_HOSTING_SUFFIXES = [
+  "tilda.ws",
+  "tilda.site",
+  "wixsite.com",
+  "nethouse.ru",
+  "flexbe.ru",
+  "taplink.cc",
+  "lpmotor.ru",
+  "multiscreen.ru",
+  "ucoz.ru",
+  "ucoz.com",
+  "github.io",
+  "webflow.io",
+  "carrd.co",
+];
+
+function isWeakHosting(domain: string): boolean {
+  const d = domain.toLowerCase();
+  return WEAK_HOSTING_SUFFIXES.some((s) => d === s || d.endsWith(`.${s}`));
+}
+
 const ARTICLE_PATH_RE =
   /\/(blog|blogs|article|articles|news|novosti|rating|ratings|top|obzor|obzory|howto|kak-|wiki|guides?|statyi|posts?)\b/i;
 
@@ -95,6 +119,10 @@ export function classifyCompanySite(params: {
 
   if (hostMatchesBlacklist(domain)) {
     return { ok: false, reason: "blacklist_domain" };
+  }
+
+  if (isWeakHosting(domain)) {
+    return { ok: false, reason: "weak_hosting" };
   }
 
   let path = "";

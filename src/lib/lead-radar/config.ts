@@ -29,6 +29,12 @@ export { SETTING_SENDER_PROFILE } from "@/lib/lead-radar/sender-profiles";
 /** Минимальный hotScore для приоритета в TG-превью (не жёсткий gate очереди). */
 export const HOT_SCORE_PREVIEW_MIN = 0;
 
+/**
+ * Минимальный hotScore для авто-очереди (гипотеза дерево: отсечь совсем «пустые»).
+ * Ручной enqueue-url не использует этот порог.
+ */
+export const HOT_SCORE_QUEUE_MIN = 40;
+
 /** Вечерний отчёт по умолчанию (МСК). */
 export const DAILY_REPORT_HOUR_MSK = 21;
 

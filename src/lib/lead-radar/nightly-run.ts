@@ -36,11 +36,12 @@ import {
   getCollectPerTick,
   getDailyQueueLimit,
   getDailySendLimit,
+  HOT_SCORE_QUEUE_MIN,
   mskDateISO,
 } from "@/lib/lead-radar/config";
 
 export { DAILY_QUEUE_LIMIT } from "@/lib/lead-radar/config";
-const CONTACT_COOLDOWN_DAYS = 30;
+const CONTACT_COOLDOWN_DAYS = 90;
 
 /** Сколько держать в очереди: не больше лимита очереди и не больше остатка бюджета sent. */
 export async function resolveCollectTarget(options?: {
@@ -306,6 +307,14 @@ export async function runNightlyLeadRadar(options?: {
       const audit = await checkWebsite(cand.url);
       if (!audit.reachable) {
         skipped.push({ domain: cand.domain, reason: "unreachable" });
+        continue;
+      }
+
+      if (audit.hotScore < HOT_SCORE_QUEUE_MIN) {
+        skipped.push({
+          domain: cand.domain,
+          reason: `hot_score_low_${audit.hotScore}`,
+        });
         continue;
       }
 

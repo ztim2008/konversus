@@ -79,14 +79,22 @@ function pickCityFromHistory(
       .filter((h) => daysBetween(h.date, todayISO()) < GEO_COOLDOWN_DAYS)
       .map((h) => h.id)
   );
-  const ordered = [
-    ...GEO_CITIES_V1.filter((c) => c.id !== lastCity),
-    ...GEO_CITIES_V1.filter((c) => c.id === lastCity),
-  ];
-  return (
-    ordered.find((c) => !recent.has(c.id)) ||
-    GEO_CITIES_V1.find((c) => c.id === GEO_BOOTSTRAP_CITY_ID)!
-  );
+
+  let pool = GEO_CITIES_V1.filter((c) => !recent.has(c.id));
+  if (pool.length === 0) pool = [...GEO_CITIES_V1];
+
+  // Меньше «израсходован / вес» — выше приоритет (лесные города с большим weight чаще).
+  const scored = pool.map((c) => {
+    const used = history.filter((h) => h.id === c.id).length;
+    const w = Math.max(1, Number(c.weight) || 1);
+    const lastPenalty = c.id === lastCity ? 0.75 : 0;
+    return { c, score: used / w + lastPenalty };
+  });
+  scored.sort((a, b) => {
+    if (a.score !== b.score) return a.score - b.score;
+    return (b.c.weight || 0) - (a.c.weight || 0);
+  });
+  return scored[0]?.c || GEO_CITIES_V1[0];
 }
 
 function resolveCity(cityParam?: string): GeoCity {
@@ -98,11 +106,12 @@ function resolveCity(cityParam?: string): GeoCity {
       (c) =>
         c.name.toLowerCase() === cityParam.trim().toLowerCase() ||
         c.id === cityParam.trim().toLowerCase()
-    ) || {
+    )     || {
       id: "custom",
       name: cityParam.trim(),
       priority: "high" as const,
       travel: false,
+      weight: 1,
     }
   );
 }
@@ -164,15 +173,18 @@ export async function pickCityAndNiche(params?: {
   );
   cursors = nextCursors;
 
-  // Bootstrap: только СПб, но ниши/вертикали уже из рулетки B
-  if (daysBetween(bootstrapStart, todayISO()) < GEO_BOOTSTRAP_DAYS) {
+  // Bootstrap выключен (GEO_BOOTSTRAP_DAYS=0) — сразу ротация по лесному поясу
+  if (
+    GEO_BOOTSTRAP_DAYS > 0 &&
+    daysBetween(bootstrapStart, todayISO()) < GEO_BOOTSTRAP_DAYS
+  ) {
     const city = GEO_CITIES_V1.find((c) => c.id === GEO_BOOTSTRAP_CITY_ID)!;
     return {
       city,
       niche,
       verticalId: vertical.id,
       verticalLabel: vertical.labelRu,
-      reason: "bootstrap_spb",
+      reason: "bootstrap",
       slotIndex,
     };
   }
