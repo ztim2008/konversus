@@ -74,6 +74,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   lead_radar_auto_send_interval_min: "30",
   lead_radar_collect_per_tick: "2",
   lead_radar_vertical_weights: "",
+  lead_radar_sender_profile: "alexey",
 };
 
 export async function getAllSettings(): Promise<Record<string, string>> {

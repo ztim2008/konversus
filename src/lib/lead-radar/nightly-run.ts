@@ -18,6 +18,7 @@ import {
   buildKpSubject,
   renderLeadWebKpHtml,
 } from "@/lib/lead-agent/kp-html-template";
+import { getActiveSenderProfile } from "@/lib/lead-radar/sender-profiles";
 import {
   countQueuedForDate,
   createRadar,
@@ -289,6 +290,7 @@ export async function runNightlyLeadRadar(options?: {
   let tokensTotal = 0;
 
   const publicOrigin = process.env.NEXT_PUBLIC_BASE_URL || "https://konversus.ru";
+  const profile = await getActiveSenderProfile();
 
   for (const cand of candidates) {
     if (queued >= limit) break;
@@ -353,6 +355,7 @@ export async function runNightlyLeadRadar(options?: {
         batchDate,
         issues: audit.issues,
         publicOrigin,
+        profile,
       });
 
       // insert without leadId in CTA first, then we could update — for MVP embed after insert
@@ -391,6 +394,7 @@ export async function runNightlyLeadRadar(options?: {
         batchDate,
         issues: audit.issues,
         publicOrigin,
+        profile,
       });
 
       const db = getDbPool();

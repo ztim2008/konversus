@@ -150,15 +150,20 @@ export async function listQueuedSites(batchDate?: string): Promise<any[]> {
 /** +1 к счётчику пачки дня. */
 export async function bumpBatchCounter(
   batchDate: string,
-  field: "sent_count" | "skipped_count" | "replied_count"
+  field: "sent_count" | "skipped_count" | "replied_count" | "call_click_count"
 ): Promise<void> {
   const db = getDbPool();
   const existing = await getBatchByDate(batchDate);
   if (!existing) {
     await upsertBatchPlan({ batchDate, queuedCount: 0 });
   }
-  const allowed = ["sent_count", "skipped_count", "replied_count"] as const;
-  if (!allowed.includes(field)) return;
+  const allowed = [
+    "sent_count",
+    "skipped_count",
+    "replied_count",
+    "call_click_count",
+  ] as const;
+  if (!(allowed as readonly string[]).includes(field)) return;
   await db.query(
     `UPDATE lead_radar_batches SET ${field} = ${field} + 1 WHERE batch_date = ?`,
     [batchDate]
@@ -380,6 +385,19 @@ export async function markReplied(siteId: string): Promise<void> {
   const db = getDbPool();
   await db.query("UPDATE lead_radar_sites SET status = 'replied', replied_at = NOW() WHERE id = ?", [siteId]);
   await db.query("UPDATE lead_follow_ups SET replied_at = NOW() WHERE site_id = ? ORDER BY sent_at DESC LIMIT 1", [siteId]);
+}
+
+/** Первый клик «Позвонить» из письма. Возвращает true, если клик новый. */
+export async function markCallClicked(siteId: string): Promise<boolean> {
+  const db = getDbPool();
+  const [result] = await db.query(
+    `UPDATE lead_radar_sites
+     SET call_clicked_at = NOW()
+     WHERE id = ? AND call_clicked_at IS NULL`,
+    [siteId]
+  );
+  const affected = Number((result as { affectedRows?: number }).affectedRows ?? 0);
+  return affected > 0;
 }
 
 export async function listAllSites(): Promise<any[]> { const db = getDbPool(); const [rows] = await db.query('SELECT s.*, f.opened_at FROM lead_radar_sites s LEFT JOIN lead_follow_ups f ON f.site_id = s.id AND f.opened_at IS NOT NULL WHERE (s.status != ? OR s.contacted_at IS NOT NULL) ORDER BY s.contacted_at DESC, s.found_at DESC LIMIT 100', ['new']); return rows as any[]; }

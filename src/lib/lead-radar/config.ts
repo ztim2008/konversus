@@ -23,6 +23,8 @@ export const SETTING_MANUAL_RESPECTS_LIMIT = "lead_radar_manual_respects_limit";
 export const SETTING_AUTO_SEND_INTERVAL_MIN = "lead_radar_auto_send_interval_min";
 /** Сколько новых КП (DeepSeek) за один тик сбора. */
 export const SETTING_COLLECT_PER_TICK = "lead_radar_collect_per_tick";
+/** Активный профиль отправителя: igor | alexey */
+export { SETTING_SENDER_PROFILE } from "@/lib/lead-radar/sender-profiles";
 
 /** Минимальный hotScore для приоритета в TG-превью (не жёсткий gate очереди). */
 export const HOT_SCORE_PREVIEW_MIN = 0;

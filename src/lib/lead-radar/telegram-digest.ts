@@ -14,6 +14,7 @@ const SOURCE_RU: Record<string, string> = {
   manual: "Вручную в админке",
   form: "Форма на сайте",
   cta: "Клик по ссылке в письме",
+  call: "Клик: позвонить",
   email: "Ответ на email",
   webhook: "Заявка / webhook",
 };
@@ -317,8 +318,10 @@ export async function sendReplyNotification(params: {
   const srcLabel = sourceLabelRu(source);
   const src = srcLabel ? `\nКак узнали: ${srcLabel}` : "";
   const admin = adminUrl ? `\nАдминка: ${adminUrl}` : "";
+  const title =
+    source === "call" ? "📞 Клик: позвонить" : "🔥 Ответ/заявка";
   const caption =
-    `🔥 Ответ/заявка: ${name || domain}${plat}${mail}${src}\n` +
+    `${title}: ${name || domain}${plat}${mail}${src}\n` +
     `https://${domain}${admin}`;
 
   const localPath = resolveLocalScreenshotPath(screenshotPath, screenshotUrl);

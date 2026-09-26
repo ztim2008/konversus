@@ -1,6 +1,7 @@
 /**
- * География v1 + рулетка вертикалей v2 (Лид-радар Auto).
- * План: docs/plans/2026-09-lead-radar-niche-roulette.md
+ * География + рулетка вертикалей.
+ * V2 (Игорь / широкая стройка) — снимок VERTICALS_V2_ARCHIVE.
+ * Активно: VERTICALS_V2 = дерево-дома / бани / каркас / бытовки·веранды.
  */
 export type GeoCity = {
   id: string;
@@ -12,8 +13,11 @@ export type GeoCity = {
 export const GEO_CITIES_V1: GeoCity[] = [
   { id: "spb", name: "Санкт-Петербург", priority: "home", travel: false },
   { id: "msk", name: "Москва", priority: "high", travel: false },
-  { id: "omsk", name: "Омск", priority: "high", travel: true },
+  { id: "lo", name: "Ленинградская область", priority: "high", travel: true },
   { id: "vnovgorod", name: "Великий Новгород", priority: "high", travel: true },
+  { id: "tver", name: "Тверь", priority: "tier2", travel: true },
+  { id: "pskov", name: "Псков", priority: "tier2", travel: true },
+  { id: "omsk", name: "Омск", priority: "tier2", travel: true },
 ];
 
 export const GEO_COOLDOWN_DAYS = 3;
@@ -22,13 +26,20 @@ export const GEO_BOOTSTRAP_DAYS = 14;
 
 /** @deprecated используйте VERTICALS_V2 / allNichesFlat() */
 export const NICHES_V1 = [
-  "ремонт квартир",
-  "строительная компания",
-  "стройматериалы",
-  "инженерные сети",
+  "дома из бруса",
+  "каркасные дома",
+  "бани из бруса",
+  "бытовки",
 ] as const;
 
 export type VerticalId =
+  | "doma_derevo"
+  | "karkas"
+  | "bani"
+  | "bytovki_verandy";
+
+/** Снимок прежних id (гипотеза Игорь) — только для документации/отката. */
+export type VerticalIdArchive =
   | "stroitelstvo"
   | "remont"
   | "uslugi"
@@ -37,16 +48,21 @@ export type VerticalId =
 export type VerticalDef = {
   id: VerticalId;
   labelRu: string;
-  /** Относительный вес в рулетке (стройка выше). */
+  /** Относительный вес в рулетке. */
   weight: number;
   niches: readonly string[];
 };
 
 /**
- * Вертикаль → подниши (SERP-запросы без города).
- * Веса: стройка 40 · ремонт 25 · услуги 20 · производство 15.
+ * Снимок рулетки гипотезы A (Игорь / lead-web.pro) — не использовать в runtime.
+ * Откат: вернуть как VERTICALS_V2 + VerticalId.
  */
-export const VERTICALS_V2: readonly VerticalDef[] = [
+export const VERTICALS_V2_ARCHIVE: readonly {
+  id: VerticalIdArchive;
+  labelRu: string;
+  weight: number;
+  niches: readonly string[];
+}[] = [
   {
     id: "stroitelstvo",
     labelRu: "Стройка",
@@ -128,8 +144,73 @@ export const VERTICALS_V2: readonly VerticalDef[] = [
 ] as const;
 
 /**
- * Детерминированная лента слотов (~20 дней), перемешанная по весам
- * (стройка чаще, но не блоками подряд).
+ * Активная рулетка: деревянные дома / бани / каркас / бытовки·веранды.
+ * Веса: дома 35 · каркас 30 · бани 25 · бытовки/веранды 10.
+ * Запросы — коммерческие, как ищут заказчики (без города).
+ */
+export const VERTICALS_V2: readonly VerticalDef[] = [
+  {
+    id: "doma_derevo",
+    labelRu: "Дома из дерева",
+    weight: 35,
+    niches: [
+      "дома из бруса под ключ",
+      "строительство домов из бруса",
+      "дома из клееного бруса",
+      "дома из оцилиндрованного бревна",
+      "деревянные дома под ключ",
+      "дачные дома из бруса",
+      "строительство деревянных домов",
+      "дома из профилированного бруса",
+    ],
+  },
+  {
+    id: "karkas",
+    labelRu: "Каркасники",
+    weight: 30,
+    niches: [
+      "каркасные дома под ключ",
+      "строительство каркасных домов",
+      "каркасное домостроение",
+      "каркасно-щитовые дома",
+      "модульные каркасные дома",
+      "дачные каркасные дома",
+      "каркасный дом цена",
+    ],
+  },
+  {
+    id: "bani",
+    labelRu: "Бани",
+    weight: 25,
+    niches: [
+      "бани из бруса под ключ",
+      "строительство бань из бруса",
+      "бани под ключ",
+      "каркасные бани",
+      "бани из бревна",
+      "проекты бань с комнатой отдыха",
+      "строительство бань",
+    ],
+  },
+  {
+    id: "bytovki_verandy",
+    labelRu: "Бытовки и веранды",
+    weight: 10,
+    niches: [
+      "бытовки дачные",
+      "бытовки для дачи под ключ",
+      "хозблоки и бытовки",
+      "веранды и террасы под ключ",
+      "пристройка веранды к дому",
+      "террасы из дерева",
+      "строительство веранд",
+      "бытовки деревянные",
+    ],
+  },
+] as const;
+
+/**
+ * Детерминированная лента слотов (~20 дней), перемешанная по весам.
  */
 export function buildVerticalSlotRibbon(
   weights?: Partial<Record<VerticalId, number>>

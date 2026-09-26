@@ -248,9 +248,24 @@
       "path": "src/app/api/lead-radar/interest"
     },
     {
+      "id": "app.api_call",
+      "type": "app",
+      "path": "src/app/api/lead-radar/call"
+    },
+    {
+      "id": "lib.mark_call_click",
+      "type": "lib",
+      "path": "src/lib/lead-radar/mark-call-click.ts"
+    },
+    {
       "id": "lib.lead_radar_config",
       "type": "lib",
       "path": "src/lib/lead-radar/config.ts"
+    },
+    {
+      "id": "lib.sender_profiles",
+      "type": "lib",
+      "path": "src/lib/lead-radar/sender-profiles.ts"
     },
     {
       "id": "lib.auto_send",
@@ -405,6 +420,26 @@
       "type": "writes"
     },
     {
+      "from": "lib.ai_composer",
+      "to": "lib.sender_profiles",
+      "type": "reads"
+    },
+    {
+      "from": "lib.kp_html",
+      "to": "lib.sender_profiles",
+      "type": "reads"
+    },
+    {
+      "from": "lib.send_queued",
+      "to": "lib.sender_profiles",
+      "type": "reads"
+    },
+    {
+      "from": "app.api_interest",
+      "to": "lib.sender_profiles",
+      "type": "reads"
+    },
+    {
       "from": "app.api_secret_shopper",
       "to": "lib.kp_html",
       "type": "reads"
@@ -543,6 +578,26 @@
       "from": "lib.enqueue_url",
       "to": "lib.tg_digest",
       "type": "calls"
+    },
+    {
+      "from": "app.api_call",
+      "to": "lib.mark_call_click",
+      "type": "writes"
+    },
+    {
+      "from": "lib.mark_call_click",
+      "to": "lib.lead_radar_data",
+      "type": "writes"
+    },
+    {
+      "from": "lib.mark_call_click",
+      "to": "lib.tg_digest",
+      "type": "writes"
+    },
+    {
+      "from": "lib.kp_html",
+      "to": "app.api_call",
+      "type": "reads"
     }
   ],
   "taskPaths": {
@@ -578,6 +633,7 @@
     ],
     "lead_radar_email": [
       "doc.tz_auto",
+      "lib.sender_profiles",
       "lib.ai_composer",
       "lib.kp_html",
       "app.api_secret_shopper",
@@ -609,10 +665,12 @@
     "lead_radar_replies": [
       "doc.tz_auto",
       "lib.mark_replied",
+      "lib.mark_call_click",
       "lib.tg_digest",
       "lib.lead_radar_data",
       "app.api_reply_webhook",
       "app.api_interest",
+      "app.api_call",
       "app.api_lead_radar",
       "app.ui_secret_shopper",
       "gate.harness"

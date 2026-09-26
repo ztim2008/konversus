@@ -21,6 +21,7 @@ import {
   countSentForBatchDate,
   getDailySendLimit,
 } from "@/lib/lead-radar/config";
+import { getActiveSenderProfile } from "@/lib/lead-radar/sender-profiles";
 
 export type SendQueuedResult =
   | {
@@ -102,9 +103,13 @@ export async function sendQueuedLead(params: {
       site.kp_html +
       `<img src="https://konversus.ru/api/secret-shopper/track-open?siteId=${encodeURIComponent(site.id)}" width="1" height="1" style="display:none" alt="" />`;
 
+    const profile = await getActiveSenderProfile();
+    const fromAddr = smtpUser || profile.replyToEmail || "leadweb@yandex.ru";
+    const replyTo = profile.replyToEmail || smtpUser || fromAddr;
+
     const info = await transporter.sendMail({
-      from: `"lead-web.pro" <${smtpUser || "leadweb@yandex.ru"}>`,
-      replyTo: "leadweb@yandex.ru",
+      from: `"${profile.fromName}" <${fromAddr}>`,
+      replyTo,
       to: finalTo,
       subject: testMode ? `[Тест] ${site.kp_subject}` : site.kp_subject,
       html: trackingHtml,

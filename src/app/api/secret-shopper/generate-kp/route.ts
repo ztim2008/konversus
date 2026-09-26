@@ -6,9 +6,13 @@ import {
 } from "@/lib/lead-agent/kp-html-template";
 import { updateSiteKp } from "@/lib/data/lead-radar";
 import { findCityByName } from "@/lib/lead-radar-geo";
+import {
+  buildKpFallbackBody,
+  getActiveSenderProfile,
+} from "@/lib/lead-radar/sender-profiles";
 
 /**
- * POST — генерация КП lead-web.pro (текст AI + HTML со скрином).
+ * POST — генерация КП (текст AI + HTML со скрином) под активный профиль.
  * { domain, issues?, niche?, city?, contactName?, cms?, platform?,
  *   screenshotUrl?, leadId?, companyName?, siteId?, save? }
  */
@@ -24,6 +28,7 @@ export async function POST(req: NextRequest) {
   const issues: string[] = Array.isArray(body.issues) ? body.issues : [];
   const leadId = body.leadId || body.siteId || null;
   const batchDate = body.batchDate || new Date().toISOString().slice(0, 10);
+  const profile = await getActiveSenderProfile();
 
   try {
     const generated = await generatePersonalizedKP({
@@ -51,6 +56,7 @@ export async function POST(req: NextRequest) {
       leadId,
       batchDate,
       issues,
+      profile,
     });
 
     if (body.save && body.siteId) {
@@ -63,13 +69,20 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const ctaUrl = new URL(profile.primarySiteUrl);
+    ctaUrl.searchParams.set("utm_source", "radar");
+    ctaUrl.searchParams.set("utm_medium", "email");
+    ctaUrl.searchParams.set("utm_campaign", `batch_${batchDate}`);
+    if (leadId) ctaUrl.searchParams.set("lead", String(leadId));
+
     return NextResponse.json({
       ok: true,
       source: generated.source,
       subject,
       kp: generated.bodyText,
       html,
-      cta: `https://lead-web.pro/?utm_source=radar&utm_medium=email&utm_campaign=batch_${batchDate}${leadId ? `&lead=${leadId}` : ""}`,
+      cta: ctaUrl.toString(),
+      profileId: profile.id,
       tokensIn: generated.tokensIn,
       tokensOut: generated.tokensOut,
       model: generated.model,
@@ -77,7 +90,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("[generate-kp]", err?.message || err);
-    const fallbackText = `Здравствуйте!\n\nПосмотрели сайт ${domain}. Готовы коротко разобрать точки роста и заявки.\n\nКоманда lead-web.pro`;
+    const fallbackText = buildKpFallbackBody(profile, {
+      domain,
+      city,
+      cms: platform,
+      issues,
+    });
     const html = renderLeadWebKpHtml({
       companyName,
       domain,
@@ -88,6 +106,7 @@ export async function POST(req: NextRequest) {
       leadId,
       batchDate,
       issues,
+      profile,
     });
     return NextResponse.json({
       ok: true,
@@ -95,6 +114,7 @@ export async function POST(req: NextRequest) {
       subject: buildKpSubject(companyName, domain),
       kp: fallbackText,
       html,
+      profileId: profile.id,
       error: err?.message,
     });
   }

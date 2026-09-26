@@ -1,9 +1,14 @@
 /**
- * AI Composer — персонализированное КП под бренд lead-web.pro.
+ * AI Composer — персонализированное КП под активный профиль отправителя.
  * Модель: DeepSeek через OpenRouter.
  */
 import { callOpenRouter } from "@/lib/ai/openrouter";
 import { getSetting } from "@/lib/data/settings";
+import {
+  buildKpFallbackBody,
+  buildKpSystemPrompt,
+  getActiveSenderProfile,
+} from "@/lib/lead-radar/sender-profiles";
 
 interface SiteSnapshot {
   url: string;
@@ -74,43 +79,18 @@ async function fetchSite(url: string): Promise<SiteSnapshot> {
   return { url: normalized, title, description: desc, h1, textContent: text };
 }
 
-const KP_SYSTEM_PROMPT = `Ты пишешь исходящие письма от лица Игоря — веб-разработчика lead-web.pro.
-Не упоминай Konversus. Бренд только lead-web.pro.
-Представляйся как человек: Игорь, веб-разработчик.
-
-Задача: короткий персональный текст письма владельцу бизнеса (тело без HTML).
-
-ПРАВИЛА:
-1. Не шаблонничай — опирайся на факты сайта.
-2. Учти CMS/платформу: Tilda/Wix — аккуратно про рост и стабильность; WordPress — скорость/дизайн; Битрикс — доработки; самописный — как плюс зрелости.
-3. 1–2 конкретные проблемы и зачем это бьёт по заявкам.
-4. 1 мысль: как автоматизация или доработка сайта даст рост.
-5. Живой тон, без угроз и без «вы нарушаете закон». Про риски cookie/политики — мягко.
-6. Один бесплатный совет.
-7. 120–200 слов. Без markdown. Без темы письма в теле. Без блока контактов и телефона в конце (их добавит шаблон: телефон главный, сайт — дополнительно).
-8. Не описывай скриншот — он будет в письме отдельно.
-9. В первом абзаце можно коротко: «Меня зовут Игорь…» — не в каждом предложении.
-
-СТРУКТУРА:
-- Приветствие (по имени если есть, иначе «Здравствуйте!»)
-- Кто пишет (Игорь, веб-разработчик) + что посмотрели и одна конкретная деталь
-- Проблема → влияние на заявки
-- Что могу предложить коротко
-- Бесплатный совет
-- Мягкий переход: удобнее созвониться (без номера телефона и URL — их добавит шаблон)`;
-
-function fallbackBody(ctx: KpContext): string {
-  const issues = (ctx.issues || []).slice(0, 3).join("; ") || "несколько точек роста по сайту";
-  return `Здравствуйте${ctx.contactName ? `, ${ctx.contactName}` : ""}!
-
-Меня зовут Игорь, веб-разработчик lead-web.pro. Посмотрел сайт ${ctx.domain}${ctx.city ? ` (${ctx.city})` : ""}${ctx.cms ? `, платформа ${ctx.cms}` : ""}. Заметил: ${issues}.
-
-Это часто снижает конверсию в заявки даже при хорошем трафике. Могу коротко разобрать, что поправить в первую очередь и где поможет автоматизация или доработка сайта.
-
-Если откликнется — удобнее созвониться или ответить на письмо, подскажу без обязательства.`;
-}
-
 export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerateResult> {
+  const profile = await getActiveSenderProfile();
+  const systemPrompt = buildKpSystemPrompt(profile);
+  const fallback = () =>
+    buildKpFallbackBody(profile, {
+      domain: ctx.domain,
+      city: ctx.city,
+      cms: ctx.cms,
+      contactName: ctx.contactName,
+      issues: ctx.issues,
+    });
+
   const subjectBase = ctx.domain.replace(/^www\./, "");
   const defaultSubject = `Посмотрел сайт ${subjectBase}: пара идей по заявкам`;
 
@@ -118,7 +98,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
   if (!apiKey) {
     return {
       subject: defaultSubject,
-      bodyText: fallbackBody(ctx),
+      bodyText: fallback(),
       tokensIn: 0,
       tokensOut: 0,
       model: "none",
@@ -153,7 +133,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
   try {
     const result = await callOpenRouter(
       [
-        { role: "system", content: KP_SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         {
           role: "user",
           content: `Напиши только текст тела письма (без темы).\n\nДанные:\n\n${siteInfo}`,
@@ -178,7 +158,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
     console.error("[ai-composer] DeepSeek/OpenRouter error:", err);
     return {
       subject: defaultSubject,
-      bodyText: fallbackBody(ctx),
+      bodyText: fallback(),
       tokensIn: 0,
       tokensOut: 0,
       model: "none",

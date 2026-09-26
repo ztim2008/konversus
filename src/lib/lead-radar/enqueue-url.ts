@@ -15,6 +15,7 @@ import {
   buildKpSubject,
   renderLeadWebKpHtml,
 } from "@/lib/lead-agent/kp-html-template";
+import { getActiveSenderProfile } from "@/lib/lead-radar/sender-profiles";
 import {
   countQueuedForDate,
   createRadar,
@@ -136,6 +137,7 @@ export async function enqueueUrlToQueue(params: {
   const niche = (params.niche || "ручной URL").trim() || "ручной URL";
   const publicOrigin =
     process.env.NEXT_PUBLIC_BASE_URL || "https://konversus.ru";
+  const profile = await getActiveSenderProfile();
 
   try {
     const audit = await checkWebsite(normalized);
@@ -216,6 +218,7 @@ export async function enqueueUrlToQueue(params: {
       batchDate,
       issues: audit.issues,
       publicOrigin,
+      profile,
     });
 
     const db = getDbPool();
