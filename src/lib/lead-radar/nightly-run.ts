@@ -106,6 +106,13 @@ async function domainRecentlyUsed(domain: string): Promise<boolean> {
   return (rows as any[]).length > 0;
 }
 
+function clipH1(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const text = value.replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return text.slice(0, 250);
+}
+
 async function insertQueuedSite(row: {
   radarId: string;
   domain: string;
@@ -161,7 +168,7 @@ async function insertQueuedSite(row: {
       row.tokensOut,
       row.hotScore,
       row.score,
-      row.h1,
+      clipH1(row.h1),
       row.batchDate,
     ]
   );
@@ -248,7 +255,6 @@ export async function runNightlyLeadRadar(options?: {
   });
 
   const query = buildCompanySerpQuery(niche, city.name);
-  const serp = await searchSerperOrganic({ query, num: 30 });
 
   type Cand = {
     domain: string;
@@ -257,35 +263,9 @@ export async function runNightlyLeadRadar(options?: {
     position: number;
     title: string;
   };
-  const candidates: Cand[] = [];
   const seen = new Set<string>();
-
-  for (const item of serp.organic) {
-    const domain = extractDomain(item.link);
-    const verdict = classifyCompanySite({
-      url: item.link,
-      title: item.title,
-      snippet: item.snippet,
-      domain,
-    });
-    if (!verdict.ok) {
-      skipped.push({ domain: domain || item.link, reason: verdict.reason });
-      continue;
-    }
-    if (!domain || seen.has(domain)) continue;
-    seen.add(domain);
-    if (await domainRecentlyUsed(domain)) {
-      skipped.push({ domain, reason: "recently_used" });
-      continue;
-    }
-    candidates.push({
-      domain,
-      name: guessCompanyName(item.title, domain),
-      url: item.link.startsWith("http") ? item.link : `https://${item.link}`,
-      position: item.position,
-      title: item.title,
-    });
-  }
+  let serpRaw = 0;
+  let candidatesCount = 0;
 
   let queued = already;
   let tokensTotal = 0;
@@ -293,7 +273,46 @@ export async function runNightlyLeadRadar(options?: {
   const publicOrigin = process.env.NEXT_PUBLIC_BASE_URL || "https://konversus.ru";
   const profile = await getActiveSenderProfile();
 
-  for (const cand of candidates) {
+  // Страница 1, затем 2 и 3 — только если тик ещё не добрал need.
+  for (let page = 1; page <= 3; page++) {
+    if (queued >= limit) break;
+    if (queued - already >= need) break;
+    if (samples.length >= need) break;
+
+    const serp = await searchSerperOrganic({ query, num: 10, page });
+    serpRaw += serp.organic.length;
+    if (serp.organic.length === 0) break;
+
+    const pageCandidates: Cand[] = [];
+    for (const item of serp.organic) {
+      const domain = extractDomain(item.link);
+      const verdict = classifyCompanySite({
+        url: item.link,
+        title: item.title,
+        snippet: item.snippet,
+        domain,
+      });
+      if (!verdict.ok) {
+        skipped.push({ domain: domain || item.link, reason: verdict.reason });
+        continue;
+      }
+      if (!domain || seen.has(domain)) continue;
+      seen.add(domain);
+      if (await domainRecentlyUsed(domain)) {
+        skipped.push({ domain, reason: "recently_used" });
+        continue;
+      }
+      pageCandidates.push({
+        domain,
+        name: guessCompanyName(item.title, domain),
+        url: item.link.startsWith("http") ? item.link : `https://${item.link}`,
+        position: item.position,
+        title: item.title,
+      });
+    }
+    candidatesCount += pageCandidates.length;
+
+  for (const cand of pageCandidates) {
     if (queued >= limit) break;
     if (queued - already >= need) break;
     if (samples.length >= need) break;
@@ -430,6 +449,7 @@ export async function runNightlyLeadRadar(options?: {
         reason: err?.message || "enrich_error",
       });
     }
+    }
   }
 
   const finalCount = await countQueuedForDate(batchDate);
@@ -483,8 +503,8 @@ export async function runNightlyLeadRadar(options?: {
     verticalId,
     pickReason: reason,
     radarId,
-    serpRaw: serp.organic.length,
-    candidates: candidates.length,
+    serpRaw,
+    candidates: candidatesCount,
     queued: finalCount,
     skipped: skipped.slice(0, 50),
     tokensTotal,

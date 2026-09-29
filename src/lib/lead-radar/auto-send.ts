@@ -5,8 +5,10 @@
  */
 import "server-only";
 import {
-  listQueuedSites,
-  countQueuedForDate,
+  listSendableQueued,
+  countSendableQueued,
+  moveQueuedToBatch,
+  skipQueuedIds,
 } from "@/lib/data/lead-radar";
 import { getDbPool } from "@/lib/db";
 import type { RowDataPacket } from "mysql2";
@@ -38,19 +40,40 @@ export type AutoSendResult = {
   skippedReason?: string;
 };
 
-async function minutesSinceLastContact(batchDate: string): Promise<number | null> {
+function sqlDateISO(value: unknown): string {
+  if (!value) return "";
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const raw = String(value);
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) return match[1];
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, "0");
+    const d = String(parsed.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  return "";
+}
+
+async function secondsSinceLastContact(batchDate: string): Promise<number | null> {
   const db = getDbPool();
   const [rows] = await db.query(
-    `SELECT TIMESTAMPDIFF(MINUTE, MAX(contacted_at), NOW()) AS m
+    `SELECT TIMESTAMPDIFF(SECOND, MAX(contacted_at), NOW()) AS s
      FROM lead_radar_sites
      WHERE batch_date = ?
        AND status IN ('contacted','replied','won')
        AND contacted_at IS NOT NULL`,
     [batchDate]
   );
-  const m = (rows as RowDataPacket[])[0]?.m;
-  if (m == null) return null;
-  return Number(m);
+  const s = (rows as RowDataPacket[])[0]?.s;
+  if (s == null) return null;
+  return Number(s);
 }
 
 /**
@@ -85,7 +108,7 @@ export async function runAutoSendDrip(options?: {
     attempted: 0,
     succeeded: 0,
     failed: [],
-    queuedLeft: await countQueuedForDate(batchDate),
+    queuedLeft: await countSendableQueued(),
     intervalMin,
   };
 
@@ -100,8 +123,10 @@ export async function runAutoSendDrip(options?: {
   }
 
   if (!options?.ignoreInterval && !options?.force) {
-    const since = await minutesSinceLastContact(batchDate);
-    if (since != null && since < intervalMin) {
+    const sinceSec = await secondsSinceLastContact(batchDate);
+    // 90 с запаса: cron ровно в */15 часто даёт 14 мин из‑за TIMESTAMPDIFF.
+    const needSec = intervalMin * 60 - 90;
+    if (sinceSec != null && sinceSec < needSec) {
       return {
         ...base,
         skippedReason: `interval_${intervalMin}m`,
@@ -110,9 +135,24 @@ export async function runAutoSendDrip(options?: {
   }
 
   const budget = Math.min(perRun, sentLimit - sentBefore);
-  const queued = await listQueuedSites(batchDate);
-  const ready = queued.filter((s) => s.email && s.kp_html && s.kp_subject);
-  const slice = ready.slice(0, budget);
+  const queued = await listSendableQueued();
+  const seenEmail = new Set<string>();
+  const unique: typeof queued = [];
+  const duplicateIds: string[] = [];
+  for (const site of queued) {
+    const email = String(site.email || "").trim().toLowerCase();
+    if (!email) continue;
+    if (seenEmail.has(email)) {
+      duplicateIds.push(String(site.id));
+      continue;
+    }
+    seenEmail.add(email);
+    unique.push(site);
+  }
+  if (duplicateIds.length) {
+    await skipQueuedIds(duplicateIds, "duplicate_email");
+  }
+  const slice = unique.slice(0, budget);
 
   const failed: AutoSendResult["failed"] = [];
   let succeeded = 0;
@@ -120,6 +160,10 @@ export async function runAutoSendDrip(options?: {
 
   for (const site of slice) {
     base.attempted++;
+    const siteBatch = sqlDateISO(site.batch_date);
+    if (siteBatch !== batchDate) {
+      await moveQueuedToBatch(String(site.id), batchDate);
+    }
     // Клиенту письмо + вам в TG карточка (скрин, email, текст КП, пульс)
     const result = await sendQueuedLead({
       siteId: site.id,
@@ -138,7 +182,7 @@ export async function runAutoSendDrip(options?: {
   }
 
   const sentAfter = await countSentForBatchDate(batchDate);
-  const queuedLeft = await countQueuedForDate(batchDate);
+  const queuedLeft = await countSendableQueued();
 
   return {
     ok: true,

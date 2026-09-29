@@ -252,7 +252,7 @@ export async function enqueueUrlToQueue(params: {
         generated.tokensOut,
         audit.hotScore,
         audit.score,
-        audit.h1.texts[0] || null,
+        (audit.h1.texts[0] || "").replace(/\s+/g, " ").trim().slice(0, 250) || null,
         batchDate,
       ]
     );

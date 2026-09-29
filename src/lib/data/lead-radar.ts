@@ -131,6 +131,78 @@ export async function getSiteById(id: string): Promise<any | null> {
   return (rows as any[])[0] || null;
 }
 
+function clipRejectReason(reason: string): string {
+  return reason.replace(/\s+/g, " ").trim().slice(0, 250);
+}
+
+/** Готовые к отправке письма любой даты: новее сверху. */
+export async function listSendableQueued(): Promise<any[]> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT s.*, r.city AS radar_city, r.niche AS radar_niche
+     FROM lead_radar_sites s
+     LEFT JOIN lead_radars r ON r.id = s.radar_id
+     WHERE s.status = 'queued'
+       AND s.email IS NOT NULL AND TRIM(s.email) <> ''
+       AND s.kp_html IS NOT NULL AND TRIM(s.kp_html) <> ''
+       AND s.kp_subject IS NOT NULL AND TRIM(s.kp_subject) <> ''
+     ORDER BY s.batch_date DESC, s.hot_score DESC, s.queued_at ASC`
+  );
+  return rows as any[];
+}
+
+export async function countSendableQueued(): Promise<number> {
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT COUNT(*) AS c FROM lead_radar_sites
+     WHERE status = 'queued'
+       AND email IS NOT NULL AND TRIM(email) <> ''
+       AND kp_html IS NOT NULL AND TRIM(kp_html) <> ''
+       AND kp_subject IS NOT NULL AND TRIM(kp_subject) <> ''`
+  );
+  return Number((rows as RowDataPacket[])[0]?.c ?? 0);
+}
+
+/** Переносит queued-лид в пачку дня, чтобы sent считался в бюджете сегодня. */
+export async function moveQueuedToBatch(siteId: string, batchDate: string): Promise<void> {
+  const db = getDbPool();
+  await db.query(
+    `UPDATE lead_radar_sites SET batch_date = ? WHERE id = ? AND status = 'queued'`,
+    [batchDate, siteId]
+  );
+}
+
+export async function skipQueuedIds(ids: string[], reason: string): Promise<void> {
+  if (!ids.length) return;
+  const db = getDbPool();
+  const placeholders = ids.map(() => "?").join(",");
+  await db.query(
+    `UPDATE lead_radar_sites
+     SET status = 'skipped', reject_reason = ?
+     WHERE status = 'queued' AND id IN (${placeholders})`,
+    [clipRejectReason(reason), ...ids]
+  );
+}
+
+/** Жёсткий отказ SMTP: этот лид и другие queued на тот же email. */
+export async function markLeadBounced(siteId: string, reason: string): Promise<void> {
+  const db = getDbPool();
+  const site = await getSiteById(siteId);
+  const clipped = clipRejectReason(reason);
+  await db.query(
+    `UPDATE lead_radar_sites SET status = 'bounced', reject_reason = ? WHERE id = ?`,
+    [clipped, siteId]
+  );
+  const email = String(site?.email || "").trim();
+  if (!email) return;
+  await db.query(
+    `UPDATE lead_radar_sites
+     SET status = 'bounced', reject_reason = ?
+     WHERE status = 'queued' AND LOWER(email) = LOWER(?)`,
+    [clipped, email]
+  );
+}
+
 /** Очередь «К отправке» за сегодня (или указанную дату). */
 export async function listQueuedSites(batchDate?: string): Promise<any[]> {
   const db = getDbPool();

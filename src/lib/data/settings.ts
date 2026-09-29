@@ -50,6 +50,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
 
   // ── AI Architect ──
   openrouter_api_key: "",
+  deepseek_api_key: "",
   architect_fast_model: "deepseek/deepseek-v4-flash",
   architect_strong_model: "qwen/qwen3-235b-a22b-2507",
   architect_daily_limit: "10",

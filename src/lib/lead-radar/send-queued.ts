@@ -9,8 +9,10 @@ import {
   createFollowUp,
   updateSiteStatus,
   bumpBatchCounter,
+  countSendableQueued,
   countQueuedForDate,
   upsertBatchPlan,
+  markLeadBounced,
 } from "@/lib/data/lead-radar";
 import { getAllSettings } from "@/lib/data/settings";
 import {
@@ -32,6 +34,13 @@ export type SendQueuedResult =
       testMode: boolean;
     }
   | { ok: false; error: string; status?: number };
+
+/** Постоянный отказ ящика. Временные 421/450 не трогаем — следующий тик повторит. */
+function isHardBounce(message: string): boolean {
+  return /550|553|5\.7\.1|policy rejection|recipients were rejected|user unknown|mailbox unavailable|no such user|recipient address rejected/i.test(
+    message
+  );
+}
 
 function toBatchDate(value: unknown): string {
   if (!value) return new Date().toISOString().slice(0, 10);
@@ -130,8 +139,9 @@ export async function sendQueuedLead(params: {
       await updateSiteStatus(site.id, "contacted");
       const batchDate = toBatchDate(site.batch_date);
       await bumpBatchCounter(batchDate, "sent_count");
-      const queuedCount = await countQueuedForDate(batchDate);
-      await upsertBatchPlan({ batchDate, queuedCount });
+      const queuedToday = await countQueuedForDate(batchDate);
+      await upsertBatchPlan({ batchDate, queuedCount: queuedToday });
+      const queuedCount = await countSendableQueued();
 
       if (!params.skipTelegram) {
         const settings = await getAllSettings();
@@ -165,7 +175,11 @@ export async function sendQueuedLead(params: {
       testMode,
     };
   } catch (err: any) {
-    return { ok: false, error: err?.message || "send_failed", status: 500 };
+    const message = err?.message || "send_failed";
+    if (isHardBounce(message)) {
+      await markLeadBounced(site.id, message);
+    }
+    return { ok: false, error: message, status: 500 };
   }
 }
 

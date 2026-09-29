@@ -2,7 +2,7 @@
  * AI Composer — персонализированное КП под активный профиль отправителя.
  * Модель: DeepSeek через OpenRouter.
  */
-import { callOpenRouter } from "@/lib/ai/openrouter";
+import { callDeepSeek } from "@/lib/ai/deepseek";
 import { getSetting } from "@/lib/data/settings";
 import {
   buildKpFallbackBody,
@@ -37,13 +37,13 @@ export type KpGenerateResult = {
   source: "ai" | "fallback";
 };
 
-const DEEPSEEK_MODEL = "deepseek/deepseek-chat";
+const DEEPSEEK_MODEL = "deepseek-chat";
 
-async function resolveOpenRouterKey(): Promise<string> {
-  const fromEnv = (process.env.OPENROUTER_API_KEY || "").trim();
+async function resolveDeepSeekKey(): Promise<string> {
+  const fromEnv = (process.env.DEEPSEEK_API_KEY || "").trim();
   if (fromEnv) return fromEnv;
   try {
-    return (await getSetting("openrouter_api_key")).trim();
+    return (await getSetting("deepseek_api_key")).trim();
   } catch {
     return "";
   }
@@ -94,8 +94,9 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
   const subjectBase = ctx.domain.replace(/^www\./, "");
   const defaultSubject = `Посмотрел сайт ${subjectBase}: пара идей по заявкам`;
 
-  const apiKey = await resolveOpenRouterKey();
+  const apiKey = await resolveDeepSeekKey();
   if (!apiKey) {
+    console.error("[ai-composer] DEEPSEEK_API_KEY не задан, КП — шаблон");
     return {
       subject: defaultSubject,
       bodyText: fallback(),
@@ -131,7 +132,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
     .join("\n");
 
   try {
-    const result = await callOpenRouter(
+    const result = await callDeepSeek(
       [
         { role: "system", content: systemPrompt },
         {
@@ -155,7 +156,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
       source: "ai",
     };
   } catch (err) {
-    console.error("[ai-composer] DeepSeek/OpenRouter error:", err);
+    console.error("[ai-composer] DeepSeek error:", err);
     return {
       subject: defaultSubject,
       bodyText: fallback(),
