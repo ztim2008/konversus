@@ -212,3 +212,77 @@ export function extractTelegram(html: string): string | null {
   }
   return null;
 }
+
+export type LegalForm = "ip" | "company" | "unknown";
+
+export type LegalReading = {
+  form: LegalForm;
+  inn: string | null;
+};
+
+/** Контрольные цифры ИНН. 10 — организация, 12 — ИП или физлицо. */
+export function isValidInn(digits: string): boolean {
+  if (!/^\d{10}$|^\d{12}$/.test(digits)) return false;
+  const d = digits.split("").map(Number);
+  const check = (coeffs: number[], index: number) => {
+    const sum = coeffs.reduce((acc, coeff, i) => acc + coeff * d[i], 0);
+    return (sum % 11) % 10 === d[index];
+  };
+  if (d.length === 10) return check([2, 4, 10, 3, 5, 9, 4, 6, 8], 9);
+  return (
+    check([7, 2, 4, 10, 3, 5, 9, 4, 6, 8], 10) &&
+    check([3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8], 11)
+  );
+}
+
+function pageText(html: string): string {
+  return decodeHtmlEntities(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+  ).replace(/\s+/g, " ");
+}
+
+function mentionsIp(text: string): boolean {
+  if (/индивидуальн\w*\s+предпринимател/i.test(text)) return true;
+  return /(?<![A-Za-zА-Яа-яЁё0-9])ИП(?![A-Za-zА-Яа-яЁё0-9])/.test(text);
+}
+
+/** ИНН рядом со словом «ИНН». Без подписи номер не берём: это может быть телефон или заказ. */
+export function readLegalForm(html: string): LegalReading {
+  const text = pageText(html);
+  const found: string[] = [];
+  const re = /инн[^0-9]{0,16}([0-9][0-9\s-]{8,22})/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text))) {
+    const digits = match[1].replace(/\D/g, "");
+    const twelve = digits.slice(0, 12);
+    const ten = digits.slice(0, 10);
+    if (twelve.length === 12 && isValidInn(twelve)) found.push(twelve);
+    else if (ten.length === 10 && isValidInn(ten)) found.push(ten);
+  }
+  const inn12 = found.find((item) => item.length === 12) || null;
+  const inn10 = found.find((item) => item.length === 10) || null;
+  if (inn12) return { form: "ip", inn: inn12 };
+  if (inn10) return { form: "company", inn: inn10 };
+  if (mentionsIp(text)) return { form: "ip", inn: null };
+  return { form: "unknown", inn: null };
+}
+
+/** Номер важнее слова. 12 цифр важнее 10. */
+export function preferLegalForm(current: LegalReading, next: LegalReading): LegalReading {
+  const rank = (item: LegalReading) => {
+    if (item.form === "ip" && item.inn) return 3;
+    if (item.form === "company" && item.inn) return 2;
+    if (item.form === "ip") return 1;
+    return 0;
+  };
+  return rank(next) > rank(current) ? next : current;
+}
+
+export function legalFormLabel(form: string | null | undefined): string {
+  if (form === "ip") return "ИП";
+  if (form === "company") return "ООО";
+  return "не видно";
+}

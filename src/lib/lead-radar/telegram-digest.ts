@@ -5,6 +5,7 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { basename, join } from "node:path";
+import { legalFormLabel } from "@/lib/lead-radar/page-facts";
 
 const PHOTO_LIMIT = 5;
 /** Лимит Telegram sendMessage — оставляем запас. */
@@ -25,6 +26,7 @@ export type DigestSample = {
   platform?: string | null;
   email?: string | null;
   hotScore?: number;
+  legalForm?: string | null;
   screenshotUrl?: string | null;
   /** Абсолютный путь на диске — предпочтительнее URL (без 404 Next/nginx). */
   screenshotPath?: string | null;
@@ -72,7 +74,7 @@ export async function sendMorningDigest(params: {
   const lines = samples.slice(0, 8).map((s, i) => {
     const plat = s.platform ? ` · ${s.platform}` : "";
     const hot = s.hotScore != null ? ` · 🔥${s.hotScore}` : "";
-    return `${i + 1}. ${s.name || s.domain}${plat}${hot}`;
+    return `${i + 1}. ${s.name || s.domain}${plat}${hot} · ${legalFormLabel(s.legalForm)}`;
   });
 
   const text =
@@ -148,6 +150,7 @@ export async function sendManualEnqueueNotification(params: {
   domain: string;
   platform?: string | null;
   email?: string | null;
+  legalForm?: string | null;
   screenshotUrl?: string | null;
   screenshotPath?: string | null;
   kpSubject?: string | null;
@@ -193,6 +196,7 @@ export async function sendManualEnqueueNotification(params: {
       domain: rest.domain,
       platform: rest.platform,
       email: rest.email,
+      legalForm: rest.legalForm,
       screenshotUrl: rest.screenshotUrl,
       screenshotPath: rest.screenshotPath,
       kpSubject: rest.kpSubject,
@@ -213,6 +217,7 @@ export async function sendSentNotification(params: {
   domain: string;
   platform?: string | null;
   email: string;
+  legalForm?: string | null;
   screenshotUrl?: string | null;
   screenshotPath?: string | null;
   kpSubject?: string | null;
@@ -240,6 +245,7 @@ export async function sendSentNotification(params: {
       domain: rest.domain,
       platform: rest.platform,
       email: rest.email,
+      legalForm: rest.legalForm,
       screenshotUrl: rest.screenshotUrl,
       screenshotPath: rest.screenshotPath,
       kpSubject: rest.kpSubject,
@@ -521,12 +527,13 @@ async function sendLeadCardToTelegram(params: {
   const { botToken, chatId, publicOrigin, prefix, mode, sample, pulseLine } =
     params;
   const plat = sample.platform ? ` · ${sample.platform}` : "";
+  const who = ` · ${legalFormLabel(sample.legalForm)}`;
   const mail = sample.email ? `\n📧 ${sample.email}` : "";
   const pulse = pulseLine ? `\n${pulseLine}` : "";
   const title =
     mode === "sent"
-      ? `${prefix} Отправлено: ${sample.name || sample.domain}${plat}${mail}\nhttps://${sample.domain}${pulse}`
-      : `${prefix}. ${sample.name || sample.domain}${plat}${mail}\nhttps://${sample.domain}`;
+      ? `${prefix} Отправлено: ${sample.name || sample.domain}${plat}${who}${mail}\nhttps://${sample.domain}${pulse}`
+      : `${prefix}. ${sample.name || sample.domain}${plat}${who}${mail}\nhttps://${sample.domain}`;
 
   let photo = false;
   const localPath = resolveLocalScreenshotPath(

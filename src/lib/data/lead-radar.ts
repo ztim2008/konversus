@@ -146,7 +146,7 @@ export async function listSendableQueued(): Promise<any[]> {
        AND s.email IS NOT NULL AND TRIM(s.email) <> ''
        AND s.kp_html IS NOT NULL AND TRIM(s.kp_html) <> ''
        AND s.kp_subject IS NOT NULL AND TRIM(s.kp_subject) <> ''
-     ORDER BY s.batch_date DESC, s.hot_score DESC, s.queued_at ASC`
+     ORDER BY s.batch_date DESC, (s.legal_form = 'ip') DESC, s.hot_score DESC, s.queued_at ASC`
   );
   return rows as any[];
 }
@@ -213,7 +213,7 @@ export async function listQueuedSites(batchDate?: string): Promise<any[]> {
      LEFT JOIN lead_radars r ON r.id = s.radar_id
      WHERE s.status = 'queued'
        AND s.batch_date = COALESCE(?, CURDATE())
-     ORDER BY s.hot_score DESC, s.queued_at ASC`,
+     ORDER BY (s.legal_form = 'ip') DESC, s.hot_score DESC, s.queued_at ASC`,
     [date]
   );
   return rows as any[];

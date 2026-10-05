@@ -159,6 +159,7 @@ export async function sendQueuedLead(params: {
           domain: site.domain,
           platform: site.platform,
           email: site.email,
+          legalForm: site.legal_form,
           screenshotUrl: site.screenshot_url,
           screenshotPath: site.screenshot_path,
           kpSubject: site.kp_subject,

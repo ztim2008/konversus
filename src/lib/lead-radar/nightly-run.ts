@@ -135,6 +135,8 @@ async function insertQueuedSite(row: {
   h1: string | null;
   phone: string | null;
   telegram: string | null;
+  inn: string | null;
+  legalForm: "ip" | "company" | "unknown";
   serpQuery: string;
   serpPosition: number;
   kpHtml: string;
@@ -148,11 +150,11 @@ async function insertQueuedSite(row: {
   await db.query(
     `INSERT INTO lead_radar_sites (
       id, radar_id, domain, name, url, platform, source, serp_query, serp_position,
-      email, email_source_url, phone, telegram, problems, privacy_issues,
+      email, email_source_url, phone, telegram, inn, legal_form, problems, privacy_issues,
       screenshot_path, screenshot_url, screenshot_at,
       kp_html, kp_subject, kp_tokens_in, kp_tokens_out,
       hot_score, score, h1_text, status, queued_at, batch_date
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
     [
       id,
       row.radarId,
@@ -167,6 +169,8 @@ async function insertQueuedSite(row: {
       row.emailSourceUrl,
       row.phone,
       row.telegram,
+      row.inn,
+      row.legalForm,
       JSON.stringify(row.problems),
       JSON.stringify(row.privacyIssues),
       row.screenshotPath,
@@ -224,6 +228,7 @@ export async function runNightlyLeadRadar(options?: {
     platform?: string | null;
     email?: string | null;
     hotScore?: number;
+    legalForm?: string | null;
     screenshotUrl?: string | null;
     screenshotPath?: string | null;
     kpSubject?: string | null;
@@ -321,11 +326,13 @@ export async function runNightlyLeadRadar(options?: {
     }
     candidatesCount += pageCandidates.length;
 
-  for (const cand of pageCandidates) {
-    if (queued >= limit) break;
-    if (queued - already >= need) break;
-    if (samples.length >= need) break;
+    const qualified: Array<{
+      cand: Cand;
+      audit: Awaited<ReturnType<typeof checkWebsite>>;
+      emailInfo: Awaited<ReturnType<typeof findDeepEmail>>;
+    }> = [];
 
+  for (const cand of pageCandidates) {
     try {
       if (options?.dryRun) {
         skipped.push({ domain: cand.domain, reason: "dry_run" });
@@ -367,6 +374,31 @@ export async function runNightlyLeadRadar(options?: {
         continue;
       }
 
+      qualified.push({ cand, audit, emailInfo });
+    } catch (err: any) {
+      skipped.push({
+        domain: cand.domain,
+        reason: err?.message || "enrich_error",
+      });
+    }
+  }
+
+  qualified.sort((a, b) => {
+    const aIp = a.emailInfo.legalForm === "ip" ? 1 : 0;
+    const bIp = b.emailInfo.legalForm === "ip" ? 1 : 0;
+    if (bIp !== aIp) return bIp - aIp;
+    return (b.audit.hotScore || 0) - (a.audit.hotScore || 0);
+  });
+
+  const room = Math.min(
+    limit - queued,
+    need - (queued - already),
+    need - samples.length
+  );
+
+  for (const item of qualified.slice(0, Math.max(0, room))) {
+    const { cand, audit, emailInfo } = item;
+    try {
       let screenshotPath = "";
       let screenshotUrl = "";
       if (!options?.skipScreenshot) {
@@ -418,10 +450,12 @@ export async function runNightlyLeadRadar(options?: {
         name: cand.name,
         url: cand.url,
         platform: audit.cms,
-        email: emailInfo.email,
+        email: emailInfo.email || "",
         emailSourceUrl: emailInfo.sourceUrl,
         phone: emailInfo.phone,
         telegram: emailInfo.telegram,
+        inn: emailInfo.inn,
+        legalForm: emailInfo.legalForm,
         problems: audit.issues,
         privacyIssues: audit.privacyIssues,
         screenshotPath,
@@ -465,6 +499,7 @@ export async function runNightlyLeadRadar(options?: {
         platform: audit.cms,
         email: emailInfo.email,
         hotScore: audit.hotScore,
+        legalForm: emailInfo.legalForm,
         screenshotUrl: screenshotUrl || null,
         screenshotPath: screenshotPath || null,
         kpSubject: subject || null,
@@ -499,6 +534,7 @@ export async function runNightlyLeadRadar(options?: {
             platform: s.platform,
             email: s.email,
             hotScore: s.hot_score ?? 0,
+            legalForm: s.legal_form || null,
             screenshotUrl: s.screenshot_url || null,
             screenshotPath: s.screenshot_path || null,
             kpSubject: s.kp_subject || null,
@@ -624,6 +660,7 @@ export async function runLeadRadarCollect(options?: {
       platform: s.platform,
       email: s.email,
       hotScore: s.hot_score ?? 0,
+      legalForm: s.legal_form || null,
       screenshotUrl: s.screenshot_url || null,
       screenshotPath: s.screenshot_path || null,
       kpSubject: s.kp_subject || null,

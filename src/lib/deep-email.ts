@@ -7,7 +7,10 @@ import {
   extractPhone,
   extractTelegram,
   isLiveEmail,
+  preferLegalForm,
+  readLegalForm,
   readResponseHtml,
+  type LegalForm,
 } from "@/lib/lead-radar/page-facts";
 
 const CONTACT_PATHS = [
@@ -52,6 +55,8 @@ export type DeepEmailResult = {
   pagesScanned: number;
   phone: string | null;
   telegram: string | null;
+  legalForm: LegalForm;
+  inn: string | null;
 };
 
 function normalizeBase(url: string): URL {
@@ -158,6 +163,7 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
   const allCandidates: { email: string; page: string; score: number }[] = [];
   let phone: string | null = null;
   let telegram: string | null = null;
+  let legal = { form: "unknown" as LegalForm, inn: null as string | null };
   let pagesScanned = 0;
 
   while (queue.length && pagesScanned < maxInternal + 3) {
@@ -172,6 +178,7 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
 
     if (!phone) phone = extractPhone(html);
     if (!telegram) telegram = extractTelegram(html);
+    legal = preferLegalForm(legal, readLegalForm(html));
 
     for (const email of extractEmails(html)) {
       if (!isGoodEmail(email, siteHost)) continue;
@@ -184,7 +191,12 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
 
     // Останавливаемся, когда уже есть живой ящик и открыта хотя бы страница контактов.
     const bestNow = [...allCandidates].sort((a, b) => b.score - a.score)[0];
-    if (bestNow && isLiveEmail(bestNow.email) && pagesScanned >= 2) {
+    if (
+      bestNow &&
+      isLiveEmail(bestNow.email) &&
+      pagesScanned >= 2 &&
+      (legal.inn || pagesScanned >= 4)
+    ) {
       break;
     }
 
@@ -216,5 +228,7 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
     pagesScanned,
     phone,
     telegram,
+    legalForm: legal.form,
+    inn: legal.inn,
   };
 }

@@ -22,6 +22,8 @@ type QueueSite = {
   email_source_url?: string | null;
   platform?: string | null;
   hot_score?: number;
+  legal_form?: string | null;
+  inn?: string | null;
   problems?: string | string[];
   privacy_issues?: string | string[] | null;
   screenshot_url?: string | null;
@@ -630,6 +632,13 @@ export function TodayQueue() {
                         {site.radar_city || "—"} · {site.radar_niche || "—"}
                         {site.platform ? ` · ${site.platform}` : ""}
                         {site.hot_score != null ? ` · 🔥 ${site.hot_score}` : ""}
+                        {" · "}
+                        {site.legal_form === "ip"
+                          ? "ИП"
+                          : site.legal_form === "company"
+                            ? "ООО"
+                            : "не видно"}
+                        {site.inn ? ` ${site.inn}` : ""}
                       </p>
                     </div>
                     <a
