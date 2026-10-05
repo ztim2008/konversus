@@ -17,10 +17,11 @@ import {
   getAutoSendEnabled,
   getAutoSendIntervalMin,
   isAutoSendWindowMsk,
-  countSentForBatchDate,
+  countOutboundOnDate,
   mskDateISO,
 } from "@/lib/lead-radar/config";
 import { sendQueuedLead } from "@/lib/lead-radar/send-queued";
+import { listDueSequenceSites, sendSequenceTouch } from "@/lib/lead-radar/sequence";
 
 export type AutoSendResult = {
   ok: true;
@@ -61,15 +62,13 @@ function sqlDateISO(value: unknown): string {
   return "";
 }
 
-async function secondsSinceLastContact(batchDate: string): Promise<number | null> {
+/** Пауза между любыми письмами дня: и новыми, и повторными. */
+async function secondsSinceLastOutbound(): Promise<number | null> {
   const db = getDbPool();
   const [rows] = await db.query(
-    `SELECT TIMESTAMPDIFF(SECOND, MAX(contacted_at), NOW()) AS s
-     FROM lead_radar_sites
-     WHERE batch_date = ?
-       AND status IN ('contacted','replied','won')
-       AND contacted_at IS NOT NULL`,
-    [batchDate]
+    `SELECT TIMESTAMPDIFF(SECOND, MAX(sent_at), NOW()) AS s
+     FROM lead_follow_ups
+     WHERE type = 'email'`
   );
   const s = (rows as RowDataPacket[])[0]?.s;
   if (s == null) return null;
@@ -95,7 +94,7 @@ export async function runAutoSendDrip(options?: {
   const intervalMin = await getAutoSendIntervalMin();
   const perRun = Math.min(5, Math.max(1, options?.perRun ?? 1));
 
-  const sentBefore = await countSentForBatchDate(batchDate);
+  const sentBefore = await countOutboundOnDate(batchDate);
   const base: Omit<AutoSendResult, "ok"> & { ok: true } = {
     ok: true,
     enabled,
@@ -123,7 +122,7 @@ export async function runAutoSendDrip(options?: {
   }
 
   if (!options?.ignoreInterval && !options?.force) {
-    const sinceSec = await secondsSinceLastContact(batchDate);
+    const sinceSec = await secondsSinceLastOutbound();
     // 90 с запаса: cron ровно в */15 часто даёт 14 мин из‑за TIMESTAMPDIFF.
     const needSec = intervalMin * 60 - 90;
     if (sinceSec != null && sinceSec < needSec) {
@@ -135,7 +134,31 @@ export async function runAutoSendDrip(options?: {
   }
 
   const budget = Math.min(perRun, sentLimit - sentBefore);
-  const queued = await listSendableQueued();
+  const due = await listDueSequenceSites(budget);
+  const failed: AutoSendResult["failed"] = [];
+  let succeeded = 0;
+  let lastTelegram: { ok: boolean; error?: string } | undefined;
+
+  for (const site of due) {
+    base.attempted++;
+    const result = await sendSequenceTouch({
+      siteId: site.id,
+      skipTelegram: !!options?.skipTelegram,
+    });
+    if (result.ok) {
+      succeeded++;
+      if (result.telegram) lastTelegram = result.telegram;
+    } else {
+      failed.push({
+        siteId: site.id,
+        domain: site.domain || undefined,
+        error: result.error,
+      });
+    }
+  }
+
+  const queuedBudget = Math.max(0, budget - due.length);
+  const queued = queuedBudget > 0 ? await listSendableQueued() : [];
   const seenEmail = new Set<string>();
   const unique: typeof queued = [];
   const duplicateIds: string[] = [];
@@ -152,11 +175,7 @@ export async function runAutoSendDrip(options?: {
   if (duplicateIds.length) {
     await skipQueuedIds(duplicateIds, "duplicate_email");
   }
-  const slice = unique.slice(0, budget);
-
-  const failed: AutoSendResult["failed"] = [];
-  let succeeded = 0;
-  let lastTelegram: { ok: boolean; error?: string } | undefined;
+  const slice = unique.slice(0, queuedBudget);
 
   for (const site of slice) {
     base.attempted++;
@@ -181,7 +200,7 @@ export async function runAutoSendDrip(options?: {
     }
   }
 
-  const sentAfter = await countSentForBatchDate(batchDate);
+  const sentAfter = await countOutboundOnDate(batchDate);
   const queuedLeft = await countSendableQueued();
 
   return {

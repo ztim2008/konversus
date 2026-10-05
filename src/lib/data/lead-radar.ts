@@ -190,7 +190,7 @@ export async function markLeadBounced(siteId: string, reason: string): Promise<v
   const site = await getSiteById(siteId);
   const clipped = clipRejectReason(reason);
   await db.query(
-    `UPDATE lead_radar_sites SET status = 'bounced', reject_reason = ? WHERE id = ?`,
+    `UPDATE lead_radar_sites SET status = 'bounced', reject_reason = ?, follow_up_at = NULL WHERE id = ?`,
     [clipped, siteId]
   );
   const email = String(site?.email || "").trim();
@@ -412,19 +412,84 @@ export async function listEmails(siteId: string): Promise<any[]> {
 // ─── Follow-ups ────────────────────────────────────────────────────────────
 
 export async function createFollowUp(params: {
-  siteId: string; type?: string;
+  siteId: string;
+  type?: string;
+  /** 1 — первое письмо, 2 и 3 — повтор в ту же переписку. */
+  touchNo?: number;
+  messageId?: string | null;
 }): Promise<string> {
   const db = getDbPool();
   const id = randomUUID();
+  const touchNo = params.touchNo ?? 1;
   await db.query(
-    "INSERT INTO lead_follow_ups (id, site_id, type) VALUES (?, ?, ?)",
-    [id, params.siteId, params.type || "email"]
+    `INSERT INTO lead_follow_ups (id, site_id, type, touch_no, message_id)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      id,
+      params.siteId,
+      params.type || "email",
+      touchNo,
+      params.messageId || null,
+    ]
   );
-  await db.query(
-    "UPDATE lead_radar_sites SET contacted_at = NOW(), follow_up_at = DATE_ADD(NOW(), INTERVAL 3 DAY) WHERE id = ?",
-    [params.siteId]
-  );
+  if (touchNo <= 1) {
+    // Цепочка только у писем с Message-ID. Старый путь без него не будит старые карточки.
+    const followAt = params.messageId
+      ? "DATE_ADD(NOW(), INTERVAL 4 DAY)"
+      : "DATE_ADD(NOW(), INTERVAL 3 DAY)";
+    await db.query(
+      `UPDATE lead_radar_sites SET contacted_at = NOW(), follow_up_at = ${followAt} WHERE id = ?`,
+      [params.siteId]
+    );
+  } else if (touchNo === 2) {
+    await db.query(
+      `UPDATE lead_radar_sites
+       SET follow_up_at = GREATEST(
+         DATE_ADD(COALESCE((
+           SELECT sent_at FROM (
+             SELECT sent_at FROM lead_follow_ups
+             WHERE site_id = ? AND touch_no = 1
+             ORDER BY sent_at ASC LIMIT 1
+           ) AS first_touch
+         ), NOW()), INTERVAL 10 DAY),
+         DATE_ADD(NOW(), INTERVAL 4 DAY)
+       )
+       WHERE id = ?`,
+      [params.siteId, params.siteId]
+    );
+  } else {
+    await db.query(
+      "UPDATE lead_radar_sites SET follow_up_at = NULL WHERE id = ?",
+      [params.siteId]
+    );
+  }
   return id;
+}
+
+/** Занять карточку, чтобы два тика не отправили одно и то же касание. */
+export async function claimDueFollowUp(siteId: string): Promise<boolean> {
+  const db = getDbPool();
+  const [result] = await db.query(
+    `UPDATE lead_radar_sites
+     SET follow_up_at = DATE_ADD(NOW(), INTERVAL 2 HOUR)
+     WHERE id = ?
+       AND status = 'contacted'
+       AND follow_up_at IS NOT NULL
+       AND follow_up_at <= NOW()`,
+    [siteId]
+  );
+  return Number((result as { affectedRows?: number }).affectedRows ?? 0) === 1;
+}
+
+/** Вернуть карточку в очередь касаний после сбоя отправки. */
+export async function releaseFollowUpClaim(siteId: string): Promise<void> {
+  const db = getDbPool();
+  await db.query(
+    `UPDATE lead_radar_sites
+     SET follow_up_at = NOW()
+     WHERE id = ? AND status = 'contacted'`,
+    [siteId]
+  );
 }
 
 export async function getFollowUpStats(): Promise<{
@@ -455,7 +520,10 @@ export async function getOverdueFollowUps(): Promise<any[]> {
 
 export async function markReplied(siteId: string): Promise<void> {
   const db = getDbPool();
-  await db.query("UPDATE lead_radar_sites SET status = 'replied', replied_at = NOW() WHERE id = ?", [siteId]);
+  await db.query(
+    "UPDATE lead_radar_sites SET status = 'replied', replied_at = NOW(), follow_up_at = NULL WHERE id = ?",
+    [siteId]
+  );
   await db.query("UPDATE lead_follow_ups SET replied_at = NOW() WHERE site_id = ? ORDER BY sent_at DESC LIMIT 1", [siteId]);
 }
 

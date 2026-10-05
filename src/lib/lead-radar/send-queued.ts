@@ -20,8 +20,9 @@ import {
   sendSkipNotification,
 } from "@/lib/lead-radar/telegram-digest";
 import {
-  countSentForBatchDate,
+  countOutboundOnDate,
   getDailySendLimit,
+  mskDateISO,
 } from "@/lib/lead-radar/config";
 import { getActiveSenderProfile } from "@/lib/lead-radar/sender-profiles";
 
@@ -84,8 +85,7 @@ export async function sendQueuedLead(params: {
   }
 
   if (!params.testMode) {
-    const batchDate = toBatchDate(site.batch_date);
-    const sentToday = await countSentForBatchDate(batchDate);
+    const sentToday = await countOutboundOnDate(mskDateISO());
     const sendLimit = await getDailySendLimit();
     if (sentToday >= sendLimit) {
       return {
@@ -135,7 +135,12 @@ export async function sendQueuedLead(params: {
     let telegram: { ok: boolean; error?: string } = { ok: true };
 
     if (!testMode) {
-      await createFollowUp({ siteId: site.id, type: "email" });
+      await createFollowUp({
+        siteId: site.id,
+        type: "email",
+        touchNo: 1,
+        messageId: info.messageId,
+      });
       await updateSiteStatus(site.id, "contacted");
       const batchDate = toBatchDate(site.batch_date);
       await bumpBatchCounter(batchDate, "sent_count");
@@ -145,7 +150,7 @@ export async function sendQueuedLead(params: {
 
       if (!params.skipTelegram) {
         const settings = await getAllSettings();
-        const sentToday = await countSentForBatchDate(batchDate);
+        const sentToday = await countOutboundOnDate(mskDateISO());
         const sendLimit = await getDailySendLimit();
         telegram = await sendSentNotification({
           botToken: settings.telegram_bot_token,

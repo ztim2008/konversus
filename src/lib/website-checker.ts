@@ -1,6 +1,13 @@
 // Аудит сайта: SSL, mobile, copyright, speed, SEO (H1), CMS, phone
 // Скоринг горячих лидов
 
+import { GEO_CITIES_V1 } from "@/lib/lead-radar-geo";
+import {
+  extractH1Texts,
+  pickHonestH1,
+  readResponseHtml,
+} from "@/lib/lead-radar/page-facts";
+
 export interface WebsiteResult {
   url: string;
   reachable: boolean;
@@ -103,38 +110,38 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
       return result;
     }
 
-    const html = await resp.text();
+    const html = await readResponseHtml(resp);
 
     // ─── H1 ────────────────────────────────────────────────────
-    const h1Regex = /<h1[^>]*>([\s\S]*?)<\/h1>/gi;
-    const h1Matches = html.matchAll(h1Regex);
-    const h1Texts: string[] = [];
-    for (const m of h1Matches) {
-      const text = m[1].replace(/<[^>]+>/g, "").trim();
-      if (text) h1Texts.push(text);
-    }
-    result.h1 = { count: h1Texts.length, texts: h1Texts, ok: false };
+    // В texts кладём только честный заголовок услуги.
+    // «Отзывы», «Контакты», голое имя города и кракозябры агенту не отдаём.
+    const h1Texts = extractH1Texts(html);
+    const honestH1 = pickHonestH1(
+      h1Texts,
+      GEO_CITIES_V1.map((city) => city.name)
+    );
+    result.h1 = { count: h1Texts.length, texts: honestH1 ? [honestH1] : [], ok: false };
 
     if (h1Texts.length === 0) {
       result.issues.push("❌ нет H1 (главный заголовок)");
       result.score += 2;
       result.hotScore += HOT_SCORES.no_h1;
+    } else if (!honestH1) {
+      result.issues.push("H1 не про услугу (меню, контакты или нечитаемый текст)");
+      result.score += 1;
     } else if (h1Texts.length > 1) {
       result.issues.push(`⚠️ ${h1Texts.length} заголовков H1 (должен быть один)`);
       result.score += 1;
       result.hotScore += HOT_SCORES.bad_h1;
+    } else if (honestH1.length < 10) {
+      result.issues.push(`⚠️ H1 слишком короткий: «${honestH1}»`);
+      result.score += 1;
+      result.hotScore += HOT_SCORES.bad_h1;
+    } else if (honestH1.length > 120) {
+      result.issues.push(`⚠️ H1 слишком длинный (${honestH1.length} символов)`);
+      result.hotScore += HOT_SCORES.bad_h1;
     } else {
-      const h1 = h1Texts[0];
-      if (h1.length < 10) {
-        result.issues.push(`⚠️ H1 слишком короткий: «${h1}»`);
-        result.score += 1;
-        result.hotScore += HOT_SCORES.bad_h1;
-      } else if (h1.length > 120) {
-        result.issues.push(`⚠️ H1 слишком длинный (${h1.length} символов)`);
-        result.hotScore += HOT_SCORES.bad_h1;
-      } else {
-        result.h1.ok = true;
-      }
+      result.h1.ok = true;
     }
 
     // ─── CMS ───────────────────────────────────────────────────

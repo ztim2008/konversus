@@ -3,6 +3,13 @@
  */
 import "server-only";
 
+import {
+  extractPhone,
+  extractTelegram,
+  isLiveEmail,
+  readResponseHtml,
+} from "@/lib/lead-radar/page-facts";
+
 const CONTACT_PATHS = [
   "/contacts",
   "/contact",
@@ -43,6 +50,8 @@ export type DeepEmailResult = {
   sourceUrl: string | null;
   candidates: string[];
   pagesScanned: number;
+  phone: string | null;
+  telegram: string | null;
 };
 
 function normalizeBase(url: string): URL {
@@ -77,9 +86,11 @@ function scoreEmail(email: string, siteHost: string): number {
   const host = siteHost.replace(/^www\./i, "").toLowerCase();
   let s = 0;
   if (domain === host || host.endsWith(`.${domain}`) || domain.endsWith(`.${host.split(".").slice(-2).join(".")}`)) {
-    s += 50;
+    s += 15;
   }
-  if (/^(info|mail|hello|contact|zakaz|order|office|admin)@/i.test(email)) s += 10;
+  // Живой ящик важнее корпоративного info@.
+  if (isLiveEmail(email)) s += 80;
+  else s -= 40;
   return s;
 }
 
@@ -91,11 +102,7 @@ async function fetchHtml(url: string): Promise<string | null> {
       redirect: "follow",
     });
     if (!res.ok) return null;
-    const ct = res.headers.get("content-type") || "";
-    if (ct && !/text\/html|application\/xhtml/i.test(ct) && !ct.includes("text/")) {
-      // всё равно пробуем
-    }
-    return await res.text();
+    return await readResponseHtml(res);
   } catch {
     return null;
   }
@@ -149,6 +156,8 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
   }
 
   const allCandidates: { email: string; page: string; score: number }[] = [];
+  let phone: string | null = null;
+  let telegram: string | null = null;
   let pagesScanned = 0;
 
   while (queue.length && pagesScanned < maxInternal + 3) {
@@ -161,6 +170,9 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
     pagesScanned++;
     if (!html) continue;
 
+    if (!phone) phone = extractPhone(html);
+    if (!telegram) telegram = extractTelegram(html);
+
     for (const email of extractEmails(html)) {
       if (!isGoodEmail(email, siteHost)) continue;
       allCandidates.push({
@@ -170,9 +182,9 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
       });
     }
 
-    // уже нашли хороший корпоративный — можно рано выйти
+    // Останавливаемся, когда уже есть живой ящик и открыта хотя бы страница контактов.
     const bestNow = [...allCandidates].sort((a, b) => b.score - a.score)[0];
-    if (bestNow && bestNow.score >= 50) {
+    if (bestNow && isLiveEmail(bestNow.email) && pagesScanned >= 2) {
       break;
     }
 
@@ -202,5 +214,7 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
     sourceUrl: top?.page ?? null,
     candidates: ranked.map((r) => r.email).slice(0, 5),
     pagesScanned,
+    phone,
+    telegram,
   };
 }

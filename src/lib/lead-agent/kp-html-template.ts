@@ -18,6 +18,8 @@ export type KpHtmlInput = {
   leadId?: string | null;
   batchDate?: string;
   issues?: string[];
+  /** false — второе и третье касание: без блока «Чем ещё могу помочь». */
+  includeOffer?: boolean;
   publicOrigin?: string;
   /** Если не передан — дефолт активного профиля (без чтения settings). */
   profile?: SenderProfile;
@@ -139,7 +141,8 @@ export function renderLeadWebKpHtml(input: KpHtmlInput): string {
   const platform = input.platform?.trim();
   const issues = (input.issues || []).slice(0, 4);
   const bodyHtml = textToHtmlParagraphs(input.bodyText);
-  const bullets = (profile.offerBullets || []).slice(0, 6);
+  const bullets =
+    input.includeOffer === false ? [] : (profile.offerBullets || []).slice(0, 6);
 
   const metaBits = [
     escapeHtml(input.companyName || input.domain),
@@ -186,6 +189,35 @@ ${bullets.map((b) => `<li style="margin:0 0 6px;">${escapeHtml(b)}</li>`).join("
     ? `<br/><a href="${escapeHtml(videoHref)}" style="color:#78716c;font-size:12px;text-decoration:underline;">${escapeHtml(profile.videoLabel || "Видео")}</a>`
     : "";
 
+  const messengerRows = [
+    profile.telegramUrl
+      ? { href: profile.telegramUrl, label: "Написать в Telegram" }
+      : null,
+    profile.maxUrl ? { href: profile.maxUrl, label: "Написать в Макс" } : null,
+  ].filter((row): row is { href: string; label: string } => !!row);
+
+  const messengerHtml =
+    messengerRows.length > 0
+      ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:14px;">
+${messengerRows
+  .map(
+    (row) => `            <tr><td style="padding:0 0 8px;">
+              <a href="${escapeHtml(row.href)}" style="display:inline-block;border:1px solid #1c1917;color:#1c1917;background:#ffffff;text-decoration:none;padding:11px 16px;font-size:14px;font-weight:700;">${escapeHtml(row.label)}</a>
+            </td></tr>`
+  )
+  .join("\n")}
+          </table>`
+      : "";
+
+  const replyMail = profile.replyToEmail.trim();
+  const replyHtml = replyMail
+    ? `<p style="margin:4px 0 0;font-size:13px;color:#57534e;line-height:1.45;">
+            Ответ на это письмо придёт мне на <a href="mailto:${escapeHtml(replyMail)}" style="color:#1c1917;font-weight:700;text-decoration:underline;">${escapeHtml(replyMail)}</a>.
+          </p>`
+    : `<p style="margin:10px 0 0;font-size:12px;color:#a8a29e;line-height:1.4;">
+            Или ответьте на это письмо — подскажу по сайту без обязательства.
+          </p>`;
+
   const secondaryLine = secondaryHref
     ? ` · <a href="${escapeHtml(secondaryHref)}" style="color:#a8a29e;font-size:11px;text-decoration:underline;">${escapeHtml(profile.secondarySiteLabel || secondaryHref)}</a>`
     : "";
@@ -213,18 +245,18 @@ ${bullets.map((b) => `<li style="margin:0 0 6px;">${escapeHtml(b)}</li>`).join("
             <tr>
               ${photoCell}
               <td style="vertical-align:middle;">
-                <a href="${escapeHtml(callHref)}" style="display:inline-block;background:#1c1917;color:#fafaf9;text-decoration:none;padding:14px 22px;font-size:17px;font-weight:700;border-radius:2px;letter-spacing:0.01em;">
-                  Позвонить: ${escapeHtml(profile.phoneDisplay)}
+                <a href="${escapeHtml(callHref)}" style="display:inline-block;background:#1c1917;color:#fafaf9;text-decoration:none;padding:14px 22px;border-radius:2px;text-align:left;">
+                  <span style="display:block;font-size:12px;font-weight:600;color:#a8a29e;">Позвонить</span>
+                  <span style="display:block;margin-top:4px;font-size:20px;font-weight:700;letter-spacing:0.01em;">${escapeHtml(profile.phoneDisplay)}</span>
                 </a>
               </td>
             </tr>
           </table>
+          ${messengerHtml}
+          ${replyHtml}
           <p style="margin:14px 0 0;font-size:13px;color:#57534e;line-height:1.45;">
             ${escapeHtml(profile.fullName)} · ${escapeHtml(profile.role)}<br/>
             <a href="${escapeHtml(cta)}" style="color:#78716c;font-size:12px;text-decoration:underline;">Сайт ${escapeHtml(profile.primarySiteLabel)} — портфолио</a>${videoLine}
-          </p>
-          <p style="margin:10px 0 0;font-size:12px;color:#a8a29e;line-height:1.4;">
-            Или ответьте на это письмо — подскажу по сайту без обязательства.
           </p>
         </td></tr>
         <tr><td style="padding:18px 28px;background:#fafaf9;border-top:1px solid #e7e5e4;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#57534e;line-height:1.55;">

@@ -12,6 +12,7 @@ import {
 import { classifyCompanySite, guessCompanyName } from "@/lib/company-site-filter";
 import { checkWebsite } from "@/lib/website-checker";
 import { findDeepEmail } from "@/lib/deep-email";
+import { isLiveEmail, strongSiteReason } from "@/lib/lead-radar/page-facts";
 import { captureSiteScreenshot } from "@/lib/site-screenshot";
 import { generatePersonalizedKP } from "@/lib/lead-agent/ai-composer";
 import {
@@ -32,6 +33,7 @@ import { sendMorningDigest } from "@/lib/lead-radar/telegram-digest";
 
 import {
   COLLECT_MAX_ROUNDS_DEFAULT,
+  countOutboundOnDate,
   countSentForBatchDate,
   getCollectPerTick,
   getDailyQueueLimit,
@@ -39,6 +41,7 @@ import {
   HOT_SCORE_QUEUE_MIN,
   mskDateISO,
 } from "@/lib/lead-radar/config";
+import { countSequenceReservedToday } from "@/lib/lead-radar/sequence";
 
 export { DAILY_QUEUE_LIMIT } from "@/lib/lead-radar/config";
 const CONTACT_COOLDOWN_DAYS = 90;
@@ -65,7 +68,9 @@ export async function resolveCollectTarget(options?: {
       : queueLimit;
   const sent = await countSentForBatchDate(batchDate);
   const queued = await countQueuedForDate(batchDate);
-  const remainingSend = Math.max(0, sendLimit - sent);
+  const outbound = await countOutboundOnDate(batchDate);
+  const reservedFollowUps = await countSequenceReservedToday(batchDate);
+  const remainingSend = Math.max(0, sendLimit - outbound - reservedFollowUps);
   const target = Math.min(cap, remainingSend);
   const need = Math.max(0, target - queued);
   return { batchDate, queueLimit: cap, sendLimit, sent, queued, target, need };
@@ -128,6 +133,8 @@ async function insertQueuedSite(row: {
   hotScore: number;
   score: number;
   h1: string | null;
+  phone: string | null;
+  telegram: string | null;
   serpQuery: string;
   serpPosition: number;
   kpHtml: string;
@@ -141,11 +148,11 @@ async function insertQueuedSite(row: {
   await db.query(
     `INSERT INTO lead_radar_sites (
       id, radar_id, domain, name, url, platform, source, serp_query, serp_position,
-      email, email_source_url, problems, privacy_issues,
+      email, email_source_url, phone, telegram, problems, privacy_issues,
       screenshot_path, screenshot_url, screenshot_at,
       kp_html, kp_subject, kp_tokens_in, kp_tokens_out,
       hot_score, score, h1_text, status, queued_at, batch_date
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
     [
       id,
       row.radarId,
@@ -158,6 +165,8 @@ async function insertQueuedSite(row: {
       row.serpPosition,
       row.email,
       row.emailSourceUrl,
+      row.phone,
+      row.telegram,
       JSON.stringify(row.problems),
       JSON.stringify(row.privacyIssues),
       row.screenshotPath,
@@ -337,9 +346,24 @@ export async function runNightlyLeadRadar(options?: {
         continue;
       }
 
+      const strong = strongSiteReason({
+        cmsTier: audit.cmsTier,
+        hasViewport: audit.hasViewport,
+        copyrightYear: audit.copyrightYear,
+        ssl: audit.ssl,
+      });
+      if (strong) {
+        skipped.push({ domain: cand.domain, reason: strong });
+        continue;
+      }
+
       const emailInfo = await findDeepEmail(cand.url);
       if (!emailInfo.email) {
         skipped.push({ domain: cand.domain, reason: "no_email" });
+        continue;
+      }
+      if (!isLiveEmail(emailInfo.email)) {
+        skipped.push({ domain: cand.domain, reason: "generic_email" });
         continue;
       }
 
@@ -368,6 +392,7 @@ export async function runNightlyLeadRadar(options?: {
         issues: audit.issues,
         cms: audit.cms || "",
         travel: city.travel,
+        pageUrl: cand.url,
       });
       tokensTotal += generated.tokensIn + generated.tokensOut;
 
@@ -395,6 +420,8 @@ export async function runNightlyLeadRadar(options?: {
         platform: audit.cms,
         email: emailInfo.email,
         emailSourceUrl: emailInfo.sourceUrl,
+        phone: emailInfo.phone,
+        telegram: emailInfo.telegram,
         problems: audit.issues,
         privacyIssues: audit.privacyIssues,
         screenshotPath,

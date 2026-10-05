@@ -63,8 +63,10 @@ export async function GET(req: NextRequest) {
     .label{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#78716c;margin:0 0 8px;}
     .domain{font-size:22px;font-weight:700;margin:0 0 6px;word-break:break-word;}
     .name{font-size:14px;color:#57534e;margin:0 0 20px;}
+    .num{margin:0 0 8px;font-size:28px;font-weight:700;letter-spacing:0.01em;}
+    .desk{margin:0 0 16px;font-size:14px;line-height:1.45;color:#57534e;}
     .btn{display:block;text-align:center;background:#1c1917;color:#fafaf9;text-decoration:none;
-      padding:16px 20px;font-size:18px;font-weight:700;border-radius:4px;}
+      padding:16px 20px;font-size:16px;font-weight:700;border-radius:4px;}
     .hint{margin:18px 0 0;font-size:13px;line-height:1.5;color:#57534e;}
     .phone{margin-top:12px;font-size:15px;font-weight:700;}
   </style>
@@ -75,7 +77,9 @@ export async function GET(req: NextRequest) {
       <p class="label">Звонок по письму</p>
       <p class="domain">${escapeHtml(domain ? domain : "—")}</p>
       ${company && company !== domain ? `<p class="name">${escapeHtml(company)}</p>` : ""}
-      <a class="btn" href="${escapeHtml(telHref)}">Набрать ${escapeHtml(profile.phoneDisplay)}</a>
+      <p class="num">${escapeHtml(profile.phoneDisplay)}</p>
+      <p class="desk">С компьютера наберите этот номер. С телефона нажмите кнопку — откроется набор.</p>
+      <a class="btn" href="${escapeHtml(telHref)}">Позвонить ${escapeHtml(profile.phoneDisplay)}</a>
       <p class="phone">${escapeHtml(profile.fullName)}</p>
       <p class="hint">Можете сказать: «Звоню по сайту ${escapeHtml(hintDomain)}» — так быстрее поймём, о ком речь.</p>
     </div>

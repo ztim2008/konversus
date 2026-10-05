@@ -87,6 +87,129 @@ export async function collectDayFacts(batchDate: string): Promise<{
   };
 }
 
+export type LiveDayFacts = {
+  sent: number;
+  touch1: number;
+  touch2: number;
+  touch3: number;
+  skipped: number;
+  opened: number;
+  replied: number;
+  bounce: number;
+  stillQueued: number;
+};
+
+function emptyLiveDayFacts(): LiveDayFacts {
+  return {
+    sent: 0,
+    touch1: 0,
+    touch2: 0,
+    touch3: 0,
+    skipped: 0,
+    opened: 0,
+    replied: 0,
+    bounce: 0,
+    stillQueued: 0,
+  };
+}
+
+/**
+ * Живой пересчёт по письмам дня. Колонки в lead_radar_batches — снимок вечернего отчёта
+ * и не растут, если письмо открыли на следующий день.
+ */
+export async function collectFactsForDates(
+  dates: string[]
+): Promise<Record<string, LiveDayFacts>> {
+  const unique = [...new Set(dates.map((d) => String(d).slice(0, 10)).filter(Boolean))];
+  const out: Record<string, LiveDayFacts> = {};
+  for (const date of unique) out[date] = emptyLiveDayFacts();
+  if (unique.length === 0) return out;
+
+  const db = getDbPool();
+  const placeholders = unique.map(() => "?").join(",");
+
+  const [statusRows] = (await db.query(
+    `SELECT DATE_FORMAT(batch_date, '%Y-%m-%d') AS d,
+       SUM(status IN ('contacted','replied','won')) AS sent,
+       SUM(status = 'skipped') AS skipped,
+       SUM(status IN ('replied','won')) AS replied,
+       SUM(status = 'bounced') AS bounce,
+       SUM(status = 'queued') AS still_queued
+     FROM lead_radar_sites
+     WHERE batch_date IN (${placeholders})
+     GROUP BY DATE_FORMAT(batch_date, '%Y-%m-%d')`,
+    unique
+  )) as any;
+
+  const [openRows] = (await db.query(
+    `SELECT DATE_FORMAT(s.batch_date, '%Y-%m-%d') AS d,
+       COUNT(DISTINCT f.site_id) AS opened
+     FROM lead_follow_ups f
+     JOIN lead_radar_sites s ON s.id = f.site_id
+     WHERE s.batch_date IN (${placeholders})
+       AND f.opened_at IS NOT NULL
+     GROUP BY DATE_FORMAT(s.batch_date, '%Y-%m-%d')`,
+    unique
+  )) as any;
+
+  for (const row of statusRows as any[]) {
+    const date = String(row.d || "").slice(0, 10);
+    if (!out[date]) out[date] = emptyLiveDayFacts();
+    out[date].sent = Number(row.sent ?? 0);
+    out[date].skipped = Number(row.skipped ?? 0);
+    out[date].replied = Number(row.replied ?? 0);
+    out[date].bounce = Number(row.bounce ?? 0);
+    out[date].stillQueued = Number(row.still_queued ?? 0);
+  }
+
+  for (const row of openRows as any[]) {
+    const date = String(row.d || "").slice(0, 10);
+    if (!out[date]) out[date] = emptyLiveDayFacts();
+    out[date].opened = Number(row.opened ?? 0);
+  }
+
+  const [touchRows] = (await db.query(
+    `SELECT DATE_FORMAT(DATE_ADD(sent_at, INTERVAL 3 HOUR), '%Y-%m-%d') AS d,
+       SUM(touch_no = 1) AS touch1,
+       SUM(touch_no = 2) AS touch2,
+       SUM(touch_no = 3) AS touch3,
+       SUM(opened_at IS NOT NULL) AS opened,
+       SUM(replied_at IS NOT NULL) AS replied
+     FROM lead_follow_ups
+     WHERE type = 'email'
+       AND DATE_FORMAT(DATE_ADD(sent_at, INTERVAL 3 HOUR), '%Y-%m-%d') IN (${placeholders})
+     GROUP BY DATE_FORMAT(DATE_ADD(sent_at, INTERVAL 3 HOUR), '%Y-%m-%d')`,
+    unique
+  )) as any;
+
+  for (const row of touchRows as any[]) {
+    const date = String(row.d || "").slice(0, 10);
+    if (!out[date]) out[date] = emptyLiveDayFacts();
+    const touch1 = Number(row.touch1 ?? 0);
+    const touch2 = Number(row.touch2 ?? 0);
+    const touch3 = Number(row.touch3 ?? 0);
+    const touchSent = touch1 + touch2 + touch3;
+    if (touchSent <= 0) continue;
+    out[date].touch1 = touch1;
+    out[date].touch2 = touch2;
+    out[date].touch3 = touch3;
+    out[date].sent = touchSent;
+    out[date].opened = Number(row.opened ?? 0);
+    const touchReplied = Number(row.replied ?? 0);
+    if (touchReplied > out[date].replied) out[date].replied = touchReplied;
+  }
+
+  for (const date of unique) {
+    const facts = out[date];
+    if (!facts) continue;
+    if (facts.touch1 + facts.touch2 + facts.touch3 === 0) {
+      facts.touch1 = facts.sent;
+    }
+  }
+
+  return out;
+}
+
 export async function runDailyReport(options?: {
   batchDate?: string;
   skipTelegram?: boolean;

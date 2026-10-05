@@ -19,7 +19,7 @@ import {
 import { sendQueuedLead, skipQueuedLead } from "@/lib/lead-radar/send-queued";
 import { markLeadReplied } from "@/lib/lead-radar/mark-replied";
 import { enqueueUrlToQueue } from "@/lib/lead-radar/enqueue-url";
-import { collectDayFacts } from "@/lib/lead-radar/daily-report";
+import { collectDayFacts, collectFactsForDates } from "@/lib/lead-radar/daily-report";
 import {
   DAILY_QUEUE_LIMIT,
   DAILY_REPORT_HOUR_MSK,
@@ -27,11 +27,12 @@ import {
   formatBatchDateRu,
   getDailyQueueLimit,
   getDailySendLimit,
+  mskDateISO,
   getAutoSendEnabled,
   getAutoSendIntervalMin,
   getCollectPerTick,
   getManualRespectsLimit,
-  countSentForBatchDate,
+  countOutboundOnDate,
   saveRadarRuntimeSettings,
 } from "@/lib/lead-radar/config";
 import { getRouletteAdminState } from "@/lib/lead-radar/day-picker";
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
     const today = new Date().toISOString().slice(0, 10);
     const dateKey = batchDate || today;
     const batch = await getBatchByDate(dateKey);
-    const sentToday = await countSentForBatchDate(dateKey);
+    const sentToday = await countOutboundOnDate(mskDateISO());
     const lastCityId = await getSetting("lead_radar_last_city_id");
     const lastNiche = await getSetting("lead_radar_last_niche");
     const lastVertical = await getSetting("lead_radar_last_vertical");
@@ -121,9 +122,10 @@ export async function POST(req: NextRequest) {
     const limit = typeof body.limit === "number" ? body.limit : 30;
     const batches = await listBatches(limit);
     const tokensAll = await sumBatchTokens();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = mskDateISO();
     const live = await collectDayFacts(body.batchDate || today);
     const dailyQueueLimit = await getDailyQueueLimit();
+    const dailySendLimit = await getDailySendLimit();
     const rows = batches.map((b: any) => {
       let dateIso: string;
       if (b.batch_date instanceof Date) {
@@ -142,16 +144,48 @@ export async function POST(req: NextRequest) {
         report_sent: !!b.report_sent_at,
       };
     });
+    const factDates = rows.map((row) => row.batch_date);
+    if (!factDates.includes(today)) factDates.push(today);
+    const factsByDate = await collectFactsForDates(factDates);
+    const withFacts = rows.map((row) => ({
+      ...row,
+        facts: factsByDate[row.batch_date] || {
+        sent: Number(row.sent_count || 0),
+        touch1: Number(row.sent_count || 0),
+        touch2: 0,
+        touch3: 0,
+        skipped: Number(row.skipped_count || 0),
+        opened: Number(row.opened_count || 0),
+        replied: Number(row.replied_count || 0),
+        bounce: Number(row.bounce_count || 0),
+        stillQueued: 0,
+      },
+    }));
     return NextResponse.json({
       ok: true,
-      batches: rows,
+      batches: withFacts,
       tokensAll,
       usdAll: estimateUsd(tokensAll),
       live,
       liveUsd: estimateUsd(live.tokens),
+      today: {
+        date: today,
+        sendLimit: dailySendLimit,
+        ...(factsByDate[today] || {
+          sent: live.sent,
+          touch1: live.sent,
+          touch2: 0,
+          touch3: 0,
+          skipped: live.skipped,
+          opened: live.opened,
+          replied: live.replied,
+          bounce: live.bounce,
+          stillQueued: 0,
+        }),
+      },
       config: {
         dailyQueueLimit,
-        dailySendLimit: await getDailySendLimit(),
+        dailySendLimit,
         autoSendEnabled: await getAutoSendEnabled(),
         dailyReportHourMsk: DAILY_REPORT_HOUR_MSK,
         defaultDailyQueueLimit: DAILY_QUEUE_LIMIT,

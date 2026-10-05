@@ -126,6 +126,31 @@ export function isAutoSendWindowMsk(now = new Date()): boolean {
   );
 }
 
+/** Границы календарного дня Москвы в UTC (MySQL хранит sent_at в UTC). */
+export function mskDayBoundsUtc(iso: string): { start: string; end: string } {
+  const [y, m, d] = iso.split("-").map(Number);
+  const start = new Date(Date.UTC(y, m - 1, d, -3, 0, 0, 0));
+  const end = new Date(Date.UTC(y, m - 1, d + 1, -3, 0, 0, 0));
+  const fmt = (dt: Date) => dt.toISOString().slice(0, 19).replace("T", " ");
+  return { start: fmt(start), end: fmt(end) };
+}
+
+/**
+ * Сколько писем ушло за календарный день Москвы: первое, второе и третье вместе.
+ * Это дневной лимит 40, а не число новых карточек пачки.
+ */
+export async function countOutboundOnDate(iso?: string): Promise<number> {
+  const date = iso || mskDateISO();
+  const { start, end } = mskDayBoundsUtc(date);
+  const db = getDbPool();
+  const [rows] = await db.query(
+    `SELECT COUNT(*) AS c FROM lead_follow_ups
+     WHERE type = 'email' AND sent_at >= ? AND sent_at < ?`,
+    [start, end]
+  );
+  return Number((rows as RowDataPacket[])[0]?.c ?? 0);
+}
+
 /** Сколько писем уже ушло за batch_date (contacted+). */
 export async function countSentForBatchDate(batchDate?: string): Promise<number> {
   const db = getDbPool();

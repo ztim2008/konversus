@@ -23,6 +23,10 @@ export type SenderProfile = {
   fromName: string;
   /** Reply-To (если пусто — SMTP_USER на отправке) */
   replyToEmail: string;
+  /** Прямая ссылка «написать в Telegram», если есть. */
+  telegramUrl?: string;
+  /** Прямая ссылка «написать в Макс», если есть. */
+  maxUrl?: string;
   /** Главный сайт (CTA / interest redirect) */
   primarySiteUrl: string;
   primarySiteLabel: string;
@@ -67,7 +71,10 @@ export const SENDER_PROFILE_ALEXEY: SenderProfile = {
   phoneE164: "+79212013252",
   phoneDisplay: "+7 (921) 201-32-52",
   fromName: "Алексей · russait.ru",
-  replyToEmail: "",
+  replyToEmail: "bilariuss@yandex.ru",
+  telegramUrl: "https://t.me/bilarius",
+  maxUrl:
+    "https://max.ru/u/f9LHodD0cOLcEBDs06CKJvYgNLDUtG5shhyHj-Vd6ZhQkV6uB5UgvlCAwlE",
   primarySiteUrl: "https://russait.ru/",
   primarySiteLabel: "russait.ru",
   secondarySiteUrl: "https://маркет-фон.рф/",

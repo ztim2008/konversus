@@ -196,6 +196,7 @@ export async function enqueueUrlToQueue(params: {
       issues: audit.issues,
       cms: audit.cms || "",
       travel: false,
+      pageUrl: normalized,
     });
 
     const radarId = await createRadar({
@@ -225,11 +226,11 @@ export async function enqueueUrlToQueue(params: {
     await db.query(
       `INSERT INTO lead_radar_sites (
         id, radar_id, domain, name, url, platform, source, serp_query, serp_position,
-        email, email_source_url, problems, privacy_issues,
+        email, email_source_url, phone, telegram, problems, privacy_issues,
         screenshot_path, screenshot_url, screenshot_at,
         kp_html, kp_subject, kp_tokens_in, kp_tokens_out,
         hot_score, score, h1_text, status, queued_at, batch_date
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
       [
         siteId,
         radarId,
@@ -242,6 +243,8 @@ export async function enqueueUrlToQueue(params: {
         null,
         emailInfo.email,
         emailInfo.sourceUrl,
+        emailInfo.phone,
+        emailInfo.telegram,
         JSON.stringify(audit.issues),
         JSON.stringify(audit.privacyIssues),
         screenshotPath,

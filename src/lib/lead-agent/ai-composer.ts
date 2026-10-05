@@ -4,6 +4,13 @@
  */
 import { callDeepSeek } from "@/lib/ai/deepseek";
 import { getSetting } from "@/lib/data/settings";
+import { GEO_CITIES_V1 } from "@/lib/lead-radar-geo";
+import {
+  decodeHtmlEntities,
+  extractH1Texts,
+  pickHonestH1,
+  readResponseHtml,
+} from "@/lib/lead-radar/page-facts";
 import {
   buildKpFallbackBody,
   buildKpSystemPrompt,
@@ -26,6 +33,8 @@ export interface KpContext {
   contactName?: string;
   cms?: string;
   travel?: boolean;
+  /** Страница из поиска. Без неё агент открывает корень домена и берёт чужой H1. */
+  pageUrl?: string;
 }
 
 export type KpGenerateResult = {
@@ -55,28 +64,35 @@ async function fetchSite(url: string): Promise<SiteSnapshot> {
     signal: AbortSignal.timeout(10000),
     headers: { "User-Agent": "Mozilla/5.0 (compatible; LeadWebRadar/1.0)" },
   });
-  const html = await res.text();
+  const html = await readResponseHtml(res);
+  const cityNames = GEO_CITIES_V1.map((city) => city.name);
 
-  const title = (html.match(/<title[^>]*>([^<]+)<\/title>/i) || [])[1]?.trim() || "";
-  const desc =
+  const title = decodeHtmlEntities(
+    (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1]?.replace(/<[^>]+>/g, " ") || ""
+  )
+    .replace(/\s+/g, " ")
+    .trim();
+  const desc = decodeHtmlEntities(
     (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i) ||
-      [])[1]?.trim() || "";
-  const h1Matches = html.match(/<h1[^>]*>([^<]+)<\/h1>/gi) || [];
-  const h1 = h1Matches.map((h) => h.replace(/<[^>]+>/g, "").trim()).filter(Boolean);
+      [])[1] || ""
+  ).trim();
+  const h1 = extractH1Texts(html);
+  const honest = pickHonestH1(h1, cityNames);
 
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const body = bodyMatch ? bodyMatch[1] : html;
-  const text = body
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
+  const text = decodeHtmlEntities(
+    body
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<[^>]+>/g, " ")
+  )
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 3000);
 
-  return { url: normalized, title, description: desc, h1, textContent: text };
+  return { url: normalized, title, description: desc, h1: honest ? [honest] : [], textContent: text };
 }
 
 export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerateResult> {
@@ -109,7 +125,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
 
   let snapshot: SiteSnapshot;
   try {
-    snapshot = await fetchSite(ctx.domain);
+    snapshot = await fetchSite(ctx.pageUrl || ctx.domain);
   } catch {
     snapshot = { url: ctx.domain, title: "", description: "", h1: [], textContent: "" };
   }
@@ -118,7 +134,7 @@ export async function generatePersonalizedKP(ctx: KpContext): Promise<KpGenerate
     `URL: ${snapshot.url}`,
     `Title: ${snapshot.title || "не найден"}`,
     `Description: ${snapshot.description || "отсутствует"}`,
-    `H1: ${snapshot.h1.join(" | ") || "не найден"}`,
+    `H1: ${snapshot.h1.join(" | ") || "не найден — не выдумывай заголовок страницы и не цитируй его"}`,
     `Текст сайта (фрагмент): ${snapshot.textContent.slice(0, 2500)}`,
     "",
     `CMS/платформа: ${ctx.cms || "не определена"}`,

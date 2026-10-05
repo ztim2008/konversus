@@ -3,6 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
+type DayFacts = {
+  sent: number;
+  touch1: number;
+  touch2: number;
+  touch3: number;
+  skipped: number;
+  opened: number;
+  replied: number;
+  bounce: number;
+  stillQueued: number;
+};
+
 type BatchRow = {
   batch_date: string;
   batch_date_ru: string;
@@ -15,25 +27,77 @@ type BatchRow = {
   tokens_total: number;
   usd_estimate: number;
   report_sent: boolean;
+  facts?: DayFacts;
 };
 
-type LiveFacts = {
-  queued: number;
-  sent: number;
-  skipped: number;
-  opened: number;
-  replied: number;
-  bounce: number;
-  tokens: number;
+type TodayReport = DayFacts & {
+  date: string;
+  sendLimit: number;
 };
+
+const MONTHS = [
+  "января",
+  "февраля",
+  "марта",
+  "апреля",
+  "мая",
+  "июня",
+  "июля",
+  "августа",
+  "сентября",
+  "октября",
+  "ноября",
+  "декабря",
+];
+
+function formatDayRu(iso: string): string {
+  const match = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return iso;
+  const day = Number(match[3]);
+  const month = MONTHS[Number(match[2]) - 1] || match[2];
+  return `${day} ${month}`;
+}
+
+function factsOf(row: BatchRow): DayFacts {
+  const sent = Number(row.facts?.sent ?? row.sent_count ?? 0);
+  const touch1 = Number(row.facts?.touch1 ?? sent);
+  const touch2 = Number(row.facts?.touch2 ?? 0);
+  const touch3 = Number(row.facts?.touch3 ?? 0);
+  return {
+    sent,
+    touch1,
+    touch2,
+    touch3,
+    skipped: Number(row.facts?.skipped ?? row.skipped_count ?? 0),
+    opened: Number(row.facts?.opened ?? row.opened_count ?? 0),
+    replied: Number(row.facts?.replied ?? row.replied_count ?? 0),
+    bounce: Number(row.facts?.bounce ?? row.bounce_count ?? 0),
+    stillQueued: Number(row.facts?.stillQueued ?? 0),
+  };
+}
+
+function dayLine(facts: DayFacts): string {
+  const parts = [
+    `первое ${facts.touch1}`,
+    `второе ${facts.touch2}`,
+    `третье ${facts.touch3}`,
+    `прочитали ${facts.opened}`,
+    `ответили ${facts.replied}`,
+  ];
+  if (facts.bounce > 0) parts.push(`не дошло ${facts.bounce}`);
+  return parts.join(", ");
+}
 
 export function BatchesStats() {
   const [batches, setBatches] = useState<BatchRow[]>([]);
-  const [live, setLive] = useState<LiveFacts | null>(null);
-  const [liveUsd, setLiveUsd] = useState(0);
+  const [today, setToday] = useState<TodayReport | null>(null);
   const [tokensAll, setTokensAll] = useState(0);
   const [usdAll, setUsdAll] = useState(0);
-  const [config, setConfig] = useState<{ dailyQueueLimit: number; dailyReportHourMsk: number } | null>(null);
+  const [config, setConfig] = useState<{
+    dailyQueueLimit: number;
+    dailySendLimit: number;
+    dailyReportHourMsk: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -49,13 +113,12 @@ export function BatchesStats() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Ошибка загрузки");
       setBatches(data.batches || []);
-      setLive(data.live || null);
-      setLiveUsd(data.liveUsd || 0);
+      setToday(data.today || null);
       setTokensAll(data.tokensAll || 0);
       setUsdAll(data.usdAll || 0);
       setConfig(data.config || null);
-    } catch (e: any) {
-      setError(e?.message || "Не удалось загрузить статистику");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Не удалось загрузить отчёт");
     } finally {
       setLoading(false);
     }
@@ -65,24 +128,31 @@ export function BatchesStats() {
     load();
   }, [load]);
 
-  const weekBars = (() => {
-    const rows = [...batches].slice(0, 7).reverse();
-    const max = Math.max(
-      1,
-      ...rows.map((b) =>
-        Math.max(Number(b.queued_count || 0), Number(b.sent_count || 0))
-      )
-    );
-    return { rows, max };
-  })();
+  const todayDate = today?.date || "";
+  const past = batches.filter((row) => row.batch_date !== todayDate);
+  const week = past.slice(0, 7);
+  const weekTotals = week.reduce(
+    (acc, row) => {
+      const facts = factsOf(row);
+      acc.touch1 += facts.touch1;
+      acc.touch2 += facts.touch2;
+      acc.touch3 += facts.touch3;
+      acc.opened += facts.opened;
+      acc.replied += facts.replied;
+      acc.bounce += facts.bounce;
+      return acc;
+    },
+    { touch1: 0, touch2: 0, touch3: 0, opened: 0, replied: 0, bounce: 0 }
+  );
+  const sendLimit = today?.sendLimit || config?.dailySendLimit || 40;
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-white">Статистика дней</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Утро = план · вечер = факт. Те же цифры, что в Telegram-отчёте.
+          <h2 className="text-lg font-semibold text-white">Отчёт</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Цифры живые: если письмо откроют завтра, «прочитали» вырастет.
           </p>
         </div>
         <button
@@ -100,193 +170,146 @@ export function BatchesStats() {
         </div>
       )}
 
-      <div className="grid sm:grid-cols-3 gap-3 mb-6">
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-wide">Лимит пачки</div>
-          <div className="text-2xl font-semibold text-white mt-1">
-            {config?.dailyQueueLimit ?? 20}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            настраивается во вкладке «Рулетка»
-          </div>
-        </div>
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-wide">Токены всего</div>
-          <div className="text-2xl font-semibold text-white mt-1">
-            {tokensAll.toLocaleString("ru-RU")}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">~${usdAll.toFixed(3)}</div>
-        </div>
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-wide">Вечерний отчёт</div>
-          <div className="text-2xl font-semibold text-white mt-1">
-            {config?.dailyReportHourMsk ?? 21}:00
-          </div>
-          <div className="text-xs text-gray-500 mt-1">МСК · cron</div>
-        </div>
-      </div>
-
-      {live && (
-        <div className="mb-6 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4">
-          <h3 className="text-sm font-semibold text-indigo-300 mb-3">
-            Сегодня (живой расчёт = как в Telegram)
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-sm">
-            <Metric label="План" value={live.queued} />
-            <Metric label="Отправлено" value={live.sent} />
-            <Metric label="Пропуск" value={live.skipped} />
-            <Metric label="Открыли" value={live.opened} />
-            <Metric label="Ответы" value={live.replied} accent />
-            <Metric label="Bounce" value={live.bounce} />
-            <Metric
-              label="Токены"
-              value={`${live.tokens.toLocaleString("ru-RU")}`}
-              sub={`~$${liveUsd.toFixed(3)}`}
-            />
-          </div>
-        </div>
-      )}
-
-      {!loading && weekBars.rows.length > 0 && (
-        <div className="mb-6 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-white">
-              План → отправлено (до 7 дней)
-            </h3>
-            <div className="flex gap-3 text-[10px] text-gray-500">
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-sm bg-indigo-400/70" />{" "}
-                план
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-sm bg-emerald-400/80" />{" "}
-                отпр.
-              </span>
-            </div>
-          </div>
-          <div className="flex items-end gap-2 h-28">
-            {weekBars.rows.map((b) => {
-              const queued = Number(b.queued_count || 0);
-              const sent = Number(b.sent_count || 0);
-              const qH = Math.max(4, Math.round((queued / weekBars.max) * 100));
-              const sH = Math.max(sent > 0 ? 4 : 0, Math.round((sent / weekBars.max) * 100));
-              const label = (b.batch_date_ru || "").slice(0, 5);
-              return (
-                <div
-                  key={b.batch_date}
-                  className="flex-1 flex flex-col items-center gap-1 min-w-0"
-                  title={`${b.batch_date_ru}: план ${queued}, отпр. ${sent}`}
-                >
-                  <div className="w-full h-24 flex items-end justify-center gap-0.5">
-                    <div
-                      className="w-[42%] rounded-t bg-indigo-400/70"
-                      style={{ height: `${qH}%` }}
-                    />
-                    <div
-                      className="w-[42%] rounded-t bg-emerald-400/80"
-                      style={{ height: `${sH}%` }}
-                    />
-                  </div>
-                  <div className="text-[10px] text-gray-500 truncate w-full text-center">
-                    {label}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {loading && (
         <div className="rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-gray-500">
-          Загружаем историю…
+          Считаем письма…
         </div>
+      )}
+
+      {!loading && today && (
+        <section className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+          <h3 className="text-sm text-gray-400">
+            Сегодня, {formatDayRu(today.date)}
+          </h3>
+          <div className="mt-5 grid gap-6 sm:grid-cols-3">
+            <div>
+              <div className="text-sm text-gray-400">Ушло</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums text-white">
+                {today.sent}{" "}
+                <span className="text-lg font-normal text-gray-500">
+                  из {sendLimit}
+                </span>
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-400">Прочитали</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums text-white">
+                {today.opened}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Как минимум. Почта часто прячет счётчик, пока не нажмут «показать картинки».
+              </p>
+            </div>
+            <div>
+              <div className="text-sm text-gray-400">Ответили</div>
+              <div className="mt-1 text-3xl font-semibold tabular-nums text-white">
+                {today.replied}
+              </div>
+            </div>
+          </div>
+          <p className="mt-5 text-sm text-gray-400">
+            Первое {today.touch1 || 0}, второе {today.touch2 || 0}, третье{" "}
+            {today.touch3 || 0}. Лимит общий на все письма дня.
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            Не дошло: {today.bounce}
+            {today.bounce > 0
+              ? ". Почта получателя вернула письмо."
+              : ""}
+          </p>
+        </section>
+      )}
+
+      {!loading && week.length > 0 && (
+        <p className="mt-4 text-sm text-gray-400">
+          За прошлые {week.length}{" "}
+          {week.length === 1 ? "день" : week.length < 5 ? "дня" : "дней"}: первое{" "}
+          {weekTotals.touch1}, второе {weekTotals.touch2}, третье {weekTotals.touch3},
+          прочитали {weekTotals.opened}, ответили {weekTotals.replied}
+          {weekTotals.bounce > 0 ? `, не дошло ${weekTotals.bounce}` : ""}.
+        </p>
+      )}
+
+      {!loading && past.length > 0 && (
+        <ul className="mt-4 divide-y divide-white/[0.06] border-y border-white/[0.06]">
+          {past.slice(0, 14).map((row) => {
+            const facts = factsOf(row);
+            return (
+              <li key={row.batch_date} className="py-2.5 text-sm">
+                <span className="text-white">{formatDayRu(row.batch_date)}</span>
+                <span className="text-gray-400"> — {dayLine(facts)}</span>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       {!loading && batches.length === 0 && (
         <div className="rounded-xl border border-white/5 bg-white/[0.02] p-8 text-center text-sm text-gray-500">
-          Пока нет пачек. Появятся после ночного прогона.
+          Пока нет отправленных дней.
         </div>
       )}
 
       {!loading && batches.length > 0 && (
-        <div className="border border-white/[0.06] rounded-xl overflow-x-auto">
-          <table className="w-full text-sm min-w-[720px]">
-            <thead>
-              <tr className="border-b border-white/[0.06] bg-[#0f172a] text-left text-xs text-gray-500">
-                <th className="p-3">Дата</th>
-                <th className="p-3">План</th>
-                <th className="p-3">Отпр.</th>
-                <th className="p-3">Проп.</th>
-                <th className="p-3">Откр.</th>
-                <th className="p-3">Ответы</th>
-                <th className="p-3">Bounce</th>
-                <th className="p-3">Токены</th>
-                <th className="p-3">Отчёт TG</th>
-              </tr>
-            </thead>
-            <tbody>
-              {batches.map((b) => (
-                <tr key={b.batch_date} className="border-b border-white/[0.04]">
-                  <td className="p-3 text-white font-medium">{b.batch_date_ru}</td>
-                  <td className="p-3 text-gray-300">{b.queued_count}</td>
-                  <td className="p-3 text-amber-300">{b.sent_count}</td>
-                  <td className="p-3 text-gray-400">{b.skipped_count}</td>
-                  <td className="p-3 text-blue-300">{b.opened_count}</td>
-                  <td className="p-3 text-emerald-400 font-semibold">{b.replied_count}</td>
-                  <td className="p-3 text-gray-500">{b.bounce_count}</td>
-                  <td className="p-3 text-gray-300">
-                    {Number(b.tokens_total || 0).toLocaleString("ru-RU")}
-                    <span className="block text-[10px] text-gray-600">
-                      ~${Number(b.usd_estimate || 0).toFixed(3)}
-                    </span>
-                  </td>
-                  <td className="p-3 text-xs">
-                    {b.report_sent ? (
-                      <span className="text-emerald-400">отправлен</span>
-                    ) : (
-                      <span className="text-gray-600">—</span>
-                    )}
-                  </td>
+        <details className="mt-6">
+          <summary className="cursor-pointer text-sm text-gray-400">
+            Подробнее: план, пропуски, токены
+          </summary>
+          <p className="mt-3 text-xs text-gray-500">
+            План — сколько КП собрали утром. Пропуск — письмо не отправили.
+            Токены — расход на тексты. Вечерний отчёт в Telegram уходит в{" "}
+            {config?.dailyReportHourMsk ?? 21}:00. Всего токенов{" "}
+            {tokensAll.toLocaleString("ru-RU")} (~${usdAll.toFixed(2)}). Лимит сбора{" "}
+            {config?.dailyQueueLimit ?? 20} настраивается во вкладке «Рулетка».
+          </p>
+          <div className="mt-3 overflow-x-auto border border-white/[0.06] rounded-xl">
+            <table className="w-full min-w-[880px] text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.06] text-left text-gray-500">
+                  <th className="p-3 font-normal">Дата</th>
+                  <th className="p-3 font-normal">Первое</th>
+                  <th className="p-3 font-normal">Второе</th>
+                  <th className="p-3 font-normal">Третье</th>
+                  <th className="p-3 font-normal">Прочитали</th>
+                  <th className="p-3 font-normal">Ответили</th>
+                  <th className="p-3 font-normal">Не дошло</th>
+                  <th className="p-3 font-normal">Пропуск</th>
+                  <th className="p-3 font-normal">План</th>
+                  <th className="p-3 font-normal">Токены</th>
+                  <th className="p-3 font-normal">Отчёт</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {batches.map((row) => {
+                  const facts = factsOf(row);
+                  return (
+                    <tr key={row.batch_date} className="border-b border-white/[0.04]">
+                      <td className="p-3 text-white">{formatDayRu(row.batch_date)}</td>
+                      <td className="p-3 text-gray-300">{facts.touch1}</td>
+                      <td className="p-3 text-gray-300">{facts.touch2}</td>
+                      <td className="p-3 text-gray-300">{facts.touch3}</td>
+                      <td className="p-3 text-gray-300">{facts.opened}</td>
+                      <td className="p-3 text-gray-300">{facts.replied}</td>
+                      <td className="p-3 text-gray-300">{facts.bounce}</td>
+                      <td className="p-3 text-gray-400">{facts.skipped}</td>
+                      <td className="p-3 text-gray-400">{row.queued_count}</td>
+                      <td className="p-3 text-gray-300">
+                        {Number(row.tokens_total || 0).toLocaleString("ru-RU")}
+                        <span className="block text-xs text-gray-600">
+                          ~${Number(row.usd_estimate || 0).toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="p-3 text-xs text-gray-400">
+                        {row.report_sent ? "ушёл" : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </details>
       )}
-
-      <p className="mt-4 text-xs text-gray-600">
-        Агрегаторы и статьи отсекаются фильтром компаний. Лимит{" "}
-        {config?.dailyQueueLimit ?? 20} — из вкладки «Рулетка» (nightly и
-        очередь).
-      </p>
-    </div>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  sub,
-  accent,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
-      <div
-        className={
-          "text-lg font-semibold mt-0.5 " +
-          (accent ? "text-emerald-400" : "text-white")
-        }
-      >
-        {value}
-      </div>
-      {sub && <div className="text-[10px] text-gray-600">{sub}</div>}
     </div>
   );
 }
