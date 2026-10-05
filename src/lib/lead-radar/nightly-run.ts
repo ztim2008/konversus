@@ -38,9 +38,11 @@ import {
   getCollectPerTick,
   getDailyQueueLimit,
   getDailySendLimit,
+  getDirectMode,
   HOT_SCORE_QUEUE_MIN,
   mskDateISO,
 } from "@/lib/lead-radar/config";
+import { isPortfolioDomain } from "@/lib/lead-radar/portfolio-domains";
 import { countSequenceReservedToday } from "@/lib/lead-radar/sequence";
 
 export { DAILY_QUEUE_LIMIT } from "@/lib/lead-radar/config";
@@ -286,6 +288,7 @@ export async function runNightlyLeadRadar(options?: {
 
   const publicOrigin = process.env.NEXT_PUBLIC_BASE_URL || "https://konversus.ru";
   const profile = await getActiveSenderProfile();
+  const directMode = await getDirectMode();
 
   // Страница 1, затем 2 и 3 — только если тик ещё не добрал need.
   for (let page = 1; page <= 3; page++) {
@@ -312,6 +315,10 @@ export async function runNightlyLeadRadar(options?: {
       }
       if (!domain || seen.has(domain)) continue;
       seen.add(domain);
+      if (isPortfolioDomain(domain)) {
+        skipped.push({ domain, reason: "portfolio" });
+        continue;
+      }
       if (await domainRecentlyUsed(domain)) {
         skipped.push({ domain, reason: "recently_used" });
         continue;
@@ -361,6 +368,15 @@ export async function runNightlyLeadRadar(options?: {
       });
       if (strong) {
         skipped.push({ domain: cand.domain, reason: strong });
+        continue;
+      }
+
+      if (directMode === "ads" && !audit.hasYandexDirect) {
+        skipped.push({ domain: cand.domain, reason: "no_direct" });
+        continue;
+      }
+      if (directMode === "no_ads" && audit.hasYandexDirect) {
+        skipped.push({ domain: cand.domain, reason: "has_direct" });
         continue;
       }
 

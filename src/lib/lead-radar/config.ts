@@ -23,6 +23,10 @@ export const SETTING_MANUAL_RESPECTS_LIMIT = "lead_radar_manual_respects_limit";
 export const SETTING_AUTO_SEND_INTERVAL_MIN = "lead_radar_auto_send_interval_min";
 /** Сколько новых КП (DeepSeek) за один тик сбора. */
 export const SETTING_COLLECT_PER_TICK = "lead_radar_collect_per_tick";
+/** mix | ads | no_ads — кого брать по коду Директа на сайте. */
+export const SETTING_DIRECT_MODE = "lead_radar_direct_mode";
+
+export type DirectMode = "mix" | "ads" | "no_ads";
 /** Активный профиль отправителя: igor | alexey */
 export { SETTING_SENDER_PROFILE } from "@/lib/lead-radar/sender-profiles";
 
@@ -107,6 +111,12 @@ export async function getCollectPerTick(): Promise<number> {
   return Math.min(10, Math.max(1, n));
 }
 
+export async function getDirectMode(): Promise<DirectMode> {
+  const raw = (await getSetting(SETTING_DIRECT_MODE)).trim().toLowerCase();
+  if (raw === "ads" || raw === "no_ads" || raw === "mix") return raw;
+  return "mix";
+}
+
 export async function getManualRespectsLimit(): Promise<boolean> {
   const raw = (await getSetting(SETTING_MANUAL_RESPECTS_LIMIT)).trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
@@ -189,6 +199,7 @@ export async function saveRadarRuntimeSettings(params: {
   manualRespectsLimit?: boolean;
   autoSendIntervalMin?: number;
   collectPerTick?: number;
+  directMode?: DirectMode;
   weights?: Partial<VerticalWeights>;
 }): Promise<{
   dailyQueueLimit: number;
@@ -197,6 +208,7 @@ export async function saveRadarRuntimeSettings(params: {
   manualRespectsLimit: boolean;
   autoSendIntervalMin: 15 | 30;
   collectPerTick: number;
+  directMode: DirectMode;
   weights: VerticalWeights;
 }> {
   const patch: Record<string, string> = {};
@@ -237,6 +249,12 @@ export async function saveRadarRuntimeSettings(params: {
     patch[SETTING_COLLECT_PER_TICK] = String(collectPerTick);
   }
 
+  let directMode = await getDirectMode();
+  if (params.directMode === "ads" || params.directMode === "no_ads" || params.directMode === "mix") {
+    directMode = params.directMode;
+    patch[SETTING_DIRECT_MODE] = directMode;
+  }
+
   let weights = await getVerticalWeights();
   if (params.weights) {
     weights = { ...weights };
@@ -262,6 +280,7 @@ export async function saveRadarRuntimeSettings(params: {
     manualRespectsLimit,
     autoSendIntervalMin,
     collectPerTick,
+    directMode,
     weights,
   };
 }

@@ -31,6 +31,7 @@ import {
   getAutoSendEnabled,
   getAutoSendIntervalMin,
   getCollectPerTick,
+  getDirectMode,
   getManualRespectsLimit,
   countOutboundOnDate,
   saveRadarRuntimeSettings,
@@ -202,6 +203,7 @@ export async function POST(req: NextRequest) {
       manualRespectsLimit,
       autoSendIntervalMin,
       collectPerTick,
+      directMode,
     ] = await Promise.all([
       getRouletteAdminState(),
       getDailyQueueLimit(),
@@ -210,6 +212,7 @@ export async function POST(req: NextRequest) {
       getManualRespectsLimit(),
       getAutoSendIntervalMin(),
       getCollectPerTick(),
+      getDirectMode(),
     ]);
     return NextResponse.json({
       ok: true,
@@ -219,6 +222,7 @@ export async function POST(req: NextRequest) {
       manualRespectsLimit,
       autoSendIntervalMin,
       collectPerTick,
+      directMode,
       cities: GEO_CITIES_V1,
       ...state,
       help: {
@@ -259,6 +263,10 @@ export async function POST(req: NextRequest) {
       collectPerTick:
         typeof body.collectPerTick === "number"
           ? body.collectPerTick
+          : undefined,
+      directMode:
+        body.directMode === "ads" || body.directMode === "no_ads" || body.directMode === "mix"
+          ? body.directMode
           : undefined,
       weights,
     });

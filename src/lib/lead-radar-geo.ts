@@ -1,6 +1,7 @@
 /**
  * География + рулетка вертикалей.
- * Гипотеза B (дерево): ядро = лесной пояс (заводы), СПб/Мск — тонкий слой сбыта.
+ * Ключи — как сделанные сайты: стройка-услуги и мебель/производство.
+ * Города крутятся по России, без упора на лесной пояс.
  */
 export type GeoCity = {
   id: string;
@@ -11,30 +12,44 @@ export type GeoCity = {
   weight: number;
 };
 
-/**
- * Веса гео ≈: лесной пояс ~65 · Новгород/Тверь/Псков ~20 · СПб+ЛО ~15 · Мск ~5.
- */
+/** Одинаковый вес: город каждый тик другой, без любимчиков. */
 export const GEO_CITIES_V1: GeoCity[] = [
-  // Лесной пояс — производство / домокомплекты
-  { id: "ptz", name: "Петрозаводск", priority: "high", travel: true, weight: 15 },
-  { id: "vologda", name: "Вологда", priority: "high", travel: true, weight: 12 },
-  { id: "kostroma", name: "Кострома", priority: "high", travel: true, weight: 12 },
-  { id: "cherepovets", name: "Череповец", priority: "high", travel: true, weight: 10 },
-  { id: "kirov", name: "Киров", priority: "high", travel: true, weight: 10 },
-  // Ближний лес / СЗ
-  { id: "vnovgorod", name: "Великий Новгород", priority: "high", travel: true, weight: 10 },
-  { id: "tver", name: "Тверь", priority: "high", travel: true, weight: 8 },
-  { id: "pskov", name: "Псков", priority: "tier2", travel: true, weight: 5 },
-  // Сбыт / монтаж (не выжигать)
-  { id: "spb", name: "Санкт-Петербург", priority: "home", travel: false, weight: 8 },
-  { id: "lo", name: "Ленинградская область", priority: "high", travel: true, weight: 5 },
-  { id: "vyborg", name: "Выборг", priority: "tier2", travel: true, weight: 3 },
-  { id: "msk", name: "Москва", priority: "tier2", travel: false, weight: 4 },
+  { id: "perm", name: "Пермь", priority: "high", travel: true, weight: 5 },
+  { id: "yaroslavl", name: "Ярославль", priority: "high", travel: true, weight: 5 },
+  { id: "omsk", name: "Омск", priority: "high", travel: true, weight: 5 },
+  { id: "spb", name: "Санкт-Петербург", priority: "home", travel: false, weight: 5 },
+  { id: "msk", name: "Москва", priority: "tier2", travel: false, weight: 5 },
+  { id: "kaluga", name: "Калуга", priority: "high", travel: true, weight: 5 },
+  { id: "chel", name: "Челябинск", priority: "high", travel: true, weight: 5 },
+  { id: "volgograd", name: "Волгоград", priority: "high", travel: true, weight: 5 },
+  { id: "nsk", name: "Новосибирск", priority: "high", travel: true, weight: 5 },
+  { id: "kazan", name: "Казань", priority: "high", travel: true, weight: 5 },
+  { id: "krasnoyarsk", name: "Красноярск", priority: "high", travel: true, weight: 5 },
+  { id: "ekb", name: "Екатеринбург", priority: "high", travel: true, weight: 5 },
+  { id: "nn", name: "Нижний Новгород", priority: "high", travel: true, weight: 5 },
+  { id: "samara", name: "Самара", priority: "high", travel: true, weight: 5 },
+  { id: "rostov", name: "Ростов-на-Дону", priority: "high", travel: true, weight: 5 },
+  { id: "voronezh", name: "Воронеж", priority: "high", travel: true, weight: 5 },
+  { id: "krasnodar", name: "Краснодар", priority: "high", travel: true, weight: 5 },
+  { id: "ufa", name: "Уфа", priority: "high", travel: true, weight: 5 },
+  { id: "tyumen", name: "Тюмень", priority: "high", travel: true, weight: 5 },
+  { id: "irkutsk", name: "Иркутск", priority: "high", travel: true, weight: 5 },
+  { id: "barnaul", name: "Барнаул", priority: "high", travel: true, weight: 5 },
+  { id: "tula", name: "Тула", priority: "high", travel: true, weight: 5 },
+  { id: "ryazan", name: "Рязань", priority: "high", travel: true, weight: 5 },
+  { id: "tomsk", name: "Томск", priority: "high", travel: true, weight: 5 },
+  { id: "kemerovo", name: "Кемерово", priority: "high", travel: true, weight: 5 },
+  { id: "saratov", name: "Саратов", priority: "high", travel: true, weight: 5 },
+  { id: "izhevsk", name: "Ижевск", priority: "high", travel: true, weight: 5 },
+  { id: "tver", name: "Тверь", priority: "high", travel: true, weight: 5 },
+  { id: "vologda", name: "Вологда", priority: "high", travel: true, weight: 5 },
+  { id: "kostroma", name: "Кострома", priority: "high", travel: true, weight: 5 },
+  { id: "kirov", name: "Киров", priority: "high", travel: true, weight: 5 },
 ];
 
-/** Bootstrap СПб выключен (0): сразу крутим лесной пояс. */
+/** Bootstrap выключен: сразу ротация по списку городов. */
 export const GEO_COOLDOWN_DAYS = 3;
-export const GEO_BOOTSTRAP_CITY_ID = "ptz";
+export const GEO_BOOTSTRAP_CITY_ID = "perm";
 export const GEO_BOOTSTRAP_DAYS = 0;
 
 /** @deprecated используйте VERTICALS_V2 / allNichesFlat() */
@@ -45,11 +60,7 @@ export const NICHES_V1 = [
   "бытовки",
 ] as const;
 
-export type VerticalId =
-  | "doma_derevo"
-  | "karkas"
-  | "bani"
-  | "bytovki_verandy";
+export type VerticalId = "stroika" | "mebel";
 
 /** Снимок прежних id (гипотеза Игорь) — только для документации/отката. */
 export type VerticalIdArchive =
@@ -156,62 +167,43 @@ export const VERTICALS_V2_ARCHIVE: readonly {
 ] as const;
 
 /**
- * Активная рулетка: дома/каркас/бани жирнее; бытовки почти выкл.
- * Веса: дома 45 · каркас 35 · бани 15 · бытовки/веранды 5.
- * Запросы с уклоном в завод / производство / домокомплект.
+ * Активная рулетка по сделанным сайтам.
+ * Веса: стройка и услуги 70 · мебель и производство 30.
  */
 export const VERTICALS_V2: readonly VerticalDef[] = [
   {
-    id: "doma_derevo",
-    labelRu: "Дома из дерева",
-    weight: 45,
+    id: "stroika",
+    labelRu: "Стройка и услуги",
+    weight: 70,
     niches: [
-      "завод домов из бруса",
-      "производство домов из бруса",
-      "домокомплекты из бруса",
       "дома из бруса под ключ",
-      "дома из клееного бруса завод",
-      "дома из оцилиндрованного бревна производство",
-      "строительство домов из бруса",
-      "деревянные дома производство",
-    ],
-  },
-  {
-    id: "karkas",
-    labelRu: "Каркасники",
-    weight: 35,
-    niches: [
-      "завод каркасных домов",
-      "производство каркасных домов",
-      "домокомплекты каркасные",
-      "каркасные дома под ключ",
-      "каркасное домостроение завод",
-      "модульные каркасные дома производство",
-      "строительство каркасных домов",
-    ],
-  },
-  {
-    id: "bani",
-    labelRu: "Бани",
-    weight: 15,
-    niches: [
-      "завод бань из бруса",
-      "производство бань из бруса",
+      "строительство домов под ключ",
+      "дома из газобетона под ключ",
       "бани из бруса под ключ",
-      "бани из бревна производство",
-      "каркасные бани завод",
-      "строительство бань из бруса",
+      "каркасные бани под ключ",
+      "мобильные бани под ключ",
+      "модульные бани под ключ",
+      "дома и срубы из кедра",
+      "беседки и хозблоки",
+      "монтаж кровли",
+      "укладка тротуарной плитки",
+      "укладка асфальта",
+      "строительство бассейнов под ключ",
+      "демонтаж зданий",
+      "доставка песка щебня бетона",
     ],
   },
   {
-    id: "bytovki_verandy",
-    labelRu: "Бытовки и веранды",
-    weight: 5,
+    id: "mebel",
+    labelRu: "Мебель и производство",
+    weight: 30,
     niches: [
-      "производство бытовок деревянных",
-      "бытовки дачные под ключ",
-      "веранды и террасы под ключ",
-      "пристройка веранды к дому",
+      "кухни на заказ",
+      "шкафы-купе на заказ",
+      "мебель на заказ",
+      "производство мебели на заказ",
+      "оборудование для мясопереработки",
+      "3d печать деталей",
     ],
   },
 ] as const;

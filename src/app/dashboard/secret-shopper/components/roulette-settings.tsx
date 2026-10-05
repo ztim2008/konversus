@@ -31,6 +31,7 @@ export function RouletteSettings() {
   const [manualRespectsLimit, setManualRespectsLimit] = useState(false);
   const [autoSendIntervalMin, setAutoSendIntervalMin] = useState<15 | 30>(30);
   const [collectPerTick, setCollectPerTick] = useState(2);
+  const [directMode, setDirectMode] = useState<"mix" | "ads" | "no_ads">("mix");
   const [verticals, setVerticals] = useState<VerticalRow[]>([]);
   const [preview, setPreview] = useState<PreviewRow[]>([]);
   const [ribbon, setRibbon] = useState<Array<{ id: string; labelRu: string }>>(
@@ -45,7 +46,7 @@ export function RouletteSettings() {
     bootstrapStart: "",
     help: "",
   });
-  const [openVertical, setOpenVertical] = useState<string | null>("stroitelstvo");
+  const [openVertical, setOpenVertical] = useState<string | null>("stroika");
 
   const weightSum = useMemo(
     () => verticals.reduce((s, v) => s + (Number(v.weight) || 0), 0),
@@ -69,6 +70,7 @@ export function RouletteSettings() {
       setManualRespectsLimit(!!data.manualRespectsLimit);
       setAutoSendIntervalMin(data.autoSendIntervalMin === 15 ? 15 : 30);
       setCollectPerTick(Number(data.collectPerTick) || 2);
+      setDirectMode(data.directMode === "ads" || data.directMode === "no_ads" ? data.directMode : "mix");
       setVerticals(data.verticals || []);
       setPreview(data.preview || []);
       setRibbon(data.ribbon || []);
@@ -117,6 +119,7 @@ export function RouletteSettings() {
           manualRespectsLimit,
           autoSendIntervalMin,
           collectPerTick,
+          directMode,
           weights,
         }),
       });
@@ -128,6 +131,7 @@ export function RouletteSettings() {
       setManualRespectsLimit(!!data.manualRespectsLimit);
       setAutoSendIntervalMin(data.autoSendIntervalMin === 15 ? 15 : 30);
       setCollectPerTick(Number(data.collectPerTick) || collectPerTick);
+      setDirectMode(data.directMode === "ads" || data.directMode === "no_ads" ? data.directMode : "mix");
       setVerticals(data.verticals || verticals);
       setPreview(data.preview || []);
       setRibbon(data.ribbon || []);
@@ -241,6 +245,25 @@ export function RouletteSettings() {
               onChange={(e) => setCollectPerTick(Number(e.target.value) || 1)}
               className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
             />
+          </label>
+          <label className="block text-xs text-gray-500">
+            Яндекс Директ
+            <select
+              value={directMode}
+              onChange={(e) =>
+                setDirectMode(
+                  e.target.value === "ads" || e.target.value === "no_ads" ? e.target.value : "mix"
+                )
+              }
+              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
+            >
+              <option value="mix">Вперемешку</option>
+              <option value="ads">Только с рекламой</option>
+              <option value="no_ads">Только без рекламы</option>
+            </select>
+            <span className="mt-1 block text-gray-500">
+              Смотрим код на самом сайте. Кабинет Яндекса отсюда не виден.
+            </span>
           </label>
           <label className="flex items-start gap-2 text-xs text-gray-400">
             <input
@@ -410,8 +433,8 @@ export function RouletteSettings() {
           </table>
         </div>
         <p className="mt-2 text-[11px] text-gray-600">
-          Город в прогнозе не зафиксирован: в bootstrap — СПб, дальше ротация с
-          cooldown. Первый слот ленты = следующий утренний pick.
+          Город в прогнозе не зафиксирован: каждый сбор берёт следующий город из списка.
+          Первый слот ленты = следующий утренний pick.
         </p>
       </div>
     </div>

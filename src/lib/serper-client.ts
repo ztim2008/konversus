@@ -71,17 +71,11 @@ export async function searchSerperOrganic(params: {
   return { query: params.query, organic, credits: data.credits };
 }
 
-/** Запрос под исполнителей/заводы в городе (гипотеза дерево-дома). */
+/** Запрос под компании в городе. Ниша уже из ключей портфолио, без приписки «завод». */
 export function buildCompanySerpQuery(niche: string, city: string): string {
   const n = niche.trim();
   const c = city.trim();
-  const alreadyFactory =
-    /завод|производ|домокомплект|клеен|оцилиндр/i.test(n);
-  const core = alreadyFactory
-    ? `${n} ${c}`
-    : `${n} ${c} (завод OR производство OR домокомплект)`;
-  // Минус агрегаторы/биржи — меньше микро-бригад и каталогов в топе
-  return `${core} -avito -2gis -profi -youdo -domclick -yell -zoon`;
+  return `${n} ${c} -avito -2gis -profi -youdo -domclick -yell -zoon`;
 }
 
 export function extractDomain(url: string): string | null {

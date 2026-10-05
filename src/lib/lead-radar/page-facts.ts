@@ -281,6 +281,13 @@ export function preferLegalForm(current: LegalReading, next: LegalReading): Lega
   return rank(next) > rank(current) ? next : current;
 }
 
+/** Код Директа или рекламной сети Яндекса. Метрика сама по себе не считается рекламой. */
+export function hasYandexDirectPixel(html: string): boolean {
+  return /an\.yandex\.ru|yandex\.ru\/ads|direct\.yandex|yandexContextAsyncCallbacks|Ya\.Context|yandex_rtb/i.test(
+    html
+  );
+}
+
 export function legalFormLabel(form: string | null | undefined): string {
   if (form === "ip") return "ИП";
   if (form === "company") return "ООО";
