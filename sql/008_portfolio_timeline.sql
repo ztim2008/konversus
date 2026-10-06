@@ -7,6 +7,7 @@ create table if not exists portfolio_entries (
   created_at datetime(3) not null,
   updated_at datetime(3) not null,
   published tinyint(1) not null default 0,
+  telegram_announced_at datetime(3) null,
   index idx_portfolio_entries_feed (published, created_at, id)
 ) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
 

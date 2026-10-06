@@ -20,7 +20,7 @@ export function EntryPanel({
 }: {
   initial: PortfolioEntry | null;
   onClose: () => void;
-  onSaved: (entry: PortfolioEntry) => void;
+  onSaved: (entry: PortfolioEntry, telegram: { ok: boolean; error?: string } | null) => void;
 }) {
   const originalIds = useMemo(() => new Set(initial?.media.map((item) => item.id) ?? []), [initial]);
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -120,8 +120,11 @@ export function EntryPanel({
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error(await readError(response));
-      const data = (await response.json()) as { entry: PortfolioEntry };
-      onSaved(data.entry);
+      const data = (await response.json()) as {
+        entry: PortfolioEntry;
+        telegram?: { ok: boolean; error?: string } | null;
+      };
+      onSaved(data.entry, data.telegram ?? null);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Не получилось сохранить");
       setBusy(false);
@@ -219,7 +222,7 @@ export function EntryPanel({
       </div>
 
       {error ? <p className="mt-3 text-sm text-[var(--foreground)]">{error}</p> : null}
-      {busy ? <p className="mt-3 text-sm text-[var(--muted)]">Сохраняю изображения…</p> : null}
+      {busy ? <p className="mt-3 text-sm text-[var(--muted)]">Подождите…</p> : null}
 
       <div className="mt-5 flex flex-wrap gap-2">
         {initial?.published ? (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { deleteEntry, PortfolioInputError, updateEntry } from "@/lib/portfolio-timeline/queries";
+import { notifyGroupOnPublish } from "@/lib/portfolio-timeline/telegram";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     };
     const entry = await updateEntry(id, body);
     if (!entry) return NextResponse.json({ error: "Работа не найдена" }, { status: 404 });
-    return NextResponse.json({ entry });
+    const telegram = await notifyGroupOnPublish(entry);
+    return NextResponse.json({ entry, telegram });
   } catch (error) {
     return errorResponse(error);
   }

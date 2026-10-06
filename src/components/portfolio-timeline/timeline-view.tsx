@@ -25,6 +25,7 @@ export function TimelineView({
   const [panel, setPanel] = useState<PortfolioEntry | null | "new">(null);
   const [lightbox, setLightbox] = useState<{ entryId: string; index: number } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     if (!cursor) return;
@@ -102,9 +103,17 @@ export function TimelineView({
           key={panel === "new" ? "new" : panel.id}
           initial={panel === "new" ? null : panel}
           onClose={() => setPanel(null)}
-          onSaved={(entry) => saveEntry(entry, panel === "new")}
+          onSaved={(entry, telegram) => {
+            saveEntry(entry, panel === "new");
+            if (telegram?.ok) setNotice("Ушло в @avito_dizain");
+            else if (telegram && !telegram.ok) {
+              setNotice(`${telegram.error || "В группу не отправилось"}. Откройте работу и нажмите «Сохранить» ещё раз.`);
+            } else setNotice("");
+          }}
         />
       ) : null}
+
+      {notice ? <p className="mb-6 text-sm text-[var(--muted)]">{notice}</p> : null}
 
       {loadError ? <p className="text-sm text-[var(--muted)]">Лента временно недоступна.</p> : null}
 
@@ -114,7 +123,7 @@ export function TimelineView({
 
       <ol className="space-y-14">
         {entries.map((entry, entryIndex) => (
-          <li key={entry.id} className="relative border-l border-[var(--line)] pl-6">
+          <li id={entry.id} key={entry.id} className="relative border-l border-[var(--line)] pl-6">
             <span className="absolute top-1.5 -left-[5px] h-2 w-2 rounded-full bg-[var(--foreground)]" aria-hidden="true" />
             <p className="text-xs text-[var(--muted)]">{formatPortfolioDate(entry.createdAt)}</p>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">

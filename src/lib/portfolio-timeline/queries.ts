@@ -313,9 +313,10 @@ export async function updateEntry(
     await connection.beginTransaction();
     await connection.execute(
       `update portfolio_entries
-       set title = ?, description = ?, published = ?, updated_at = ?
+       set title = ?, description = ?, published = ?, updated_at = ?,
+           telegram_announced_at = if(? = 1, telegram_announced_at, null)
        where id = ?`,
-      [title, description, published ? 1 : 0, new Date(), id],
+      [title, description, published ? 1 : 0, new Date(), published ? 1 : 0, id],
     );
     if (removed.length > 0) {
       const placeholders = removed.map(() => "?").join(",");
@@ -343,6 +344,27 @@ export async function updateEntry(
 
   await removeMediaFiles(removed);
   return getEntry(id, { includeDrafts: true });
+}
+
+export async function claimTelegramAnnounce(id: string) {
+  assertUuid(id);
+  const pool = getDbPool();
+  const [result] = await pool.execute<ResultSetHeader>(
+    `update portfolio_entries
+     set telegram_announced_at = ?
+     where id = ? and published = 1 and telegram_announced_at is null`,
+    [new Date(), id],
+  );
+  return result.affectedRows === 1;
+}
+
+export async function releaseTelegramAnnounce(id: string) {
+  assertUuid(id);
+  const pool = getDbPool();
+  await pool.execute(
+    `update portfolio_entries set telegram_announced_at = null where id = ? and published = 1`,
+    [id],
+  );
 }
 
 export async function deleteEntry(id: string) {

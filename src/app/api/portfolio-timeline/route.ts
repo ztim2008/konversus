@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { createEntry, listEntries, PortfolioInputError } from "@/lib/portfolio-timeline/queries";
+import { notifyGroupOnPublish } from "@/lib/portfolio-timeline/telegram";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,8 @@ export async function POST(request: Request) {
       mediaIds?: unknown;
     };
     const entry = await createEntry(body);
-    return NextResponse.json({ entry });
+    const telegram = await notifyGroupOnPublish(entry);
+    return NextResponse.json({ entry, telegram });
   } catch (error) {
     return errorResponse(error);
   }
