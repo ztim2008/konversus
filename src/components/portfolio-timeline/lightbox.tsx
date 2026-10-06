@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type { PortfolioMedia } from "@/lib/portfolio-timeline/types";
 
@@ -34,9 +35,9 @@ export function Lightbox({
     };
   }, [index, media.length, onClose, onIndex]);
 
-  if (!item) return null;
+  if (!item || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -57,14 +58,7 @@ export function Lightbox({
         setDragX(0);
       }}
     >
-      <button
-        type="button"
-        className="absolute top-5 right-5 text-sm text-white"
-        onClick={onClose}
-      >
-        Закрыть
-      </button>
-      <p className="absolute top-5 left-5 text-sm text-white/80">
+      <p className="absolute top-5 left-5 z-20 text-sm text-white/80">
         {index + 1} / {media.length}
       </p>
       {media.length > 1 ? (
@@ -98,10 +92,22 @@ export function Lightbox({
         alt={item.alt}
         width={item.width}
         height={item.height}
-        className="max-h-[86vh] max-w-[92vw] object-contain"
+        className="z-0 min-h-0 min-w-0 max-h-[86vh] max-w-[92vw] object-contain"
         onClick={(event) => event.stopPropagation()}
         draggable={false}
       />
-    </div>
+      <button
+        type="button"
+        className="absolute top-5 right-5 z-20 flex h-12 w-12 items-center justify-center bg-black text-3xl leading-none text-white"
+        aria-label="Закрыть"
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+      >
+        ×
+      </button>
+    </div>,
+    document.body,
   );
 }

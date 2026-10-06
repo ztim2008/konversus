@@ -59,22 +59,22 @@ export function PortfolioSidebar() {
         alt="Алексей Тимофеев"
         width={640}
         height={640}
-        className="h-24 w-24 object-cover min-[900px]:h-14 min-[900px]:w-14"
+        className="mx-auto block h-28 w-28 object-cover min-[900px]:h-28 min-[900px]:w-28"
       />
-      <h1 className="mt-5 text-2xl font-semibold tracking-tight text-[var(--foreground)] min-[900px]:mt-3 min-[900px]:text-lg">
+      <h1 className="mt-5 text-center text-2xl font-semibold tracking-tight text-[var(--foreground)] min-[900px]:mt-3 min-[900px]:text-lg">
         Алексей Тимофеев
       </h1>
-      <p className="mt-3 text-sm leading-snug text-[var(--foreground)] min-[900px]:mt-1.5 min-[900px]:text-[12px] min-[900px]:leading-snug">
+      <p className="mt-3 text-center text-sm leading-snug text-[var(--foreground)] min-[900px]:mt-1.5 min-[900px]:text-[12px] min-[900px]:leading-snug">
         AI Engineer / AI Developer
         <br />
         Дизайнер цифровых продуктов и визуального контента
       </p>
-      <p className="mt-4 max-w-[28ch] text-sm leading-relaxed text-[var(--muted)] min-[900px]:mt-2 min-[900px]:text-[11px] min-[900px]:leading-snug">
+      <p className="mx-auto mt-4 max-w-[28ch] text-center text-sm leading-relaxed text-[var(--muted)] min-[900px]:mt-2 min-[900px]:text-[11px] min-[900px]:leading-snug">
         AI, сайты, автоматизация и визуальный контент. Создаю цифровые решения от идеи и архитектуры до работающего продукта.
       </p>
       <a
         href="https://t.me/bilarius"
-        className="mt-4 inline-block text-sm text-[var(--foreground)] underline decoration-[var(--line)] underline-offset-4 min-[900px]:mt-2 min-[900px]:text-[12px]"
+        className="mt-4 block text-center text-sm text-[var(--foreground)] underline decoration-[var(--line)] underline-offset-4 min-[900px]:mt-2 min-[900px]:text-[12px]"
       >
         Telegram
       </a>
