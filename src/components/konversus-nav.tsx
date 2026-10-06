@@ -168,7 +168,8 @@ export default function KonversusNav() {
               )}
             </div>
 
-            <NavLink href="/portfolio">Портфолио</NavLink>
+            <NavLink href="/portfolio">Портфолио сайтов</NavLink>
+            <NavLink href="/portfolio/timeline">Хроника работ</NavLink>
             <NavLink href="/about">Обо мне</NavLink>
             <NavLink href="/docs">Документация</NavLink>
             <NavLink href="https://t.me/bilarius" external>Контакты</NavLink>
@@ -216,7 +217,8 @@ export default function KonversusNav() {
                 </a>
               ))}
             </MobileSection>
-            <MobileLink href="/portfolio" onClick={() => setMobileOpen(false)}>Портфолио</MobileLink>
+            <MobileLink href="/portfolio" onClick={() => setMobileOpen(false)}>Портфолио сайтов</MobileLink>
+            <MobileLink href="/portfolio/timeline" onClick={() => setMobileOpen(false)}>Хроника работ</MobileLink>
             <MobileLink href="/about" onClick={() => setMobileOpen(false)}>Обо мне</MobileLink>
             <MobileLink href="/docs" onClick={() => setMobileOpen(false)}>Документация</MobileLink>
             <MobileLink href="https://t.me/bilarius" onClick={() => setMobileOpen(false)} external>Telegram @bilarius</MobileLink>

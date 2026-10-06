@@ -13,6 +13,7 @@ const PRODUCTS = [
 const ABOUT = [
   { name: "Обо мне", href: "/about" },
   { name: "Портфолио", href: "/portfolio" },
+  { name: "Хроника работ", href: "/portfolio/timeline" },
   { name: "Дизайн / Behance", href: "/about#portfolio" },
   { name: "Документация", href: "/docs" },
 ];
