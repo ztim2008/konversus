@@ -1,5 +1,6 @@
 "use client";
 
+import { BookOpen, FileText } from "lucide-react";
 import { useState } from "react";
 
 import { PROFILE_PHOTO, SKILL_GROUPS } from "./profile";
@@ -61,6 +62,23 @@ export function PortfolioSidebar() {
         height={640}
         className="mx-auto block h-28 w-28 object-cover min-[900px]:h-28 min-[900px]:w-28"
       />
+      <div className="mx-auto mt-4 flex w-full max-w-[220px] flex-col gap-2 min-[900px]:mt-3">
+        <a
+          href="/resume/aleksey-timofeev.pdf"
+          download="Алексей-Тимофеев-резюме.pdf"
+          className="flex items-center justify-center gap-2 border border-[var(--foreground)] px-3 py-2 text-[13px] text-[var(--foreground)] min-[900px]:text-[12px]"
+        >
+          <FileText size={15} strokeWidth={1.75} aria-hidden="true" />
+          Скачать
+        </a>
+        <a
+          href="/portfolio/resume"
+          className="flex items-center justify-center gap-2 border border-[var(--foreground)] px-3 py-2 text-[13px] text-[var(--foreground)] min-[900px]:text-[12px]"
+        >
+          <BookOpen size={15} strokeWidth={1.75} aria-hidden="true" />
+          Читать
+        </a>
+      </div>
       <h1 className="mt-5 text-center text-2xl font-semibold tracking-tight text-[var(--foreground)] min-[900px]:mt-3 min-[900px]:text-lg">
         Алексей Тимофеев
       </h1>
