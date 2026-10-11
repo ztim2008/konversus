@@ -10,7 +10,8 @@ import { getAllSettings } from "@/lib/data/settings";
 import { claimTelegramAnnounce, releaseTelegramAnnounce } from "./queries";
 import type { PortfolioEntry } from "./types";
 
-const GROUP_CHAT_ID = "@avito_dizain";
+const GROUP = "@avito_dizain";
+const CHANNEL = "@bilarius_design";
 const SITE = "https://konversus.ru/portfolio/timeline";
 const ALBUM_LIMIT = 10;
 const CAPTION_LIMIT = 1024;
@@ -68,14 +69,45 @@ async function jpegFor(publicPath: string) {
   }
 }
 
-function humanError(description: string) {
+function humanError(description: string, chat: string) {
   const text = description.toLowerCase();
-  if (text.includes("chat not found")) return "Бот не видит группу @avito_dizain";
-  if (text.includes("not enough rights") || text.includes("have no rights")) return "У бота нет права писать в группу";
-  if (text.includes("kicked") || text.includes("not a member") || text.includes("bot was blocked")) {
-    return "Бот из настроек сайта не состоит в @avito_dizain";
+  if (text.includes("chat not found") || text.includes("member list is inaccessible")) {
+    return `Бот @konversuss_bot не видит ${chat}. Добавьте его админом с правом публиковать.`;
   }
-  return "Telegram не принял пост";
+  if (text.includes("not enough rights") || text.includes("have no rights")) {
+    return `У @konversuss_bot нет права писать в ${chat}`;
+  }
+  if (text.includes("kicked") || text.includes("not a member") || text.includes("bot was blocked")) {
+    return `@konversuss_bot не состоит в ${chat}`;
+  }
+  return `Telegram не принял пост в ${chat}`;
+}
+
+async function readChat(token: string, chatId: string) {
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/getChat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    const data = (await response.json().catch(() => null)) as {
+      ok?: boolean;
+      result?: { id?: number; linked_chat_id?: number };
+    } | null;
+    if (!data?.ok || typeof data.result?.id !== "number") return null;
+    return { id: data.result.id, linkedChatId: data.result.linked_chat_id ?? null };
+  } catch {
+    return null;
+  }
+}
+
+/** Канал с привязанной группой обсуждения сам появляется в группе. Туда второй раз не шлём. */
+async function destinationChats(token: string) {
+  const [channel, group] = await Promise.all([readChat(token, CHANNEL), readChat(token, GROUP)]);
+  if (channel?.linkedChatId != null && channel.linkedChatId === group?.id) return [CHANNEL];
+  if (!channel || !group) return [CHANNEL];
+  return [GROUP, CHANNEL];
 }
 
 async function telegramPost(token: string, method: string, body: BodyInit, timeoutMs: number, json = false) {
@@ -89,12 +121,12 @@ async function telegramPost(token: string, method: string, body: BodyInit, timeo
   if (!response.ok || !data?.ok) {
     const description = data?.description || `HTTP ${response.status}`;
     console.error("portfolio telegram", method, description);
-    return { ok: false as const, error: humanError(description) };
+    return { ok: false as const, error: description };
   }
   return { ok: true as const };
 }
 
-async function sendAlbum(token: string, entry: PortfolioEntry) {
+async function sendAlbum(token: string, chatId: string, entry: PortfolioEntry) {
   const files: Buffer[] = [];
   for (const item of entry.media.slice(0, ALBUM_LIMIT)) {
     const jpeg = await jpegFor(item.url);
@@ -107,7 +139,7 @@ async function sendAlbum(token: string, entry: PortfolioEntry) {
       token,
       "sendMessage",
       JSON.stringify({
-        chat_id: GROUP_CHAT_ID,
+        chat_id: chatId,
         text: caption,
         parse_mode: "HTML",
         disable_web_page_preview: false,
@@ -119,7 +151,7 @@ async function sendAlbum(token: string, entry: PortfolioEntry) {
 
   if (files.length === 1) {
     const form = new FormData();
-    form.append("chat_id", GROUP_CHAT_ID);
+    form.append("chat_id", chatId);
     form.append("caption", caption);
     form.append("parse_mode", "HTML");
     form.append("photo", new Blob([new Uint8Array(files[0])], { type: "image/jpeg" }), "photo.jpg");
@@ -127,7 +159,7 @@ async function sendAlbum(token: string, entry: PortfolioEntry) {
   }
 
   const form = new FormData();
-  form.append("chat_id", GROUP_CHAT_ID);
+  form.append("chat_id", chatId);
   form.append(
     "media",
     JSON.stringify(
@@ -144,7 +176,7 @@ async function sendAlbum(token: string, entry: PortfolioEntry) {
   return telegramPost(token, "sendMediaGroup", form, 60_000);
 }
 
-/** Публикация уходит в @avito_dizain один раз. Черновик и правка уже отправленной работы молчат. */
+/** Новая публикация уходит в канал. Если группа — её обсуждение, Telegram кладёт туда копию сам. */
 export async function notifyGroupOnPublish(entry: PortfolioEntry) {
   if (!entry.published) return null;
 
@@ -155,14 +187,22 @@ export async function notifyGroupOnPublish(entry: PortfolioEntry) {
   const claimed = await claimTelegramAnnounce(entry.id);
   if (!claimed) return null;
 
+  const errors: string[] = [];
+  let sent = 0;
   try {
-    const result = await sendAlbum(token, entry);
-    if (!result.ok) await releaseTelegramAnnounce(entry.id);
-    return result;
+    const chats = await destinationChats(token);
+    for (const chat of chats) {
+      const result = await sendAlbum(token, chat, entry);
+      if (result.ok) sent += 1;
+      else errors.push(humanError(result.error, chat));
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "error";
     console.error("portfolio telegram", message.replace(/bot\d+:[A-Za-z0-9_-]+/g, "bot***"));
-    await releaseTelegramAnnounce(entry.id);
-    return { ok: false as const, error: "Telegram не принял пост" };
+    errors.push("Telegram не принял пост");
   }
+
+  if (sent === 0) await releaseTelegramAnnounce(entry.id);
+  if (errors.length) return { ok: false as const, error: errors.join(" ") };
+  return { ok: true as const };
 }

@@ -105,7 +105,7 @@ export function TimelineView({
           onClose={() => setPanel(null)}
           onSaved={(entry, telegram) => {
             saveEntry(entry, panel === "new");
-            if (telegram?.ok) setNotice("Ушло в @avito_dizain");
+            if (telegram?.ok) setNotice("Ушло в канал и в группу");
             else if (telegram && !telegram.ok) {
               setNotice(`${telegram.error || "В группу не отправилось"}. Откройте работу и нажмите «Сохранить» ещё раз.`);
             } else setNotice("");
