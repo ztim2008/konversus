@@ -10,7 +10,12 @@ import { PortfolioInputError, cleanupOrphanMedia, insertUploadedMedia } from "./
 
 const UPLOAD_ROOT = path.join(process.cwd(), "sales-doc", "uploads");
 const ORIGINALS_ROOT = path.join(process.cwd(), "sales-doc", "portfolio-originals");
-const MAX_BYTES = 15 * 1024 * 1024;
+const MAX_BYTES = 30 * 1024 * 1024;
+const MAX_PIXELS = 120_000_000;
+const WEBP_MAX = 16383;
+const JPEG_MAX = 65000;
+const PREVIEW_WIDTH = 1920;
+const LIGHTBOX_WIDTH = 3840;
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 const ALLOWED_FORMAT = new Set(["jpeg", "png", "webp"]);
 
@@ -18,11 +23,41 @@ function publicUrl(year: string, month: string, filename: string) {
   return `/sales-doc/uploads/${year}/${month}/${filename}`;
 }
 
-async function writeVariant(buffer: Buffer, maxEdge: number, filePath: string) {
-  const output = await sharp(buffer)
+function fitToWidth(srcW: number, srcH: number, maxWidth: number) {
+  let width = Math.min(srcW, maxWidth);
+  let height = Math.max(1, Math.round((srcH * width) / srcW));
+  let format: "webp" | "jpeg" = "webp";
+  if (width > WEBP_MAX || height > WEBP_MAX) {
+    format = "jpeg";
+    if (height > JPEG_MAX) {
+      width = Math.max(1, Math.round((width * JPEG_MAX) / height));
+      height = JPEG_MAX;
+    }
+  }
+  return { width, height, format };
+}
+
+async function writeWidthVariant(buffer: Buffer, maxWidth: number, filePath: string, quality: number) {
+  const meta = await sharp(buffer, { limitInputPixels: MAX_PIXELS }).rotate().metadata();
+  const fitted = fitToWidth(meta.width || maxWidth, meta.height || maxWidth, maxWidth);
+  const pipeline = sharp(buffer, { limitInputPixels: MAX_PIXELS })
     .rotate()
-    .resize(maxEdge, maxEdge, { fit: "inside", withoutEnlargement: true })
-    .webp({ quality: 82 })
+    .resize(fitted.width, fitted.height, { fit: "fill", withoutEnlargement: true });
+  const output =
+    fitted.format === "jpeg"
+      ? await pipeline.jpeg({ quality, mozjpeg: true }).toBuffer()
+      : await pipeline.webp({ quality }).toBuffer();
+  const ext = fitted.format === "jpeg" ? "jpg" : "webp";
+  const finalPath = filePath.replace(/\.webp$/, `.${ext}`);
+  await writeFile(finalPath, output);
+  return path.basename(finalPath);
+}
+
+async function writeThumb(buffer: Buffer, filePath: string) {
+  const output = await sharp(buffer, { limitInputPixels: MAX_PIXELS })
+    .rotate()
+    .resize(480, 480, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
     .toBuffer();
   await writeFile(filePath, output);
 }
@@ -34,11 +69,11 @@ export async function storePortfolioImage(file: File) {
     throw new PortfolioInputError("Нужен JPG, PNG или WebP");
   }
   if (file.size > MAX_BYTES) {
-    throw new PortfolioInputError("Файл больше 15 МБ");
+    throw new PortfolioInputError("Файл больше 30 МБ");
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  if (buffer.byteLength > MAX_BYTES) throw new PortfolioInputError("Файл больше 15 МБ");
+  if (buffer.byteLength > MAX_BYTES) throw new PortfolioInputError("Файл больше 30 МБ");
 
   let width = 0;
   let height = 0;
@@ -49,6 +84,9 @@ export async function storePortfolioImage(file: File) {
     }
     width = meta.width;
     height = meta.height;
+    if (width * height > MAX_PIXELS) {
+      throw new PortfolioInputError("Слишком длинное изображение");
+    }
   } catch (error) {
     if (error instanceof PortfolioInputError) throw error;
     throw new PortfolioInputError("Не удалось прочитать изображение");
@@ -63,35 +101,30 @@ export async function storePortfolioImage(file: File) {
   await mkdir(publicDir, { recursive: true });
   await mkdir(originalDir, { recursive: true });
 
-  const previewName = `${stamp}-preview.webp`;
-  const lightboxName = `${stamp}-lightbox.webp`;
   const thumbName = `${stamp}-thumb.webp`;
   const originalName = `${stamp}-orig`;
   const originalExt = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const originalRelative = path.join(year, month, `${originalName}.${originalExt}`);
-  const written = [
-    path.join(publicDir, previewName),
-    path.join(publicDir, lightboxName),
-    path.join(publicDir, thumbName),
-    path.join(ORIGINALS_ROOT, originalRelative),
-  ];
+  const created = [path.join(ORIGINALS_ROOT, originalRelative), path.join(publicDir, thumbName)];
 
   try {
-    await writeFile(written[3], buffer);
-    await writeVariant(buffer, 1600, written[0]);
-    await writeVariant(buffer, 2400, written[1]);
-    await writeVariant(buffer, 480, written[2]);
+    await writeFile(created[0], buffer);
+    const previewFile = await writeWidthVariant(buffer, PREVIEW_WIDTH, path.join(publicDir, `${stamp}-preview.webp`), 86);
+    created.push(path.join(publicDir, previewFile));
+    const lightboxFile = await writeWidthVariant(buffer, LIGHTBOX_WIDTH, path.join(publicDir, `${stamp}-lightbox.webp`), 90);
+    created.push(path.join(publicDir, lightboxFile));
+    await writeThumb(buffer, created[1]);
 
     return await insertUploadedMedia({
-      url: publicUrl(year, month, previewName),
-      lightboxUrl: publicUrl(year, month, lightboxName),
+      url: publicUrl(year, month, previewFile),
+      lightboxUrl: publicUrl(year, month, lightboxFile),
       thumbUrl: publicUrl(year, month, thumbName),
       originalPath: originalRelative.split(path.sep).join("/"),
       width,
       height,
     });
   } catch (error) {
-    await Promise.allSettled(written.map((filePath) => unlink(filePath)));
+    await Promise.allSettled(created.map((filePath) => unlink(filePath)));
     throw error;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { formatPortfolioDate } from "@/lib/portfolio-timeline/dates";
 import type { PortfolioEntry, PortfolioPage } from "@/lib/portfolio-timeline/types";
@@ -9,6 +9,119 @@ import { BentoGrid } from "./bento";
 import { EntryPanel } from "./entry-panel";
 import { Lightbox } from "./lightbox";
 import { VideoFrame } from "./video-frame";
+
+function WorkBlock({
+  entry,
+  entryIndex,
+  isAdmin,
+  pendingDelete,
+  onOpen,
+  onEdit,
+  onAskDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: {
+  entry: PortfolioEntry;
+  entryIndex: number;
+  isAdmin: boolean;
+  pendingDelete: string | null;
+  onOpen: (index: number) => void;
+  onEdit: () => void;
+  onAskDelete: () => void;
+  onConfirmDelete: () => void;
+  onCancelDelete: () => void;
+}) {
+  const ref = useRef<HTMLLIElement>(null);
+  const [phase, setPhase] = useState<"idle" | "hold" | "in">("idle");
+  const [delay, setDelay] = useState(0);
+
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setPhase("in");
+      return;
+    }
+
+    const rise = (stagger: boolean) => {
+      if (stagger) {
+        const top = node.getBoundingClientRect().top;
+        const slot = Math.max(0, Math.min(2, Math.round(top / 280)));
+        setDelay(slot * 70);
+      }
+      setPhase("in");
+    };
+
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.55 && rect.bottom > 48) {
+      rise(true);
+      return;
+    }
+
+    setPhase("hold");
+    const observer = new IntersectionObserver(
+      (records) => {
+        if (!records.some((record) => record.isIntersecting)) return;
+        rise(false);
+        observer.disconnect();
+      },
+      { threshold: 0, rootMargin: "0px 0px -8% 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <li
+      ref={ref}
+      id={entry.id}
+      className={`pt-work relative border-l border-[var(--line)] pl-6 ${phase === "hold" ? "is-hold" : ""} ${phase === "in" ? "is-in" : ""}`}
+      style={phase === "in" && delay ? { animationDelay: `${delay}ms` } : undefined}
+    >
+      <span className="absolute top-1.5 -left-[5px] h-2 w-2 rounded-full bg-[var(--foreground)]" aria-hidden="true" />
+      <p className="text-xs text-[var(--muted)]">{formatPortfolioDate(entry.createdAt)}</p>
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{entry.title}</h2>
+        {!entry.published ? <span className="text-xs text-[var(--muted)]">Черновик</span> : null}
+      </div>
+      {entry.description ? (
+        <div className="pt-copy mt-3 max-w-[66ch] text-[15px] leading-relaxed text-[var(--muted)]" dangerouslySetInnerHTML={{ __html: entry.description }} />
+      ) : null}
+      {entry.video ? (
+        <div className="mt-5">
+          <VideoFrame video={entry.video} />
+        </div>
+      ) : null}
+      {entry.media.length > 0 ? (
+        <div className="mt-5">
+          <BentoGrid media={entry.media} priority={entryIndex === 0} onOpen={onOpen} />
+        </div>
+      ) : null}
+      {isAdmin ? (
+        <div className="mt-3 flex gap-4 text-sm">
+          <button type="button" className="text-[var(--foreground)] underline decoration-[var(--line)] underline-offset-4" onClick={onEdit}>
+            Изменить
+          </button>
+          {pendingDelete === entry.id ? (
+            <>
+              <span className="text-[var(--muted)]">Удалить эту работу?</span>
+              <button type="button" className="text-[var(--foreground)]" onClick={onConfirmDelete}>
+                Да, удалить
+              </button>
+              <button type="button" className="text-[var(--muted)]" onClick={onCancelDelete}>
+                Отмена
+              </button>
+            </>
+          ) : (
+            <button type="button" className="text-[var(--muted)]" onClick={onAskDelete}>
+              Удалить
+            </button>
+          )}
+        </div>
+      ) : null}
+    </li>
+  );
+}
 
 export function TimelineView({
   isAdmin,
@@ -85,6 +198,15 @@ export function TimelineView({
         .pt-copy p { margin: 0 0 0.7em; }
         .pt-copy p:last-child { margin-bottom: 0; }
         .pt-copy a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+        .pt-work.is-hold { opacity: 0; transform: translateY(36px); }
+        .pt-work.is-in { animation: pt-rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes pt-rise {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pt-work.is-hold, .pt-work.is-in { opacity: 1; transform: none; animation: none; }
+        }
       `}</style>
 
       {isAdmin ? (
@@ -124,53 +246,18 @@ export function TimelineView({
 
       <ol className="space-y-14">
         {entries.map((entry, entryIndex) => (
-          <li id={entry.id} key={entry.id} className="relative border-l border-[var(--line)] pl-6">
-            <span className="absolute top-1.5 -left-[5px] h-2 w-2 rounded-full bg-[var(--foreground)]" aria-hidden="true" />
-            <p className="text-xs text-[var(--muted)]">{formatPortfolioDate(entry.createdAt)}</p>
-            <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <h2 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{entry.title}</h2>
-              {!entry.published ? <span className="text-xs text-[var(--muted)]">Черновик</span> : null}
-            </div>
-            {entry.description ? (
-              <div className="pt-copy mt-3 max-w-[66ch] text-[15px] leading-relaxed text-[var(--muted)]" dangerouslySetInnerHTML={{ __html: entry.description }} />
-            ) : null}
-            {entry.video ? (
-              <div className="mt-5">
-                <VideoFrame video={entry.video} />
-              </div>
-            ) : null}
-            {entry.media.length > 0 ? (
-              <div className="mt-5">
-                <BentoGrid
-                  media={entry.media}
-                  priority={entryIndex === 0}
-                  onOpen={(index) => setLightbox({ entryId: entry.id, index })}
-                />
-              </div>
-            ) : null}
-            {isAdmin ? (
-              <div className="mt-3 flex gap-4 text-sm">
-                <button type="button" className="text-[var(--foreground)] underline decoration-[var(--line)] underline-offset-4" onClick={() => setPanel(entry)}>
-                  Изменить
-                </button>
-                {pendingDelete === entry.id ? (
-                  <>
-                    <span className="text-[var(--muted)]">Удалить эту работу?</span>
-                    <button type="button" className="text-[var(--foreground)]" onClick={() => void removeEntry(entry.id)}>
-                      Да, удалить
-                    </button>
-                    <button type="button" className="text-[var(--muted)]" onClick={() => setPendingDelete(null)}>
-                      Отмена
-                    </button>
-                  </>
-                ) : (
-                  <button type="button" className="text-[var(--muted)]" onClick={() => setPendingDelete(entry.id)}>
-                    Удалить
-                  </button>
-                )}
-              </div>
-            ) : null}
-          </li>
+          <WorkBlock
+            key={entry.id}
+            entry={entry}
+            entryIndex={entryIndex}
+            isAdmin={isAdmin}
+            pendingDelete={pendingDelete}
+            onOpen={(index) => setLightbox({ entryId: entry.id, index })}
+            onEdit={() => setPanel(entry)}
+            onAskDelete={() => setPendingDelete(entry.id)}
+            onConfirmDelete={() => void removeEntry(entry.id)}
+            onCancelDelete={() => setPendingDelete(null)}
+          />
         ))}
       </ol>
 

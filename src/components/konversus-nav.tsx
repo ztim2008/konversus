@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Menu, X, ChevronDown, Globe, Search, Zap,
-  ShoppingBag, ExternalLink, Layers, MessageCircle
+  ShoppingBag, ExternalLink, Layers, MessageCircle, Images
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -169,7 +169,10 @@ export default function KonversusNav() {
             </div>
 
             <NavLink href="/portfolio">Портфолио сайтов</NavLink>
-            <NavLink href="/portfolio/timeline">Хроника работ</NavLink>
+            <NavLink href="/portfolio/timeline" highlight>
+              <Images size={14} strokeWidth={2} />
+              Хроника работ
+            </NavLink>
             <NavLink href="/about">Обо мне</NavLink>
             <NavLink href="/docs">Документация</NavLink>
             <NavLink href="https://t.me/bilarius" external>Контакты</NavLink>
@@ -218,7 +221,10 @@ export default function KonversusNav() {
               ))}
             </MobileSection>
             <MobileLink href="/portfolio" onClick={() => setMobileOpen(false)}>Портфолио сайтов</MobileLink>
-            <MobileLink href="/portfolio/timeline" onClick={() => setMobileOpen(false)}>Хроника работ</MobileLink>
+            <MobileLink href="/portfolio/timeline" onClick={() => setMobileOpen(false)} highlight>
+              <Images size={16} strokeWidth={2} />
+              Хроника работ
+            </MobileLink>
             <MobileLink href="/about" onClick={() => setMobileOpen(false)}>Обо мне</MobileLink>
             <MobileLink href="/docs" onClick={() => setMobileOpen(false)}>Документация</MobileLink>
             <MobileLink href="https://t.me/bilarius" onClick={() => setMobileOpen(false)} external>Telegram @bilarius</MobileLink>
@@ -245,21 +251,35 @@ export default function KonversusNav() {
 
 // Вспомогательные компоненты
 
-function NavLink({ href, children, external }: { href: string; children: React.ReactNode; external?: boolean }) {
+function NavLink({ href, children, external, highlight }: { href: string; children: React.ReactNode; external?: boolean; highlight?: boolean }) {
   return (
     <a
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener" : undefined}
       style={{
-        display: "flex", alignItems: "center", gap: 4,
+        display: "flex", alignItems: "center", gap: highlight ? 6 : 4,
         padding: "8px 14px", borderRadius: 8,
-        color: "#a1a1aa", fontSize: "0.85rem", fontWeight: 500,
+        color: highlight ? "#ffffff" : "#a1a1aa",
+        background: highlight ? "#4f46e5" : "transparent",
+        fontSize: "0.85rem", fontWeight: highlight ? 600 : 500,
         textDecoration: "none",
-        transition: "color 0.15s ease",
+        transition: "background 0.15s ease, color 0.15s ease",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.color = "#fafafa")}
-      onMouseLeave={(e) => (e.currentTarget.style.color = "#a1a1aa")}
+      onMouseEnter={(e) => {
+        if (highlight) {
+          e.currentTarget.style.background = "#7c3aed";
+          return;
+        }
+        e.currentTarget.style.color = "#fafafa";
+      }}
+      onMouseLeave={(e) => {
+        if (highlight) {
+          e.currentTarget.style.background = "#4f46e5";
+          return;
+        }
+        e.currentTarget.style.color = "#a1a1aa";
+      }}
     >
       {children}
       {external && <ExternalLink size={12} style={{ opacity: 0.5 }} />}
@@ -276,7 +296,7 @@ function MobileSection({ title, children }: { title: string; children: React.Rea
   );
 }
 
-function MobileLink({ href, children, onClick, external }: { href: string; children: React.ReactNode; onClick?: () => void; external?: boolean }) {
+function MobileLink({ href, children, onClick, external, highlight }: { href: string; children: React.ReactNode; onClick?: () => void; external?: boolean; highlight?: boolean }) {
   return (
     <a
       href={href}
@@ -284,10 +304,17 @@ function MobileLink({ href, children, onClick, external }: { href: string; child
       rel={external ? "noopener" : undefined}
       onClick={onClick}
       style={{
-        display: "flex", alignItems: "center", gap: 8,
-        padding: "12px 0", textDecoration: "none",
-        color: "#a1a1aa", fontSize: "0.9rem",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        display: highlight ? "inline-flex" : "flex",
+        alignItems: "center", gap: 8,
+        margin: highlight ? "10px 0" : undefined,
+        padding: highlight ? "10px 14px" : "12px 0",
+        textDecoration: "none",
+        color: highlight ? "#ffffff" : "#a1a1aa",
+        background: highlight ? "#4f46e5" : "transparent",
+        borderRadius: highlight ? 8 : undefined,
+        fontSize: "0.9rem",
+        fontWeight: highlight ? 600 : 400,
+        borderBottom: highlight ? "none" : "1px solid rgba(255,255,255,0.04)",
       }}
     >
       {children}

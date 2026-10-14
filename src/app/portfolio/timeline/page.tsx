@@ -63,7 +63,7 @@ export default async function PortfolioTimelinePage() {
   return (
     <div className="relative z-[1] bg-[var(--background)] text-[var(--foreground)]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="mx-auto flex min-h-[70vh] max-w-[1240px] flex-col min-[900px]:flex-row">
+      <div className="flex min-h-[70vh] w-full flex-col min-[900px]:flex-row">
         <PortfolioSidebar />
         <TimelineView isAdmin={Boolean(admin)} initial={initial} loadError={loadError} />
       </div>

@@ -17,6 +17,28 @@ export function BentoGrid({
   priority?: boolean;
 }) {
   const count = media.length;
+  const alone = media[0];
+  if (count === 1 && alone && alone.height > alone.width) {
+    return (
+      <button
+        type="button"
+        className="block w-full text-left focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+        onClick={() => onOpen(0)}
+      >
+        <img
+          src={alone.url}
+          alt={alone.alt}
+          width={alone.width}
+          height={alone.height}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
+          className="block h-auto w-full"
+        />
+      </button>
+    );
+  }
+
   const columns = count === 1 ? "grid-cols-1" : count >= 5 ? "grid-cols-2 min-[720px]:grid-cols-4" : "grid-cols-2";
 
   return (
