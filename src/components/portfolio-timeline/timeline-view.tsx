@@ -2,10 +2,11 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { formatPortfolioDate } from "@/lib/portfolio-timeline/dates";
-import type { PortfolioEntry, PortfolioPage } from "@/lib/portfolio-timeline/types";
+import { formatPortfolioDate, moscowDateKey } from "@/lib/portfolio-timeline/dates";
+import type { PortfolioActivity, PortfolioEntry, PortfolioPage } from "@/lib/portfolio-timeline/types";
 
 import { BentoGrid } from "./bento";
+import { PortfolioSidebar } from "./sidebar";
 import { EntryPanel } from "./entry-panel";
 import { Lightbox } from "./lightbox";
 import { VideoFrame } from "./video-frame";
@@ -75,7 +76,8 @@ function WorkBlock({
     <li
       ref={ref}
       id={entry.id}
-      className={`pt-work relative border-l border-[var(--line)] pl-6 ${phase === "hold" ? "is-hold" : ""} ${phase === "in" ? "is-in" : ""}`}
+      data-day={moscowDateKey(entry.createdAt)}
+      className={`pt-work relative scroll-mt-20 border-l border-[var(--line)] pl-6 ${phase === "hold" ? "is-hold" : ""} ${phase === "in" ? "is-in" : ""}`}
       style={phase === "in" && delay ? { animationDelay: `${delay}ms` } : undefined}
     >
       <span className="absolute top-1.5 -left-[5px] h-2 w-2 rounded-full bg-[var(--foreground)]" aria-hidden="true" />
@@ -126,14 +128,22 @@ function WorkBlock({
 export function TimelineView({
   isAdmin,
   initial,
+  activity,
   loadError,
 }: {
   isAdmin: boolean;
   initial: PortfolioPage;
+  activity: PortfolioActivity;
   loadError: boolean;
 }) {
   const [entries, setEntries] = useState(initial.entries);
   const [cursor, setCursor] = useState(initial.nextCursor);
+  const [monthKey, setMonthKey] = useState(activity.month);
+  const [months, setMonths] = useState(activity.months);
+  const [days, setDays] = useState(activity.days);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const monthRef = useRef(activity.month);
+  const loadSeq = useRef(0);
   const [loading, setLoading] = useState(false);
   const loadingLock = useRef(false);
   const [panel, setPanel] = useState<PortfolioEntry | null | "new">(null);
@@ -152,6 +162,7 @@ export function TimelineView({
         loadingLock.current = true;
         setLoading(true);
         const params = new URLSearchParams({ cursor });
+        if (monthRef.current) params.set("month", monthRef.current);
         fetch(`/api/portfolio-timeline?${params.toString()}`)
           .then(async (response) => {
             if (!response.ok) throw new Error("load");
@@ -177,9 +188,65 @@ export function TimelineView({
     return () => observer.disconnect();
   }, [cursor]);
 
+  function applyActivity(next: PortfolioActivity) {
+    setMonths(next.months);
+    if (next.month === monthRef.current) {
+      setDays(next.days);
+      setMonthKey(next.month);
+    }
+  }
+
+  async function reloadActivity(month: string | null) {
+    const params = new URLSearchParams({ activity: "1" });
+    if (month) params.set("month", month);
+    const response = await fetch(`/api/portfolio-timeline?${params.toString()}`);
+    if (!response.ok) return;
+    applyActivity((await response.json()) as PortfolioActivity);
+  }
+
+  async function openMonth(key: string) {
+    if (key === monthRef.current) {
+      document.getElementById("portfolio-timeline-feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    const seq = ++loadSeq.current;
+    setPendingKey(key);
+    setCursor(null);
+    try {
+      const params = new URLSearchParams({ month: key });
+      const activityParams = new URLSearchParams({ activity: "1", month: key });
+      const [pageResponse, activityResponse] = await Promise.all([
+        fetch(`/api/portfolio-timeline?${params.toString()}`),
+        fetch(`/api/portfolio-timeline?${activityParams.toString()}`),
+      ]);
+      if (!pageResponse.ok || !activityResponse.ok) return;
+      if (seq !== loadSeq.current) return;
+      const page = (await pageResponse.json()) as PortfolioPage;
+      const nextActivity = (await activityResponse.json()) as PortfolioActivity;
+      monthRef.current = key;
+      setMonthKey(key);
+      setMonths(nextActivity.months);
+      setDays(nextActivity.days);
+      setEntries(page.entries);
+      setCursor(page.nextCursor);
+    } finally {
+      if (seq === loadSeq.current) setPendingKey(null);
+    }
+  }
+
+  function openDay(date: string) {
+    document.querySelector<HTMLElement>(`[data-day="${date}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function saveEntry(entry: PortfolioEntry, isNew: boolean) {
-    setEntries((current) => (isNew ? [entry, ...current] : current.map((item) => (item.id === entry.id ? entry : item))));
+    const entryMonth = moscowDateKey(entry.createdAt).slice(0, 7);
+    setEntries((current) => {
+      if (!isNew) return current.map((item) => (item.id === entry.id ? entry : item));
+      if (entryMonth !== monthRef.current) return current;
+      return [entry, ...current];
+    });
     setPanel(null);
+    void reloadActivity(monthRef.current);
   }
 
   async function removeEntry(id: string) {
@@ -187,12 +254,22 @@ export function TimelineView({
     if (!response.ok) return;
     setEntries((current) => current.filter((entry) => entry.id !== id));
     setPendingDelete(null);
+    void reloadActivity(monthRef.current);
     if (panel && panel !== "new" && panel.id === id) setPanel(null);
   }
 
   const openEntry = lightbox ? entries.find((entry) => entry.id === lightbox.entryId) : null;
 
   return (
+    <>
+    <PortfolioSidebar
+      months={months}
+      monthKey={monthKey}
+      days={days}
+      pendingKey={pendingKey}
+      onMonth={(key) => void openMonth(key)}
+      onDay={openDay}
+    />
     <div className="min-w-0 flex-1 px-5 py-8 sm:px-8">
       <style>{`
         .pt-copy p { margin: 0 0 0.7em; }
@@ -244,7 +321,7 @@ export function TimelineView({
         <p className="text-sm text-[var(--muted)]">Работы появятся здесь.</p>
       ) : null}
 
-      <ol className="space-y-14">
+      <ol id="portfolio-timeline-feed" className="space-y-14">
         {entries.map((entry, entryIndex) => (
           <WorkBlock
             key={entry.id}
@@ -276,5 +353,6 @@ export function TimelineView({
         />
       ) : null}
     </div>
+    </>
   );
 }

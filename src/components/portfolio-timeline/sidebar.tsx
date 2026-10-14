@@ -1,66 +1,33 @@
-"use client";
-
 import { BookOpen, FileText } from "lucide-react";
-import { useState } from "react";
 
-import { PROFILE_PHOTO, SKILL_GROUPS } from "./profile";
+import type { PortfolioDay, PortfolioMonth } from "@/lib/portfolio-timeline/types";
 
-function SkillGroup({
-  title,
-  items,
-  limit,
-  compact,
+import { ActivityBar } from "./activity-bar";
+import { PROFILE_PHOTO } from "./profile";
+
+export function PortfolioSidebar({
+  months,
+  monthKey,
+  days,
+  pendingKey,
+  onMonth,
+  onDay,
 }: {
-  title: string;
-  items: readonly string[];
-  limit: number;
-  compact?: boolean;
+  months: PortfolioMonth[];
+  monthKey: string | null;
+  days: PortfolioDay[];
+  pendingKey: string | null;
+  onMonth: (key: string) => void;
+  onDay: (date: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const visible = open ? items : items.slice(0, limit);
-  const hidden = items.length - visible.length;
-
   return (
-    <section className={compact ? "mt-2.5" : "mt-6"}>
-      <h2 className={compact ? "text-[11px] font-medium text-[var(--foreground)]" : "text-[13px] font-medium text-[var(--foreground)]"}>
-        {title}
-      </h2>
-      <p className={compact ? "mt-0.5 text-[11px] leading-snug text-[var(--muted)]" : "mt-2 text-[13px] leading-relaxed text-[var(--muted)]"}>
-        {visible.join(" · ")}
-      </p>
-      {items.length > limit ? (
-        <button
-          type="button"
-          className="mt-0.5 text-[11px] font-medium text-[#2bae93]"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-        >
-          {open ? "Свернуть" : `Ещё ${hidden}`}
-        </button>
-      ) : null}
-    </section>
-  );
-}
-
-function Groups({ limit, compact }: { limit: number; compact?: boolean }) {
-  return (
-    <>
-      {SKILL_GROUPS.map((group) => (
-        <SkillGroup key={group.title} title={group.title} items={group.items} limit={limit} compact={compact} />
-      ))}
-    </>
-  );
-}
-
-export function PortfolioSidebar() {
-  return (
-    <aside className="border-b border-[var(--line)] px-5 py-8 min-[900px]:sticky min-[900px]:top-16 min-[900px]:w-[280px] min-[900px]:shrink-0 min-[900px]:self-start min-[900px]:overflow-visible min-[900px]:border-b-0 min-[900px]:border-r min-[900px]:px-5 min-[900px]:py-4">
+    <aside className="border-b border-[var(--line)] px-5 py-8 min-[900px]:sticky min-[900px]:top-16 min-[900px]:max-h-[calc(100dvh-4rem)] min-[900px]:w-[280px] min-[900px]:shrink-0 min-[900px]:self-start min-[900px]:overflow-y-auto min-[900px]:border-b-0 min-[900px]:border-r min-[900px]:px-5 min-[900px]:py-4">
       <img
         src={PROFILE_PHOTO}
         alt="Алексей Тимофеев"
         width={640}
         height={640}
-        className="mx-auto block h-28 w-28 object-cover min-[900px]:h-28 min-[900px]:w-28"
+        className="mx-auto block h-28 w-28 object-cover min-[900px]:h-24 min-[900px]:w-24"
       />
       <div className="mx-auto mt-4 flex w-full max-w-[220px] flex-col gap-2 min-[900px]:mt-3">
         <a
@@ -97,14 +64,8 @@ export function PortfolioSidebar() {
         Telegram
       </a>
 
-      <div className="mt-8 min-[900px]:hidden">
-        <details>
-          <summary className="cursor-pointer text-sm text-[var(--foreground)]">Навыки</summary>
-          <Groups limit={8} />
-        </details>
-      </div>
-      <div className="mt-4 hidden min-[900px]:block">
-        <Groups limit={4} compact />
+      <div className="mt-6 border-t border-[var(--line)] pt-4">
+        <ActivityBar months={months} monthKey={monthKey} days={days} pendingKey={pendingKey} onMonth={onMonth} onDay={onDay} />
       </div>
     </aside>
   );

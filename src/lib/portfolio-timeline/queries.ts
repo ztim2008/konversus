@@ -9,11 +9,14 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { getDbPool } from "@/lib/db";
 import { deleteUploadedFiles } from "@/lib/storage";
 
+import { monthLabel, moscowMonthRange } from "./dates";
 import { sanitizePortfolioHtml } from "./sanitize";
-import type { PortfolioEntry, PortfolioMedia, PortfolioPage } from "./types";
+import type { PortfolioActivity, PortfolioDay, PortfolioEntry, PortfolioMedia, PortfolioMonth, PortfolioPage } from "./types";
 import { parsePortfolioVideo } from "./video";
 
 const PAGE_SIZE = 12;
+const MONTH_PAGE_SIZE = 48;
+const MOSCOW_AT = "convert_tz(created_at, '+00:00', '+03:00')";
 const MAX_MEDIA = 12;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -151,20 +154,27 @@ async function mediaForEntries(entryIds: string[]) {
   return grouped;
 }
 
-export async function listEntries(options: { includeDrafts: boolean; cursor?: string | null }): Promise<PortfolioPage> {
+export async function listEntries(options: { includeDrafts: boolean; cursor?: string | null; month?: string | null }): Promise<PortfolioPage> {
   const pool = getDbPool();
   const decoded = options.cursor ? decodeCursor(options.cursor) : null;
   if (options.cursor && !decoded) throw new PortfolioInputError("Некорректный курсор");
+  const range = options.month ? moscowMonthRange(options.month) : null;
+  if (options.month && !range) throw new PortfolioInputError("Некорректный месяц");
+  const pageSize = range ? MONTH_PAGE_SIZE : PAGE_SIZE;
 
   const [rows] = await pool.query<EntryRow[]>(
     `select id, title, description, video_url, created_at, published
      from portfolio_entries
      where (? = 1 or published = 1)
+       and (? is null or (${MOSCOW_AT} >= ? and ${MOSCOW_AT} < ?))
        and (? is null or created_at < ? or (created_at = ? and id < ?))
      order by created_at desc, id desc
-     limit ${PAGE_SIZE + 1}`,
+     limit ${pageSize + 1}`,
     [
       options.includeDrafts ? 1 : 0,
+      range?.start ?? null,
+      range?.start ?? null,
+      range?.end ?? null,
       decoded?.createdAt ?? null,
       decoded?.createdAt ?? null,
       decoded?.createdAt ?? null,
@@ -172,14 +182,77 @@ export async function listEntries(options: { includeDrafts: boolean; cursor?: st
     ],
   );
 
-  const pageRows = rows.slice(0, PAGE_SIZE);
+  const pageRows = rows.slice(0, pageSize);
   const media = await mediaForEntries(pageRows.map((row) => row.id));
   const entries: PortfolioEntry[] = pageRows.map((row) => mapEntry(row, media.get(row.id) ?? []));
 
   const last = entries[entries.length - 1];
-  const nextCursor = rows.length > PAGE_SIZE && last ? encodeCursor(last.createdAt, last.id) : null;
+  const nextCursor = rows.length > pageSize && last ? encodeCursor(last.createdAt, last.id) : null;
 
   return { entries, nextCursor };
+}
+
+type MonthRow = RowDataPacket & { ym: string; c: number };
+type DayRow = RowDataPacket & { day: string; c: number; latest_id: string };
+type ThumbRow = RowDataPacket & { entry_id: string; thumb_url: string | null; url: string };
+
+export async function listActivity(options: { includeDrafts: boolean; month?: string | null }): Promise<PortfolioActivity> {
+  const pool = getDbPool();
+  const [monthRows] = await pool.query<MonthRow[]>(
+    `select date_format(${MOSCOW_AT}, '%Y-%m') ym, count(*) c
+     from portfolio_entries
+     where (? = 1 or published = 1)
+     group by date_format(${MOSCOW_AT}, '%Y-%m')
+     order by ym desc`,
+    [options.includeDrafts ? 1 : 0],
+  );
+
+  const months: PortfolioMonth[] = monthRows.map((row) => ({
+    key: row.ym,
+    label: monthLabel(row.ym),
+    count: Number(row.c),
+  }));
+  const month = options.month && months.some((item) => item.key === options.month) ? options.month : (months[0]?.key ?? null);
+  if (!month) return { month: null, months, days: [] };
+
+  const range = moscowMonthRange(month);
+  if (!range) throw new PortfolioInputError("Некорректный месяц");
+
+  const [dayRows] = await pool.query<DayRow[]>(
+    `select date_format(${MOSCOW_AT}, '%Y-%m-%d') day,
+            count(*) c,
+            substring_index(group_concat(id order by created_at desc, id desc separator ','), ',', 1) latest_id
+     from portfolio_entries
+     where (? = 1 or published = 1)
+       and ${MOSCOW_AT} >= ? and ${MOSCOW_AT} < ?
+     group by date_format(${MOSCOW_AT}, '%Y-%m-%d')`,
+    [options.includeDrafts ? 1 : 0, range.start, range.end],
+  );
+
+  const ids = dayRows.map((row) => row.latest_id).filter(Boolean);
+  const thumbs = new Map<string, string>();
+  if (ids.length > 0) {
+    const [thumbRows] = await pool.query<ThumbRow[]>(
+      `select entry_id, thumb_url, url
+       from portfolio_media
+       where entry_id in (${ids.map(() => "?").join(",")})
+       order by sort_order asc, created_at asc`,
+      ids,
+    );
+    for (const row of thumbRows) {
+      if (thumbs.has(row.entry_id)) continue;
+      const src = row.thumb_url || row.url;
+      if (src) thumbs.set(row.entry_id, src);
+    }
+  }
+
+  const days: PortfolioDay[] = dayRows.map((row) => ({
+    date: String(row.day).slice(0, 10),
+    count: Number(row.c),
+    thumbUrl: thumbs.get(row.latest_id) ?? null,
+  }));
+
+  return { month, months, days };
 }
 
 export async function getEntry(id: string, options: { includeDrafts: boolean }) {

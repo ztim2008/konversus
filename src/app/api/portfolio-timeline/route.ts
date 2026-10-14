@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentAdmin } from "@/lib/auth/session";
-import { createEntry, listEntries, PortfolioInputError } from "@/lib/portfolio-timeline/queries";
+import { createEntry, listActivity, listEntries, PortfolioInputError } from "@/lib/portfolio-timeline/queries";
 import { notifyGroupOnPublish } from "@/lib/portfolio-timeline/telegram";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +17,14 @@ function errorResponse(error: unknown) {
 export async function GET(request: Request) {
   try {
     const admin = await getCurrentAdmin();
-    const cursor = new URL(request.url).searchParams.get("cursor");
-    const page = await listEntries({ includeDrafts: Boolean(admin), cursor });
+    const url = new URL(request.url);
+    const month = url.searchParams.get("month");
+    if (url.searchParams.get("activity") === "1") {
+      const activity = await listActivity({ includeDrafts: Boolean(admin), month });
+      return NextResponse.json(activity);
+    }
+    const cursor = url.searchParams.get("cursor");
+    const page = await listEntries({ includeDrafts: Boolean(admin), cursor, month });
     return NextResponse.json(page);
   } catch (error) {
     return errorResponse(error);

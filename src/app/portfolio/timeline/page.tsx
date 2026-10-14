@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 
 import { ContactDock } from "@/components/portfolio-timeline/contact-dock";
-import { PortfolioSidebar } from "@/components/portfolio-timeline/sidebar";
 import { TimelineView } from "@/components/portfolio-timeline/timeline-view";
 import { PROFILE_PHOTO } from "@/components/portfolio-timeline/profile";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { getAllSettings } from "@/lib/data/settings";
-import { listEntries } from "@/lib/portfolio-timeline/queries";
-import type { PortfolioPage } from "@/lib/portfolio-timeline/types";
+import { listActivity, listEntries } from "@/lib/portfolio-timeline/queries";
+import type { PortfolioActivity, PortfolioPage } from "@/lib/portfolio-timeline/types";
 
 const PAGE_URL = "https://konversus.ru/portfolio/timeline";
 
@@ -33,14 +32,17 @@ export const metadata: Metadata = {
 };
 
 const emptyPage: PortfolioPage = { entries: [], nextCursor: null };
+const emptyActivity: PortfolioActivity = { month: null, months: [], days: [] };
 
 export default async function PortfolioTimelinePage() {
   const [admin, settings] = await Promise.all([getCurrentAdmin(), getAllSettings()]);
   let initial = emptyPage;
+  let activity = emptyActivity;
   let loadError = false;
 
   try {
-    initial = await listEntries({ includeDrafts: Boolean(admin) });
+    activity = await listActivity({ includeDrafts: Boolean(admin) });
+    initial = await listEntries({ includeDrafts: Boolean(admin), month: activity.month });
   } catch {
     loadError = true;
   }
@@ -64,8 +66,7 @@ export default async function PortfolioTimelinePage() {
     <div className="relative z-[1] bg-[var(--background)] text-[var(--foreground)]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="flex min-h-[70vh] w-full flex-col min-[900px]:flex-row">
-        <PortfolioSidebar />
-        <TimelineView isAdmin={Boolean(admin)} initial={initial} loadError={loadError} />
+        <TimelineView isAdmin={Boolean(admin)} initial={initial} activity={activity} loadError={loadError} />
       </div>
       <ContactDock
         phone={settings.contact_phone}
