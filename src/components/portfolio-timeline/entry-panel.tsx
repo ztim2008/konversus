@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { parsePortfolioVideo } from "@/lib/portfolio-timeline/video";
 import type { PortfolioEntry, PortfolioMedia } from "@/lib/portfolio-timeline/types";
 import { formatPortfolioDate } from "@/lib/portfolio-timeline/dates";
 
@@ -25,6 +26,7 @@ export function EntryPanel({
   const originalIds = useMemo(() => new Set(initial?.media.map((item) => item.id) ?? []), [initial]);
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [videoUrl, setVideoUrl] = useState(initial?.video?.pageUrl ?? "");
   const [media, setMedia] = useState<PortfolioMedia[]>(initial?.media ?? []);
   const [sessionIds, setSessionIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -102,8 +104,13 @@ export function EntryPanel({
       setError("Нужен заголовок");
       return;
     }
-    if (media.length === 0) {
-      setError("Добавьте хотя бы одно изображение");
+    const video = parsePortfolioVideo(videoUrl);
+    if (videoUrl.trim() && !video) {
+      setError("Нужна ссылка на VK Видео или Rutube");
+      return;
+    }
+    if (media.length === 0 && !video) {
+      setError("Добавьте изображение или ссылку на видео");
       return;
     }
     setBusy(true);
@@ -113,6 +120,7 @@ export function EntryPanel({
         description,
         published,
         mediaIds: media.map((item) => item.id),
+        videoUrl: video?.pageUrl ?? "",
       };
       const response = await fetch(initial ? `/api/portfolio-timeline/${initial.id}` : "/api/portfolio-timeline", {
         method: initial ? "PATCH" : "POST",
@@ -218,7 +226,7 @@ export function EntryPanel({
 
       <div className="mt-4">
         <p className="mb-1 text-sm text-[var(--foreground)]">Описание</p>
-        <MiniEditor value={description} onChange={setDescription} />
+        <MiniEditor value={description} onChange={setDescription} videoUrl={videoUrl} onVideoUrl={setVideoUrl} />
       </div>
 
       {error ? <p className="mt-3 text-sm text-[var(--foreground)]">{error}</p> : null}

@@ -38,10 +38,19 @@ import {
   getCollectPerTick,
   getDailyQueueLimit,
   getDailySendLimit,
+  getAutoSendEnabled,
   getDirectMode,
+  getOfferMode,
   HOT_SCORE_QUEUE_MIN,
   mskDateISO,
 } from "@/lib/lead-radar/config";
+import {
+  catalogSerpQuery,
+  inspectCatalog,
+  isCatalogMailbox,
+  takeNextCatalogNiche,
+} from "@/lib/lead-radar/catalog-fit";
+import { catalogLetterSubject } from "@/lib/lead-radar/catalog-letter";
 import { isPortfolioDomain } from "@/lib/lead-radar/portfolio-domains";
 import { countSequenceReservedToday } from "@/lib/lead-radar/sequence";
 
@@ -71,7 +80,12 @@ export async function resolveCollectTarget(options?: {
   const sent = await countSentForBatchDate(batchDate);
   const queued = await countQueuedForDate(batchDate);
   const outbound = await countOutboundOnDate(batchDate);
-  const reservedFollowUps = await countSequenceReservedToday(batchDate);
+  const offer = await getOfferMode();
+  const auto = await getAutoSendEnabled();
+  const reservedFollowUps =
+    offer === "catalog" || !auto
+      ? 0
+      : await countSequenceReservedToday(batchDate);
   const remainingSend = Math.max(0, sendLimit - outbound - reservedFollowUps);
   const target = Math.min(cap, remainingSend);
   const need = Math.max(0, target - queued);
@@ -256,21 +270,32 @@ export async function runNightlyLeadRadar(options?: {
     };
   }
 
-  const need = Math.min(budget.need, perTickCap);
-  const { city, niche, reason, verticalId, verticalLabel } =
-    await pickCityAndNiche({
-      city: options?.city,
-      niche: options?.niche,
-      vertical: options?.vertical,
-    });
+  const catalogMode = (await getOfferMode()) === "catalog";
+  const need = catalogMode
+    ? budget.need
+    : Math.min(budget.need, perTickCap);
+  const picked = await pickCityAndNiche({
+    city: options?.city,
+    niche: options?.niche,
+    vertical: options?.vertical,
+  });
+  const city = picked.city;
+  const reason = picked.reason;
+  const verticalId = catalogMode ? "catalog" : picked.verticalId;
+  const verticalLabel = catalogMode ? "Каталоги" : picked.verticalLabel;
+  const niche = catalogMode
+    ? options?.niche || (await takeNextCatalogNiche())
+    : picked.niche;
 
   const radarId = await createRadar({
-    city: city.name,
+    city: catalogMode ? "Россия" : city.name,
     niche,
     filters: ["serp", "auto", verticalId],
   });
 
-  const query = buildCompanySerpQuery(niche, city.name);
+  const query = catalogMode
+    ? catalogSerpQuery(niche)
+    : buildCompanySerpQuery(niche, city.name);
 
   type Cand = {
     domain: string;
@@ -337,6 +362,7 @@ export async function runNightlyLeadRadar(options?: {
       cand: Cand;
       audit: Awaited<ReturnType<typeof checkWebsite>>;
       emailInfo: Awaited<ReturnType<typeof findDeepEmail>>;
+      fit: Awaited<ReturnType<typeof inspectCatalog>> | null;
     }> = [];
 
   for (const cand of pageCandidates) {
@@ -352,32 +378,41 @@ export async function runNightlyLeadRadar(options?: {
         continue;
       }
 
-      if (audit.hotScore < HOT_SCORE_QUEUE_MIN) {
-        skipped.push({
-          domain: cand.domain,
-          reason: `hot_score_low_${audit.hotScore}`,
+      let fit: Awaited<ReturnType<typeof inspectCatalog>> | null = null;
+      if (catalogMode) {
+        fit = await inspectCatalog(cand.url);
+        if (!fit.ok) {
+          skipped.push({ domain: cand.domain, reason: fit.reason });
+          continue;
+        }
+      } else {
+        if (audit.hotScore < HOT_SCORE_QUEUE_MIN) {
+          skipped.push({
+            domain: cand.domain,
+            reason: `hot_score_low_${audit.hotScore}`,
+          });
+          continue;
+        }
+
+        const strong = strongSiteReason({
+          cmsTier: audit.cmsTier,
+          hasViewport: audit.hasViewport,
+          copyrightYear: audit.copyrightYear,
+          ssl: audit.ssl,
         });
-        continue;
-      }
+        if (strong) {
+          skipped.push({ domain: cand.domain, reason: strong });
+          continue;
+        }
 
-      const strong = strongSiteReason({
-        cmsTier: audit.cmsTier,
-        hasViewport: audit.hasViewport,
-        copyrightYear: audit.copyrightYear,
-        ssl: audit.ssl,
-      });
-      if (strong) {
-        skipped.push({ domain: cand.domain, reason: strong });
-        continue;
-      }
-
-      if (directMode === "ads" && !audit.hasYandexDirect) {
-        skipped.push({ domain: cand.domain, reason: "no_direct" });
-        continue;
-      }
-      if (directMode === "no_ads" && audit.hasYandexDirect) {
-        skipped.push({ domain: cand.domain, reason: "has_direct" });
-        continue;
+        if (directMode === "ads" && !audit.hasYandexDirect) {
+          skipped.push({ domain: cand.domain, reason: "no_direct" });
+          continue;
+        }
+        if (directMode === "no_ads" && audit.hasYandexDirect) {
+          skipped.push({ domain: cand.domain, reason: "has_direct" });
+          continue;
+        }
       }
 
       const emailInfo = await findDeepEmail(cand.url);
@@ -385,12 +420,18 @@ export async function runNightlyLeadRadar(options?: {
         skipped.push({ domain: cand.domain, reason: "no_email" });
         continue;
       }
-      if (!isLiveEmail(emailInfo.email)) {
-        skipped.push({ domain: cand.domain, reason: "generic_email" });
+      const mailboxOk = catalogMode
+        ? isCatalogMailbox(emailInfo.email)
+        : isLiveEmail(emailInfo.email);
+      if (!mailboxOk) {
+        skipped.push({
+          domain: cand.domain,
+          reason: catalogMode ? "bad_mailbox" : "generic_email",
+        });
         continue;
       }
 
-      qualified.push({ cand, audit, emailInfo });
+      qualified.push({ cand, audit, emailInfo, fit });
     } catch (err: any) {
       skipped.push({
         domain: cand.domain,
@@ -413,58 +454,63 @@ export async function runNightlyLeadRadar(options?: {
   );
 
   for (const item of qualified.slice(0, Math.max(0, room))) {
-    const { cand, audit, emailInfo } = item;
+    const { cand, audit, emailInfo, fit } = item;
+    const card = fit && fit.ok ? fit : null;
     try {
+      const shotUrl = card?.productUrl || cand.url;
       let screenshotPath = "";
       let screenshotUrl = "";
       if (!options?.skipScreenshot) {
         const shot = await captureSiteScreenshot({
-          pageUrl: cand.url,
+          pageUrl: shotUrl,
           siteId: cand.domain.replace(/\W+/g, "_").slice(0, 40),
         });
         if (!shot.ok || !shot.path || !shot.url) {
-          skipped.push({ domain: cand.domain, reason: "no_screenshot" });
-          continue;
+          if (!card) {
+            skipped.push({ domain: cand.domain, reason: "no_screenshot" });
+            continue;
+          }
+        } else {
+          screenshotPath = shot.path;
+          screenshotUrl = shot.url;
         }
-        screenshotPath = shot.path;
-        screenshotUrl = shot.url;
-      } else {
-        screenshotUrl = "";
-        screenshotPath = "";
       }
 
-      const generated = await generatePersonalizedKP({
-        domain: cand.domain,
-        niche,
-        city: city.name,
-        issues: audit.issues,
-        cms: audit.cms || "",
-        travel: city.travel,
-        pageUrl: cand.url,
-      });
-      tokensTotal += generated.tokensIn + generated.tokensOut;
+      let subject = "";
+      let bodyText = "";
+      let tokensIn = 0;
+      let tokensOut = 0;
+      let problems = audit.issues;
+      let pageUrl = cand.url;
+      let h1: string | null = audit.h1.texts[0] || null;
 
-      const subject = buildKpSubject(cand.name, cand.domain);
-      const html = renderLeadWebKpHtml({
-        companyName: cand.name,
-        domain: cand.domain,
-        platform: audit.cms,
-        city: city.name,
-        bodyText: generated.bodyText,
-        screenshotUrl: screenshotUrl || null,
-        leadId: null,
-        batchDate,
-        issues: audit.issues,
-        publicOrigin,
-        profile,
-      });
+      if (card) {
+        subject = catalogLetterSubject(card.productName);
+        problems = card.problems;
+        pageUrl = card.productUrl;
+        h1 = card.productName;
+      } else {
+        const generated = await generatePersonalizedKP({
+          domain: cand.domain,
+          niche,
+          city: city.name,
+          issues: audit.issues,
+          cms: audit.cms || "",
+          travel: city.travel,
+          pageUrl: cand.url,
+        });
+        tokensTotal += generated.tokensIn + generated.tokensOut;
+        tokensIn = generated.tokensIn;
+        tokensOut = generated.tokensOut;
+        bodyText = generated.bodyText;
+        subject = buildKpSubject(cand.name, cand.domain);
+      }
 
-      // insert without leadId in CTA first, then we could update — for MVP embed after insert
       const siteId = await insertQueuedSite({
         radarId,
         domain: cand.domain,
         name: cand.name,
-        url: cand.url,
+        url: pageUrl,
         platform: audit.cms,
         email: emailInfo.email || "",
         emailSourceUrl: emailInfo.sourceUrl,
@@ -472,41 +518,43 @@ export async function runNightlyLeadRadar(options?: {
         telegram: emailInfo.telegram,
         inn: emailInfo.inn,
         legalForm: emailInfo.legalForm,
-        problems: audit.issues,
+        problems,
         privacyIssues: audit.privacyIssues,
         screenshotPath,
         screenshotUrl,
         hotScore: audit.hotScore,
         score: audit.score,
-        h1: audit.h1.texts[0] || null,
+        h1,
         serpQuery: query,
         serpPosition: cand.position,
-        kpHtml: "", // fill below with lead id
+        kpHtml: "",
         kpSubject: subject,
-        tokensIn: generated.tokensIn,
-        tokensOut: generated.tokensOut,
+        tokensIn,
+        tokensOut,
         batchDate,
       });
 
-      const htmlFinal = renderLeadWebKpHtml({
-        companyName: cand.name,
-        domain: cand.domain,
-        platform: audit.cms,
-        city: city.name,
-        bodyText: generated.bodyText,
-        screenshotUrl: screenshotUrl || null,
-        leadId: siteId,
-        batchDate,
-        issues: audit.issues,
-        publicOrigin,
-        profile,
-      });
-
-      const db = getDbPool();
-      await db.query(
-        `UPDATE lead_radar_sites SET kp_html = ? WHERE id = ?`,
-        [htmlFinal, siteId]
-      );
+      let htmlFinal = "";
+      if (!card) {
+        htmlFinal = renderLeadWebKpHtml({
+          companyName: cand.name,
+          domain: cand.domain,
+          platform: audit.cms,
+          city: city.name,
+          bodyText,
+          screenshotUrl: screenshotUrl || null,
+          leadId: siteId,
+          batchDate,
+          issues: audit.issues,
+          publicOrigin,
+          profile,
+        });
+        const db = getDbPool();
+        await db.query(
+          `UPDATE lead_radar_sites SET kp_html = ? WHERE id = ?`,
+          [htmlFinal, siteId]
+        );
+      }
 
       queued++;
       samples.push({
@@ -527,7 +575,7 @@ export async function runNightlyLeadRadar(options?: {
         reason: err?.message || "enrich_error",
       });
     }
-    }
+  }
   }
 
   const finalCount = await countQueuedForDate(batchDate);

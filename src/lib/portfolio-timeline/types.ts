@@ -1,3 +1,5 @@
+import type { PortfolioVideo } from "./video";
+
 export type PortfolioMedia = {
   id: string;
   url: string;
@@ -13,6 +15,7 @@ export type PortfolioEntry = {
   id: string;
   title: string;
   description: string | null;
+  video: PortfolioVideo | null;
   createdAt: string;
   published: boolean;
   media: PortfolioMedia[];

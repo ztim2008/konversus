@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       description?: unknown;
       published?: unknown;
       mediaIds?: unknown;
+      videoUrl?: unknown;
     };
     const entry = await createEntry(body);
     const telegram = await notifyGroupOnPublish(entry);

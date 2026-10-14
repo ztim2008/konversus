@@ -25,6 +25,8 @@ export const SETTING_AUTO_SEND_INTERVAL_MIN = "lead_radar_auto_send_interval_min
 export const SETTING_COLLECT_PER_TICK = "lead_radar_collect_per_tick";
 /** mix | ads | no_ads — кого брать по коду Директа на сайте. */
 export const SETTING_DIRECT_MODE = "lead_radar_direct_mode";
+/** catalog — карточки каталога вручную. site — старое КП про сайт. */
+export const SETTING_OFFER_MODE = "lead_radar_offer_mode";
 
 export type DirectMode = "mix" | "ads" | "no_ads";
 /** Активный профиль отправителя: igor | alexey */
@@ -109,6 +111,13 @@ export async function getCollectPerTick(): Promise<number> {
   const n = Number.parseInt(raw || String(COLLECT_PER_TICK_DEFAULT), 10);
   if (!Number.isFinite(n) || n < 1) return COLLECT_PER_TICK_DEFAULT;
   return Math.min(10, Math.max(1, n));
+}
+
+/** Пустое значение — гипотеза каталогов. site возвращает старое КП. */
+export async function getOfferMode(): Promise<"catalog" | "site"> {
+  const raw = (await getSetting(SETTING_OFFER_MODE)).trim().toLowerCase();
+  if (raw === "site" || raw === "kp" || raw === "website") return "site";
+  return "catalog";
 }
 
 export async function getDirectMode(): Promise<DirectMode> {

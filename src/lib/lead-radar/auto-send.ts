@@ -16,6 +16,7 @@ import {
   getDailySendLimit,
   getAutoSendEnabled,
   getAutoSendIntervalMin,
+  getOfferMode,
   isAutoSendWindowMsk,
   countOutboundOnDate,
   mskDateISO,
@@ -111,6 +112,9 @@ export async function runAutoSendDrip(options?: {
     intervalMin,
   };
 
+  if ((await getOfferMode()) === "catalog" && !options?.force) {
+    return { ...base, skippedReason: "catalog_manual_only" };
+  }
   if (!enabled && !options?.force) {
     return { ...base, skippedReason: "auto_send_disabled" };
   }

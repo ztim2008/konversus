@@ -39,12 +39,13 @@ function captionFor(entry: PortfolioEntry) {
   const link = `${SITE}#${entry.id}`;
   const plain = entry.description ? htmlToPlain(entry.description) : "";
   const extra = entry.media.length > ALBUM_LIMIT ? `Ещё ${entry.media.length - ALBUM_LIMIT} фото на сайте.` : "";
-  const overhead = title.length + link.length + extra.length + 4;
+  const videoLine = entry.video?.pageUrl ?? "";
+  const overhead = title.length + link.length + extra.length + videoLine.length + 6;
   let body = plain ? escapeHtml(plain) : "";
   if (body && overhead + body.length > CAPTION_LIMIT) {
     body = `${body.slice(0, Math.max(0, CAPTION_LIMIT - overhead - 1)).trimEnd()}…`;
   }
-  return [title, body, extra.trim(), link].filter(Boolean).join("\n\n");
+  return [title, body, videoLine, extra.trim(), link].filter(Boolean).join("\n\n");
 }
 
 function uploadAbsolute(publicPath: string) {
@@ -143,6 +144,7 @@ async function sendAlbum(token: string, chatId: string, entry: PortfolioEntry) {
         text: caption,
         parse_mode: "HTML",
         disable_web_page_preview: false,
+        link_preview_options: entry.video ? { url: entry.video.pageUrl, prefer_large_media: true } : undefined,
       }),
       20_000,
       true,

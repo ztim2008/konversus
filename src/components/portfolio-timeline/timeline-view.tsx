@@ -8,6 +8,7 @@ import type { PortfolioEntry, PortfolioPage } from "@/lib/portfolio-timeline/typ
 import { BentoGrid } from "./bento";
 import { EntryPanel } from "./entry-panel";
 import { Lightbox } from "./lightbox";
+import { VideoFrame } from "./video-frame";
 
 export function TimelineView({
   isAdmin,
@@ -132,6 +133,11 @@ export function TimelineView({
             </div>
             {entry.description ? (
               <div className="pt-copy mt-3 max-w-[66ch] text-[15px] leading-relaxed text-[var(--muted)]" dangerouslySetInnerHTML={{ __html: entry.description }} />
+            ) : null}
+            {entry.video ? (
+              <div className="mt-5">
+                <VideoFrame video={entry.video} />
+              </div>
             ) : null}
             {entry.media.length > 0 ? (
               <div className="mt-5">

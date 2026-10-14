@@ -25,6 +25,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       description?: unknown;
       published?: unknown;
       mediaIds?: unknown;
+      videoUrl?: unknown;
     };
     const entry = await updateEntry(id, body);
     if (!entry) return NextResponse.json({ error: "Работа не найдена" }, { status: 404 });

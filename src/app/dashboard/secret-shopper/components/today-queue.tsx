@@ -12,6 +12,7 @@ import {
   LayoutList,
   Rows3,
 } from "lucide-react";
+import { CatalogLetterEditor } from "./catalog-letter-editor";
 
 type QueueSite = {
   id: string;
@@ -29,6 +30,7 @@ type QueueSite = {
   screenshot_url?: string | null;
   kp_html?: string | null;
   kp_subject?: string | null;
+  h1_text?: string | null;
   radar_city?: string | null;
   radar_niche?: string | null;
   batch_date?: string | null;
@@ -83,6 +85,7 @@ export function TodayQueue() {
   const [sendLimit, setSendLimit] = useState(40);
   const [sentToday, setSentToday] = useState(0);
   const [autoSendEnabled, setAutoSendEnabled] = useState(true);
+  const [offerMode, setOfferMode] = useState<"catalog" | "site">("catalog");
   const [batch, setBatch] = useState<any>(null);
   const [dayPlan, setDayPlan] = useState<DayPlan>({});
 
@@ -139,6 +142,7 @@ export function TodayQueue() {
           : Number(data.batch?.sent_count || 0)
       );
       setAutoSendEnabled(data.autoSendEnabled !== false);
+      setOfferMode(data.offerMode === "site" ? "site" : "catalog");
       setBatch(data.batch || null);
       setBatchDate(data.batchDate || "");
       setDayPlan(data.dayPlan || {});
@@ -319,7 +323,7 @@ export function TodayQueue() {
       }
       if (key === "s" && site && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        void sendSite(site);
+        if (offerMode !== "catalog" && site.kp_html) void sendSite(site);
         return;
       }
       if ((key === "x" || key === "p") && site && !e.metaKey && !e.ctrlKey) {
@@ -339,6 +343,7 @@ export function TodayQueue() {
     testMode,
     queuedCount,
     queueLimit,
+    offerMode,
   ]);
 
   const dd = batchDate
@@ -394,10 +399,12 @@ export function TodayQueue() {
             пропуск <span className="text-amber-400/90">{skippedCount}</span>
           </p>
           <p className="text-[11px] text-gray-600 mt-1">
-            {autoSendEnabled
-              ? "Автоотправка: сначала повторные письма, потом новые. Лимит на все письма дня · 09–21 МСК · "
-              : "Автоотправка выкл · "}
-            Клавиши: ↑↓ / j k · Enter превью · S отправить · X пропуск
+            {offerMode === "catalog"
+              ? "Каталоги: не больше 5 за день. Письмо уходит только с фото «было» и «стало». Автоотправка эти карточки не берёт. "
+              : autoSendEnabled
+                ? "Автоотправка: сначала повторные письма, потом новые. Лимит на все письма дня · 09–21 МСК · "
+                : "Автоотправка выкл · "}
+            Клавиши: ↑↓ / j k · Enter превью · X пропуск
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -698,19 +705,33 @@ export function TodayQueue() {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-white/[0.06]">
-                    <button
-                      type="button"
-                      disabled={busy || !site.email}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void sendSite(site);
+                  {offerMode === "catalog" || !site.kp_html ? (
+                    <CatalogLetterEditor
+                      site={site}
+                      testMode={testMode}
+                      onSent={(message) => {
+                        setInfo(message);
+                        setError("");
+                        void load();
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-                    >
-                      <Mail size={14} />
-                      {busy ? "…" : testMode ? "Тест" : "Отправить"}
-                    </button>
+                    />
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-white/[0.06]">
+                    {offerMode !== "catalog" && site.kp_html ? (
+                      <button
+                        type="button"
+                        disabled={busy || !site.email}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void sendSite(site);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                      >
+                        <Mail size={14} />
+                        {busy ? "…" : testMode ? "Тест" : "Отправить"}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       disabled={busy}

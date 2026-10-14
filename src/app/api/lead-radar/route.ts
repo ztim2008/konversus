@@ -29,6 +29,7 @@ import {
   getDailySendLimit,
   mskDateISO,
   getAutoSendEnabled,
+  getOfferMode,
   getAutoSendIntervalMin,
   getCollectPerTick,
   getDirectMode,
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
     const limit = await getDailyQueueLimit();
     const sendLimit = await getDailySendLimit();
     const autoSendEnabled = await getAutoSendEnabled();
+    const offerMode = await getOfferMode();
     const today = new Date().toISOString().slice(0, 10);
     const dateKey = batchDate || today;
     const batch = await getBatchByDate(dateKey);
@@ -106,6 +108,7 @@ export async function POST(req: NextRequest) {
       sendLimit,
       sentToday,
       autoSendEnabled,
+      offerMode,
       remaining: Math.max(0, limit - queuedCount),
       remainingSend: Math.max(0, sendLimit - sentToday),
       batch,

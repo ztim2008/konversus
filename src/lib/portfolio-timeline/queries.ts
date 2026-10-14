@@ -11,6 +11,7 @@ import { deleteUploadedFiles } from "@/lib/storage";
 
 import { sanitizePortfolioHtml } from "./sanitize";
 import type { PortfolioEntry, PortfolioMedia, PortfolioPage } from "./types";
+import { parsePortfolioVideo } from "./video";
 
 const PAGE_SIZE = 12;
 const MAX_MEDIA = 12;
@@ -22,6 +23,7 @@ type EntryRow = RowDataPacket & {
   id: string;
   title: string;
   description: string | null;
+  video_url: string | null;
   created_at: Date | string;
   published: number;
 };
@@ -50,6 +52,18 @@ export class PortfolioInputError extends Error {
 function toIso(value: Date | string) {
   const date = value instanceof Date ? value : new Date(value);
   return date.toISOString();
+}
+
+function mapEntry(row: EntryRow, media: PortfolioMedia[]): PortfolioEntry {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ? sanitizePortfolioHtml(row.description) : null,
+    video: row.video_url ? parsePortfolioVideo(row.video_url) : null,
+    createdAt: toIso(row.created_at),
+    published: Boolean(row.published),
+    media: media.map((item) => ({ ...item, alt: item.alt || row.title })),
+  };
 }
 
 function mapMedia(row: MediaRow): PortfolioMedia {
@@ -143,7 +157,7 @@ export async function listEntries(options: { includeDrafts: boolean; cursor?: st
   if (options.cursor && !decoded) throw new PortfolioInputError("Некорректный курсор");
 
   const [rows] = await pool.query<EntryRow[]>(
-    `select id, title, description, created_at, published
+    `select id, title, description, video_url, created_at, published
      from portfolio_entries
      where (? = 1 or published = 1)
        and (? is null or created_at < ? or (created_at = ? and id < ?))
@@ -160,17 +174,7 @@ export async function listEntries(options: { includeDrafts: boolean; cursor?: st
 
   const pageRows = rows.slice(0, PAGE_SIZE);
   const media = await mediaForEntries(pageRows.map((row) => row.id));
-  const entries: PortfolioEntry[] = pageRows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    description: row.description ? sanitizePortfolioHtml(row.description) : null,
-    createdAt: toIso(row.created_at),
-    published: Boolean(row.published),
-    media: (media.get(row.id) ?? []).map((item) => ({
-      ...item,
-      alt: item.alt || row.title,
-    })),
-  }));
+  const entries: PortfolioEntry[] = pageRows.map((row) => mapEntry(row, media.get(row.id) ?? []));
 
   const last = entries[entries.length - 1];
   const nextCursor = rows.length > PAGE_SIZE && last ? encodeCursor(last.createdAt, last.id) : null;
@@ -182,7 +186,7 @@ export async function getEntry(id: string, options: { includeDrafts: boolean }) 
   assertUuid(id);
   const pool = getDbPool();
   const [rows] = await pool.query<EntryRow[]>(
-    `select id, title, description, created_at, published
+    `select id, title, description, video_url, created_at, published
      from portfolio_entries
      where id = ? and (? = 1 or published = 1)
      limit 1`,
@@ -191,14 +195,7 @@ export async function getEntry(id: string, options: { includeDrafts: boolean }) 
   const row = rows[0];
   if (!row) return null;
   const media = await mediaForEntries([row.id]);
-  return {
-    id: row.id,
-    title: row.title,
-    description: row.description ? sanitizePortfolioHtml(row.description) : null,
-    createdAt: toIso(row.created_at),
-    published: Boolean(row.published),
-    media: (media.get(row.id) ?? []).map((item) => ({ ...item, alt: item.alt || row.title })),
-  } satisfies PortfolioEntry;
+  return mapEntry(row, media.get(row.id) ?? []);
 }
 
 function readTitle(value: unknown) {
@@ -209,10 +206,18 @@ function readTitle(value: unknown) {
   return title;
 }
 
+function readVideo(value: unknown) {
+  if (value == null || value === "") return null;
+  if (typeof value !== "string") throw new PortfolioInputError("Некорректная ссылка на видео");
+  const video = parsePortfolioVideo(value);
+  if (!video) throw new PortfolioInputError("Нужна ссылка на VK Видео или Rutube");
+  if (video.pageUrl.length > 500) throw new PortfolioInputError("Ссылка на видео слишком длинная");
+  return video.pageUrl;
+}
+
 function readMediaIds(value: unknown) {
-  if (!Array.isArray(value) || value.length === 0) {
-    throw new PortfolioInputError("Добавьте хотя бы одно изображение");
-  }
+  if (value == null) return [];
+  if (!Array.isArray(value)) throw new PortfolioInputError("Некорректные изображения");
   if (value.length > MAX_MEDIA) throw new PortfolioInputError("Не больше 12 изображений");
   const ids: string[] = [];
   for (const item of value) {
@@ -222,6 +227,12 @@ function readMediaIds(value: unknown) {
     if (!ids.includes(item)) ids.push(item);
   }
   return ids;
+}
+
+function assertVisual(mediaIds: string[], videoUrl: string | null) {
+  if (mediaIds.length === 0 && !videoUrl) {
+    throw new PortfolioInputError("Добавьте изображение или ссылку на видео");
+  }
 }
 
 async function loadMediaByIds(ids: string[]) {
@@ -236,14 +247,22 @@ async function loadMediaByIds(ids: string[]) {
   return rows;
 }
 
-export async function createEntry(input: { title?: unknown; description?: unknown; published?: unknown; mediaIds?: unknown }) {
+export async function createEntry(input: {
+  title?: unknown;
+  description?: unknown;
+  published?: unknown;
+  mediaIds?: unknown;
+  videoUrl?: unknown;
+}) {
   const title = readTitle(input.title);
   const description = typeof input.description === "string" ? sanitizePortfolioHtml(input.description) : null;
   const published = Boolean(input.published);
+  const videoUrl = readVideo(input.videoUrl);
   const mediaIds = readMediaIds(input.mediaIds);
-  const rows = await loadMediaByIds(mediaIds);
+  assertVisual(mediaIds, videoUrl);
+  const rows = mediaIds.length ? await loadMediaByIds(mediaIds) : [];
 
-  if (rows.length !== mediaIds.length || rows.some((row) => row.entry_id)) {
+  if (mediaIds.length && (rows.length !== mediaIds.length || rows.some((row) => row.entry_id))) {
     throw new PortfolioInputError("Изображение уже привязано или не найдено");
   }
 
@@ -255,9 +274,9 @@ export async function createEntry(input: { title?: unknown; description?: unknow
   try {
     await connection.beginTransaction();
     await connection.execute(
-      `insert into portfolio_entries (id, title, description, created_at, updated_at, published)
-       values (?, ?, ?, ?, ?, ?)`,
-      [id, title, description, now, now, published ? 1 : 0],
+      `insert into portfolio_entries (id, title, description, video_url, created_at, updated_at, published)
+       values (?, ?, ?, ?, ?, ?, ?)`,
+      [id, title, description, videoUrl, now, now, published ? 1 : 0],
     );
     for (let index = 0; index < mediaIds.length; index += 1) {
       const [result] = await connection.execute<ResultSetHeader>(
@@ -283,18 +302,20 @@ export async function createEntry(input: { title?: unknown; description?: unknow
 
 export async function updateEntry(
   id: string,
-  input: { title?: unknown; description?: unknown; published?: unknown; mediaIds?: unknown },
+  input: { title?: unknown; description?: unknown; published?: unknown; mediaIds?: unknown; videoUrl?: unknown },
 ) {
   assertUuid(id);
   const title = readTitle(input.title);
   const description = typeof input.description === "string" ? sanitizePortfolioHtml(input.description) : null;
   const published = Boolean(input.published);
+  const videoUrl = readVideo(input.videoUrl);
   const mediaIds = readMediaIds(input.mediaIds);
+  assertVisual(mediaIds, videoUrl);
   const existing = await getEntry(id, { includeDrafts: true });
   if (!existing) return null;
 
-  const rows = await loadMediaByIds(mediaIds);
-  if (rows.length !== mediaIds.length) throw new PortfolioInputError("Изображение не найдено");
+  const rows = mediaIds.length ? await loadMediaByIds(mediaIds) : [];
+  if (mediaIds.length && rows.length !== mediaIds.length) throw new PortfolioInputError("Изображение не найдено");
   if (rows.some((row) => row.entry_id && row.entry_id !== id)) {
     throw new PortfolioInputError("Изображение принадлежит другой работе");
   }
@@ -313,10 +334,10 @@ export async function updateEntry(
     await connection.beginTransaction();
     await connection.execute(
       `update portfolio_entries
-       set title = ?, description = ?, published = ?, updated_at = ?,
+       set title = ?, description = ?, video_url = ?, published = ?, updated_at = ?,
            telegram_announced_at = if(? = 1, telegram_announced_at, null)
        where id = ?`,
-      [title, description, published ? 1 : 0, new Date(), published ? 1 : 0, id],
+      [title, description, videoUrl, published ? 1 : 0, new Date(), published ? 1 : 0, id],
     );
     if (removed.length > 0) {
       const placeholders = removed.map(() => "?").join(",");

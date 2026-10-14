@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 
+import { ContactDock } from "@/components/portfolio-timeline/contact-dock";
 import { PortfolioSidebar } from "@/components/portfolio-timeline/sidebar";
 import { TimelineView } from "@/components/portfolio-timeline/timeline-view";
 import { PROFILE_PHOTO } from "@/components/portfolio-timeline/profile";
 import { getCurrentAdmin } from "@/lib/auth/session";
+import { getAllSettings } from "@/lib/data/settings";
 import { listEntries } from "@/lib/portfolio-timeline/queries";
 import type { PortfolioPage } from "@/lib/portfolio-timeline/types";
 
@@ -33,7 +35,7 @@ export const metadata: Metadata = {
 const emptyPage: PortfolioPage = { entries: [], nextCursor: null };
 
 export default async function PortfolioTimelinePage() {
-  const admin = await getCurrentAdmin();
+  const [admin, settings] = await Promise.all([getCurrentAdmin(), getAllSettings()]);
   let initial = emptyPage;
   let loadError = false;
 
@@ -65,6 +67,14 @@ export default async function PortfolioTimelinePage() {
         <PortfolioSidebar />
         <TimelineView isAdmin={Boolean(admin)} initial={initial} loadError={loadError} />
       </div>
+      <ContactDock
+        phone={settings.contact_phone}
+        phoneHref={settings.contact_phone_href}
+        vkHref="https://vk.com/bilarius"
+        telegram={settings.contact_telegram}
+        telegramHref={settings.contact_telegram_href}
+        maxHref={settings.contact_max_href}
+      />
     </div>
   );
 }
