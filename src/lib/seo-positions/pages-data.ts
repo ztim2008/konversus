@@ -7,7 +7,8 @@ import type { RowDataPacket } from "mysql2";
 import { getDbPool } from "@/lib/db";
 import { listKeywords, listSnapshotsBetween, type SeoProject } from "@/lib/seo-positions/data";
 import { fetchPage, sleep, type FetchedPage } from "@/lib/seo-positions/page-check";
-import { landingPages, normalizeUrl, plural, shortPath, type KeywordLanding } from "@/lib/seo-positions/pages";
+import { loadAudits } from "@/lib/seo-positions/audit";
+import { auditPageUrls, landingPages, normalizeUrl, plural, shortPath, type KeywordLanding } from "@/lib/seo-positions/pages";
 import type { RunProgress } from "@/lib/seo-positions/runs";
 import { monthRangeUtc, timeZoneFor } from "@/lib/seo-positions/tz";
 
@@ -111,6 +112,12 @@ export async function loadLandings(project: SeoProject, month: string): Promise<
 }
 
 /** Главная, страницы из выдачи и целевые — не больше MAX_CHECKED_PAGES, в порядке важности. */
+/** Страницы чек-листа кроме главной за месяц: уже оценённые остаются, новые — из целевых и основных страниц выдачи. */
+export async function loadAuditPages(project: SeoProject, month: string, landings?: KeywordLanding[]): Promise<string[]> {
+  const [l, { current, previous }] = await Promise.all([landings ?? loadLandings(project, month), loadAudits(project.id, month)]);
+  return auditPageUrls(project.domain, l, [...((current ?? previous)?.pages.keys() ?? [])]);
+}
+
 export function pagesToCheck(project: SeoProject, landings: KeywordLanding[]): string[] {
   const urls = [normalizeUrl(`https://${project.domain}/`)];
   const add = (u: string | null | undefined) => {

@@ -3,7 +3,7 @@ import "server-only";
 import type { Browser, BrowserContext, Page } from "playwright";
 
 import type { AuditInput } from "@/lib/seo-positions/audit";
-import { shortPath } from "@/lib/seo-positions/pages";
+import { normalizeUrl, shortPath } from "@/lib/seo-positions/pages";
 import { UserFacingError, type RunProgress } from "@/lib/seo-positions/runs";
 
 const DESKTOP_UA =
@@ -194,12 +194,26 @@ function counterId(urls: Set<string>): string | null {
   return null;
 }
 
+type R = (itemNo: number, value: "1" | "0" | null, comment: string) => AuditInput;
+
+/** Пункты страницы, которые видны автоматически: призыв к действию, обязательные поля, маска телефона. */
+function pageItemInputs(d: DesktopProbe, r: R, where: string): AuditInput[] {
+  return [
+    d.ctaText ? r(10, "1", `Кнопка «${d.ctaText}»`) : r(10, null, "На первом экране кнопку не нашёл, проверьте"),
+    d.forms
+      ? r(18, d.maxRequired <= 3 ? "1" : "0", `Обязательных полей по разметке, без галочек согласия: до ${d.maxRequired}`)
+      : r(18, null, `Формы ${where} нет`),
+    d.telInputs ? r(19, d.mask ? "1" : "0", d.mask ? "" : "Маски на поле телефона не нашёл") : r(19, null, `Поля телефона ${where} нет`),
+  ];
+}
+
 export type AutoAuditResult = { url: string; inputs: AuditInput[] };
 
-export async function runAutoAudit(domain: string, progress: RunProgress): Promise<AutoAuditResult> {
+/** pageUrls — страницы чек-листа кроме главной; по ним заполняются пункты страницы 10, 18, 19 с их page_url. */
+export async function runAutoAudit(domain: string, progress: RunProgress, pageUrls: string[] = []): Promise<AutoAuditResult> {
   const { chromium } = await import("playwright");
   let browser: Browser | null = null;
-  let total = 3 + EXTRA_PAGES;
+  let total = 3 + EXTRA_PAGES + pageUrls.length;
   try {
     await progress(0, total, "Запускаю браузер");
     browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
@@ -219,19 +233,35 @@ export async function runAutoAudit(domain: string, progress: RunProgress): Promi
     const desktopUp = await page.evaluate(probeUpButton);
 
     const pages: { url: string; ok: boolean }[] = [];
-    const extra = mainMetrika.size ? d.links.slice(0, EXTRA_PAGES) : [];
-    total = 3 + extra.length;
-    if (extra.length) {
-      for (const [i, link] of extra.entries()) {
-        const seen = new Set<string>();
-        await progress(2 + i, total, `Метрика на ${shortPath(link)}`);
-        try {
-          const p = await open(desktopCtx, link, seen);
-          await p.close();
-          pages.push({ url: link, ok: seen.size > 0 });
-        } catch {
-          /* страница не открылась — не считаем */
-        }
+    const audited = new Set(pageUrls.map(normalizeUrl));
+    const extra = mainMetrika.size ? d.links.filter((l) => !audited.has(normalizeUrl(l))).slice(0, EXTRA_PAGES) : [];
+    total = 3 + extra.length + pageUrls.length;
+    let step = 2;
+    for (const link of extra) {
+      const seen = new Set<string>();
+      await progress(step++, total, `Метрика на ${shortPath(link)}`);
+      try {
+        const p = await open(desktopCtx, link, seen);
+        await p.close();
+        pages.push({ url: link, ok: seen.size > 0 });
+      } catch {
+        /* страница не открылась — не считаем */
+      }
+    }
+
+    const r: R = (itemNo, value, comment) => ({ itemNo, value, comment });
+    const pageInputs: AuditInput[] = [];
+    for (const pageUrl of pageUrls) {
+      await progress(step++, total, `Страница ${shortPath(pageUrl)} с компьютера`);
+      const rp: R = (itemNo, value, comment) => ({ itemNo, value, comment, pageUrl });
+      const seen = new Set<string>();
+      try {
+        const p = await open(desktopCtx, pageUrl, seen);
+        pageInputs.push(...pageItemInputs(await p.evaluate(probeDesktop), rp, "на странице"));
+        await p.close();
+        if (mainMetrika.size) pages.push({ url: pageUrl, ok: seen.size > 0 });
+      } catch {
+        pageInputs.push(rp(10, null, "Страница не открылась"), rp(18, null, ""), rp(19, null, ""));
       }
     }
     await desktopCtx.close();
@@ -244,14 +274,13 @@ export async function runAutoAudit(domain: string, progress: RunProgress): Promi
       userAgent: MOBILE_UA,
       locale: "ru-RU",
     });
-    await progress(2 + extra.length, total, "Главная с телефона");
+    await progress(step, total, "Главная с телефона");
     const mPage = await open(mobileCtx, url, new Set());
     const m = await mPage.evaluate(probeMobile);
     const mobileSticky = await scrollAndCheck(mPage, probeSticky);
     const mobileUp = await mPage.evaluate(probeUpButton);
     await mobileCtx.close();
 
-    const r = (itemNo: number, value: "1" | "0" | null, comment: string): AuditInput => ({ itemNo, value, comment });
     const id = counterId(mainMetrika);
     const missing = pages.filter((p) => !p.ok).map((p) => new URL(p.url).pathname);
     const adaptive = /width\s*=\s*device-width/i.test(m.viewport) && m.overflow <= 5;
@@ -261,11 +290,7 @@ export async function runAutoAudit(domain: string, progress: RunProgress): Promi
       d.logo ? r(2, d.logoLink ? "1" : "0", d.logoLink ? "" : "Логотип не ссылка на главную") : r(2, null, ""),
       r(4, d.phoneInHeader ? "1" : "0", d.phoneInHeader ? "" : "В верхней части страницы телефона нет"),
       r(6, desktopSticky ? "1" : "0", ""),
-      d.ctaText ? r(10, "1", `Кнопка «${d.ctaText}»`) : r(10, null, "На первом экране кнопку не нашёл, проверьте"),
-      d.forms
-        ? r(18, d.maxRequired <= 3 ? "1" : "0", `Обязательных полей по разметке, без галочек согласия: до ${d.maxRequired}`)
-        : r(18, null, "Формы на главной нет"),
-      d.telInputs ? r(19, d.mask ? "1" : "0", d.mask ? "" : "Маски на поле телефона не нашёл") : r(19, null, "Поля телефона на главной нет"),
+      ...pageItemInputs(d, r, "на главной"),
       r(20, d.reviews ? "1" : "0", d.reviews ? "" : "На главной нет отзывов и ссылки на них"),
       d.certs ? r(21, "1", "") : r(21, null, "Слов «сертификат», «лицензия» на главной нет, проверьте"),
       r(
@@ -284,6 +309,7 @@ export async function runAutoAudit(domain: string, progress: RunProgress): Promi
         : pages.length === 0
           ? r(32, null, "Других страниц не нашёл, проверьте")
           : r(32, missing.length ? "0" : "1", missing.length ? `Нет на: ${missing.join(", ")}` : `Проверено страниц: ${pages.length + 1}`),
+      ...pageInputs,
     ];
     return { url, inputs };
   } finally {

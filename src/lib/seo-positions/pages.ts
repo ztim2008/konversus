@@ -107,6 +107,26 @@ export function findCannibalization(landings: KeywordLanding[]): Cannibalization
   return out;
 }
 
+export const MAX_AUDIT_PAGES = 5;
+
+/**
+ * Страницы чек-листа кроме главной (главная — page_url ''): уже оценённые, затем целевые, затем основные из выдачи.
+ * Вместе с главной не больше MAX_AUDIT_PAGES.
+ */
+export function auditPageUrls(domain: string, landings: KeywordLanding[], existing: string[] = []): string[] {
+  const home = normalizeUrl(`https://${domain}/`);
+  const out: string[] = [];
+  const add = (u: string | null | undefined) => {
+    if (!u) return;
+    const n = normalizeUrl(u);
+    if (n !== home && !out.includes(n)) out.push(n);
+  };
+  existing.forEach(add);
+  landings.forEach((l) => add(l.targetUrl));
+  landings.forEach((l) => add(l.main?.url));
+  return out.slice(0, MAX_AUDIT_PAGES - 1);
+}
+
 /** Целевая страница назначена, а Google показывает по запросу другую. */
 export function targetMismatch(l: KeywordLanding): boolean {
   return !!l.targetUrl && !!l.main && l.main.url !== l.targetUrl;

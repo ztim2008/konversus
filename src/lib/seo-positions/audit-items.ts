@@ -1,6 +1,7 @@
 export type AuditValue = "1" | "0" | "-";
 
-export type AuditItem = { no: number; text: string; auto?: boolean };
+/** site — один раз на сайт (оценивается по главной); page — для каждой важной страницы. */
+export type AuditItem = { no: number; text: string; auto?: boolean; scope?: "page" };
 export type AuditSection = { title: string; items: AuditItem[] };
 
 export const AUDIT_SECTIONS: AuditSection[] = [
@@ -18,10 +19,10 @@ export const AUDIT_SECTIONS: AuditSection[] = [
   {
     title: "Первый экран",
     items: [
-      { no: 7, text: "С первого экрана понятно, что продается на сайте." },
-      { no: 8, text: "Сразу считывается география работы." },
-      { no: 9, text: "Присутствует ключевое УТП. Понятно, почему стоит купить здесь." },
-      { no: 10, text: "Есть призыв к действию: форма обратной связи, обратный звонок или иное.", auto: true },
+      { no: 7, text: "С первого экрана понятно, что продается на сайте.", scope: "page" },
+      { no: 8, text: "Сразу считывается география работы.", scope: "page" },
+      { no: 9, text: "Присутствует ключевое УТП. Понятно, почему стоит купить здесь.", scope: "page" },
+      { no: 10, text: "Есть призыв к действию: форма обратной связи, обратный звонок или иное.", auto: true, scope: "page" },
     ],
   },
   {
@@ -37,10 +38,10 @@ export const AUDIT_SECTIONS: AuditSection[] = [
   {
     title: "Форма обратной связи",
     items: [
-      { no: 16, text: "Форму легко найти, она всегда в быстром доступе." },
-      { no: 17, text: "При отправке формы пользователю понятно, что его запрос получили." },
-      { no: 18, text: "Обязательных полей не более 3-х.", auto: true },
-      { no: 19, text: "Работает проверка телефона и почты по маске (чтобы отфильтровать спам-заявки).", auto: true },
+      { no: 16, text: "Форму легко найти, она всегда в быстром доступе.", scope: "page" },
+      { no: 17, text: "При отправке формы пользователю понятно, что его запрос получили.", scope: "page" },
+      { no: 18, text: "Обязательных полей не более 3-х.", auto: true, scope: "page" },
+      { no: 19, text: "Работает проверка телефона и почты по маске (чтобы отфильтровать спам-заявки).", auto: true, scope: "page" },
     ],
   },
   {
@@ -56,8 +57,9 @@ export const AUDIT_SECTIONS: AuditSection[] = [
       {
         no: 22,
         text: "Есть элементы, побуждающие совершить конверсию (попапы со скидками, слайдер, квизы и прочее).",
+        scope: "page",
       },
-      { no: 23, text: "Отсутствуют элементы, мешающие совершить конверсию." },
+      { no: 23, text: "Отсутствуют элементы, мешающие совершить конверсию.", scope: "page" },
     ],
   },
   {
@@ -82,6 +84,15 @@ export const AUDIT_SECTIONS: AuditSection[] = [
 ];
 
 export const AUDIT_ITEMS: AuditItem[] = AUDIT_SECTIONS.flatMap((s) => s.items);
+export const SITE_ITEMS = AUDIT_ITEMS.filter((i) => i.scope !== "page");
+export const PAGE_ITEMS = AUDIT_ITEMS.filter((i) => i.scope === "page");
+
+/** Разделы чек-листа только с нужными пунктами, пустые разделы убраны. */
+export function sectionsFor(scope: "site" | "page"): AuditSection[] {
+  return AUDIT_SECTIONS.map((s) => ({ ...s, items: s.items.filter((i) => (i.scope === "page") === (scope === "page")) })).filter(
+    (s) => s.items.length
+  );
+}
 
 export function isAuditValue(v: unknown): v is AuditValue {
   return v === "1" || v === "0" || v === "-";
@@ -90,10 +101,10 @@ export function isAuditValue(v: unknown): v is AuditValue {
 export type AuditEntry = { value: AuditValue | null; comment: string; source: "auto" | "manual" };
 
 /** Итог как в таблице: сумма «да» из оценённых «да / нет». */
-export function auditScore(entries: Map<number, AuditEntry>) {
+export function auditScore(entries: Map<number, AuditEntry>, items: AuditItem[] = AUDIT_ITEMS) {
   let yes = 0;
   let rated = 0;
-  for (const item of AUDIT_ITEMS) {
+  for (const item of items) {
     const v = entries.get(item.no)?.value;
     if (v === "1") yes++;
     if (v === "1" || v === "0") rated++;

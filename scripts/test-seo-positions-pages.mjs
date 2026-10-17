@@ -10,7 +10,7 @@ const source = readFileSync(new URL("../src/lib/seo-positions/pages.ts", import.
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 });
-const { normalizeUrl, shortPath, landingPages, findCannibalization, targetMismatch, queryMatch, pageIssues, queryIssues } = await import(
+const { normalizeUrl, shortPath, landingPages, findCannibalization, targetMismatch, queryMatch, pageIssues, queryIssues, auditPageUrls } = await import(
   `data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`
 );
 
@@ -54,6 +54,22 @@ const snapshots = [
 
 const tz = "Asia/Tashkent";
 const landings = landingPages(keywords, snapshots, tz);
+assert.deepEqual(
+  auditPageUrls("master-kotlov.uz", landings),
+  ["https://master-kotlov.uz/gaz", FLOOR],
+  "страницы чек-листа: целевая, потом основные; главная не входит (у «b» основная — главная)"
+);
+assert.deepEqual(
+  auditPageUrls("www.master-kotlov.uz", landings, ["https://master-kotlov.uz/old/", "https://master-kotlov.uz/"]),
+  ["https://master-kotlov.uz/old", "https://master-kotlov.uz/gaz", FLOOR],
+  "уже оценённые остаются первыми"
+);
+assert.equal(
+  auditPageUrls("x.uz", [], ["https://x.uz/1", "https://x.uz/2", "https://x.uz/3", "https://x.uz/4", "https://x.uz/5"]).length,
+  4,
+  "вместе с главной не больше пяти"
+);
+
 const a = landings.find((l) => l.keywordId === "a");
 assert.equal(a.main.url, FLOOR, "основная — где больше дней");
 assert.equal(a.main.days, 2);

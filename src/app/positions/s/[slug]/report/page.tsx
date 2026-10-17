@@ -8,7 +8,7 @@ import { AutoRefresh } from "@/components/seo-positions/auto-refresh";
 import { loadAudits } from "@/lib/seo-positions/audit";
 import { getRuns } from "@/lib/seo-positions/runs";
 import { PagesSection } from "@/components/seo-positions/pages-section";
-import { landingPages } from "@/lib/seo-positions/pages";
+import { auditPageUrls, landingPages } from "@/lib/seo-positions/pages";
 import { listPageChecks } from "@/lib/seo-positions/pages-data";
 import { TechSection } from "@/components/seo-positions/tech-section";
 import { loadCrawls } from "@/lib/seo-positions/crawl";
@@ -104,6 +104,7 @@ export default async function SeoReportPage({
     snapshots.filter((s) => new Date(s.checkedAt) >= from),
     timeZoneFor(project.gl)
   );
+  const auditPages = auditPageUrls(project.domain, landings, [...((audits.current ?? audits.previous)?.pages.keys() ?? [])]);
 
   const admin = !!viewer && canAccessProject(viewer, project.id);
   const report = buildMonthReport({
@@ -323,6 +324,7 @@ export default async function SeoReportPage({
         canAuto={admin && month === nowMonth}
         current={audits.current}
         previous={audits.previous}
+        pageUrls={auditPages}
         run={runs.checklist}
         timeZone={timeZoneFor(project.gl)}
       />

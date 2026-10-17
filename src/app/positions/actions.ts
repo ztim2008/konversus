@@ -21,10 +21,10 @@ import {
 import { normalizeDomain, urlMatchesDomain } from "@/lib/seo-positions/domain";
 import { saveAudit } from "@/lib/seo-positions/audit";
 import { runAutoAudit } from "@/lib/seo-positions/audit-check";
-import { AUDIT_ITEMS, isAuditValue } from "@/lib/seo-positions/audit-items";
+import { AUDIT_ITEMS, isAuditValue, PAGE_ITEMS } from "@/lib/seo-positions/audit-items";
 import { runCrawl } from "@/lib/seo-positions/crawl";
-import { normalizeUrl } from "@/lib/seo-positions/pages";
-import { checkLandingPages } from "@/lib/seo-positions/pages-data";
+import { MAX_AUDIT_PAGES, normalizeUrl } from "@/lib/seo-positions/pages";
+import { checkLandingPages, loadAuditPages } from "@/lib/seo-positions/pages-data";
 import { startBackgroundRun } from "@/lib/seo-positions/runs";
 import { currentMonth, isMonth } from "@/lib/seo-positions/tz";
 import {
@@ -155,10 +155,15 @@ export async function saveAuditAction(formData: FormData) {
   const project = await requireProject(formData);
   const month = str(formData, "month");
   if (!isMonth(month)) redirect(`/positions/${project.id}`);
-  const inputs = AUDIT_ITEMS.map((item) => {
-    const v = str(formData, `v_${item.no}`);
-    return { itemNo: item.no, value: isAuditValue(v) ? v : null, comment: str(formData, `c_${item.no}`) };
-  });
+  const read = (suffix: string, pageUrl: string) => (item: { no: number }) => {
+    const v = str(formData, `v_${suffix}${item.no}`);
+    return { itemNo: item.no, value: isAuditValue(v) ? v : null, comment: str(formData, `c_${suffix}${item.no}`), pageUrl };
+  };
+  const inputs = AUDIT_ITEMS.map(read("", ""));
+  for (let i = 1; i < MAX_AUDIT_PAGES; i++) {
+    const url = str(formData, `page_${i}`);
+    if (url && urlMatchesDomain(url, project.domain)) inputs.push(...PAGE_ITEMS.map(read(`${i}_`, normalizeUrl(url))));
+  }
   await saveAudit(project.id, month, inputs, "manual");
   auditRedirect(project.shareSlug, month);
 }
@@ -167,10 +172,13 @@ export async function autoAuditAction(formData: FormData) {
   const project = await requireProject(formData);
   const month = currentMonth(project.gl);
   await startBackgroundRun(project.id, "checklist", month, async (progress) => {
-    const { inputs } = await runAutoAudit(project.domain, progress);
+    await progress(0, 0, "Выбираю страницы");
+    const pageUrls = await loadAuditPages(project, month);
+    const { inputs } = await runAutoAudit(project.domain, progress, pageUrls);
     await saveAudit(project.id, month, inputs, "auto", { keepManual: true });
     const rated = inputs.filter((i) => i.value !== null).length;
-    return `оценено ${rated} из ${inputs.length} автопунктов${rated < inputs.length ? `, проверить вручную: ${inputs.length - rated}` : ""}`;
+    const pages = pageUrls.length ? `, страниц кроме главной: ${pageUrls.length}` : "";
+    return `оценено ${rated} из ${inputs.length} автопунктов${rated < inputs.length ? `, проверить вручную: ${inputs.length - rated}` : ""}${pages}`;
   });
   auditRedirect(project.shareSlug, month);
 }
