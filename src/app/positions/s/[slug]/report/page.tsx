@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { saveReportPlanAction } from "@/app/positions/actions";
+import { AdsSection } from "@/components/seo-positions/ads-section";
 import { AuditSection } from "@/components/seo-positions/audit-section";
+import { loadAdsData } from "@/lib/seo-positions/ads";
+import { monthDays, summarizeAds } from "@/lib/seo-positions/ads-summary";
 import { AutoRefresh } from "@/components/seo-positions/auto-refresh";
 import { loadAudits } from "@/lib/seo-positions/audit";
 import { getRuns } from "@/lib/seo-positions/runs";
@@ -20,7 +23,7 @@ import {
   listSnapshotsBetween,
 } from "@/lib/seo-positions/data";
 import { buildMonthReport, rankLabel, type ReportKeyword } from "@/lib/seo-positions/report";
-import { currentMonth, isMonth, monthPrep, monthRangeUtc, monthTitle, timeZoneFor } from "@/lib/seo-positions/tz";
+import { currentMonth, isMonth, localDayAgo, monthPrep, monthRangeUtc, monthTitle, timeZoneFor } from "@/lib/seo-positions/tz";
 import { canAccessProject, getViewer } from "@/lib/seo-positions/users";
 
 export const dynamic = "force-dynamic";
@@ -98,7 +101,12 @@ export default async function SeoReportPage({
     loadAudits(project.id, month),
     getRuns(project.id),
   ]);
-  const [pageChecks, crawls] = await Promise.all([listPageChecks(project.id, month), loadCrawls(project.id, month)]);
+  const adsDays = monthDays(month, localDayAgo(project.gl, 1));
+  const [pageChecks, crawls, ads] = await Promise.all([
+    listPageChecks(project.id, month),
+    loadCrawls(project.id, month),
+    adsDays.length ? loadAdsData(project.id, adsDays[0], adsDays.at(-1)!) : null,
+  ]);
   const landings = landingPages(
     keywords,
     snapshots.filter((s) => new Date(s.checkedAt) >= from),
@@ -269,6 +277,16 @@ export default async function SeoReportPage({
             Сколько из {keywords.length} запросов сайт держит в первой десятке Google.
           </p>
         </section>
+      )}
+
+      {ads && (
+        <AdsSection
+          projectId={project.id}
+          days={adsDays}
+          summary={summarizeAds(adsDays, ads.covered, ads.rows)}
+          links={ads.links}
+          canEdit={admin}
+        />
       )}
 
       <PagesSection

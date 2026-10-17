@@ -42,11 +42,14 @@ export function PositionChart({
   depth,
   timeZone,
   marks = [],
+  adsOn,
 }: {
   points: ChartPoint[];
   depth: number;
   timeZone: string;
   marks?: ChartMark[];
+  /** По точкам: в день этой проверки шла реклама. */
+  adsOn?: boolean[];
 }) {
   const paletteJson = useSyncExternalStore(noopSubscribe, readPalette, () => null);
   const timeFormat = new Intl.DateTimeFormat("ru-RU", {
@@ -122,10 +125,29 @@ export function PositionChart({
     },
   };
 
+  const adsPlugin: Plugin<"line"> = {
+    id: "seoAds",
+    beforeDatasetsDraw(chart) {
+      if (!adsOn?.some(Boolean)) return;
+      const { ctx, chartArea, scales } = chart;
+      const x = (i: number) => scales.x.getPixelForValue(i);
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = palette.accent;
+      adsOn.forEach((on, i) => {
+        if (!on) return;
+        const left = i === 0 ? chartArea.left : (x(i - 1) + x(i)) / 2;
+        const right = i === points.length - 1 ? chartArea.right : (x(i) + x(i + 1)) / 2;
+        ctx.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+      });
+      ctx.restore();
+    },
+  };
+
   return (
     <div className="h-64">
       <Line
-        plugins={[marksPlugin]}
+        plugins={[adsPlugin, marksPlugin]}
         options={options}
         data={{
           labels,

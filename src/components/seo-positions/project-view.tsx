@@ -68,9 +68,24 @@ type Props = {
   positionsRun?: RunState;
   error?: string | null;
   shareUrl?: string;
+  /** День (YYYY-MM-DD по городу проекта) → реклама шла / стояла; null — реклама не подключена. */
+  adsByDay?: Record<string, "on" | "off"> | null;
 };
 
-export function ProjectView({ project, rows, notes, selectedId, days, basePath, canEdit, isOwner, positionsRun, error, shareUrl }: Props) {
+export function ProjectView({
+  project,
+  rows,
+  notes,
+  selectedId,
+  days,
+  basePath,
+  canEdit,
+  isOwner,
+  positionsRun,
+  error,
+  shareUrl,
+  adsByDay = null,
+}: Props) {
   const fmt = formatter(project);
   const depth = depthLabel(project);
   const depthNum = project.maxPages * 10;
@@ -130,6 +145,12 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
           </Link>
           {canEdit && (
             <>
+              <Link
+                href={`/positions/${project.id}/ads`}
+                className="rounded-md border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-strong)]"
+              >
+                Реклама
+              </Link>
               <form action={checkNowAction}>
                 <input type="hidden" name="projectId" value={project.id} />
                 <button
@@ -196,11 +217,13 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
               depth={depthNum}
               timeZone={timeZoneFor(project.gl)}
               marks={marks}
+              adsOn={adsByDay ? historyDates.map((d) => adsByDay[d] === "on") : undefined}
               points={selected.history.map((s) => ({ at: s.checkedAt, position: s.position, status: s.status }))}
             />
             <p className="mt-2 text-xs text-[var(--muted)]">
               Линия — место сайта. Крестик внизу — сайта нет в {depth}. Треугольник — проверка не удалась, это не значит
               «не найден». Пунктир с номером — правка на сайте, стоит у первой проверки после неё.
+              {adsByDay && " Светлая подложка — в этот день шла реклама Google Ads (на места в обычной выдаче она не влияет)."}
             </p>
 
             <div className="mt-4 border-t border-[var(--line)] pt-3">

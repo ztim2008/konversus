@@ -17,6 +17,11 @@ export function monthRangeUtc(month: string, gl: string): { from: Date; to: Date
   };
 }
 
+/** Дата YYYY-MM-DD по городу проекта: 0 — сегодня, 1 — вчера и т. д. */
+export function localDayAgo(gl: string, daysAgo: number, now = Date.now()) {
+  return new Date(now - daysAgo * 86400_000 + utcOffsetHours(gl) * 3600_000).toISOString().slice(0, 10);
+}
+
 export function isMonth(value: string | undefined): value is string {
   return !!value && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 }

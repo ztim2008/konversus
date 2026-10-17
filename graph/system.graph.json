@@ -356,6 +356,16 @@
       "id": "sql.seo_audit_pages",
       "type": "sql",
       "path": "sql/020_seo_audit_pages.sql"
+    },
+    {
+      "id": "sql.seo_ads",
+      "type": "sql",
+      "path": "sql/021_seo_ads.sql"
+    },
+    {
+      "id": "app.api_seo_positions_ads",
+      "type": "app",
+      "path": "src/app/api/seo-positions/ads"
     }
   ],
   "edges": [
@@ -728,6 +738,16 @@
       "from": "lib.seo_positions",
       "to": "sql.seo_audit_pages",
       "type": "writes"
+    },
+    {
+      "from": "lib.seo_positions",
+      "to": "sql.seo_ads",
+      "type": "writes"
+    },
+    {
+      "from": "app.api_seo_positions_ads",
+      "to": "lib.seo_positions",
+      "type": "calls"
     }
   ],
   "taskPaths": {
@@ -839,9 +859,11 @@
       "sql.seo_crawl",
       "sql.seo_run_progress",
       "sql.seo_audit_pages",
+      "sql.seo_ads",
       "lib.seo_positions",
       "app.ui_seo_positions",
       "app.api_seo_positions_daily",
+      "app.api_seo_positions_ads",
       "ops.cron_seo_positions",
       "gate.harness"
     ]

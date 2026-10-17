@@ -19,6 +19,7 @@ import {
   setProjectActive,
 } from "@/lib/seo-positions/data";
 import { normalizeDomain, urlMatchesDomain } from "@/lib/seo-positions/domain";
+import { ADS_FLASH_COOKIE, createAdsToken } from "@/lib/seo-positions/ads";
 import { saveAudit } from "@/lib/seo-positions/audit";
 import { runAutoAudit } from "@/lib/seo-positions/audit-check";
 import { AUDIT_ITEMS, isAuditValue, PAGE_ITEMS } from "@/lib/seo-positions/audit-items";
@@ -195,6 +196,20 @@ export async function crawlSiteAction(formData: FormData) {
   const month = currentMonth(project.gl);
   await startBackgroundRun(project.id, "crawl", month, (progress) => runCrawl(project, month, progress));
   auditRedirect(project.shareSlug, month, "tech");
+}
+
+/** Ключ скрипта Google Ads показывается только в httpOnly-cookie страницы «Реклама» на 10 минут: в базе лишь хеш. */
+export async function createAdsTokenAction(formData: FormData) {
+  const project = await requireProject(formData);
+  const token = await createAdsToken(project.id, "google");
+  (await cookies()).set(ADS_FLASH_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    path: `/positions/${project.id}/ads`,
+    maxAge: 600,
+  });
+  redirect(`/positions/${project.id}/ads`);
 }
 
 export async function setTargetUrlAction(formData: FormData) {
