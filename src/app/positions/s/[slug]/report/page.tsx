@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { saveReportPlanAction } from "@/app/positions/actions";
+import { AuditSection } from "@/components/seo-positions/audit-section";
+import { loadAudits } from "@/lib/seo-positions/audit";
 import {
   getProjectBySlug,
   getReportPlan,
@@ -80,12 +82,13 @@ export default async function SeoReportPage({
 
   const { from, to } = monthRangeUtc(month, project.gl);
   const depth = project.maxPages * 10;
-  const [viewer, keywords, snapshots, notes, plan] = await Promise.all([
+  const [viewer, keywords, snapshots, notes, plan, audits] = await Promise.all([
     isPdf ? Promise.resolve(null) : getViewer(),
     listKeywords(project.id),
     listSnapshotsBetween(project.id, new Date(from.getTime() - 7 * 86400_000), to),
     listNotesForMonth(project.id, month),
     getReportPlan(project.id, month),
+    loadAudits(project.id, month),
   ]);
 
   const admin = !!viewer && canAccessProject(viewer, project.id);
@@ -277,6 +280,16 @@ export default async function SeoReportPage({
           !admin && <p className="text-[var(--muted)]">План пока не заполнен</p>
         )}
       </section>
+
+      <AuditSection
+        projectId={project.id}
+        month={month}
+        canEdit={admin}
+        canAuto={admin && month === nowMonth}
+        current={audits.current}
+        previous={audits.previous}
+        error={typeof sp.auditError === "string" ? sp.auditError.slice(0, 200) : null}
+      />
 
       <p className="mt-10 border-t border-[var(--line)] pt-3 text-xs text-[var(--muted)]">
         Как считали: обычная выдача Google без рекламы, {project.location}, компьютер, раз в сутки. «Начало» — медиана

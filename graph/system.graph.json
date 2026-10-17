@@ -331,6 +331,11 @@
       "id": "sql.seo_users",
       "type": "sql",
       "path": "sql/015_seo_users.sql"
+    },
+    {
+      "id": "sql.seo_audits",
+      "type": "sql",
+      "path": "sql/016_seo_audits.sql"
     }
   ],
   "edges": [
@@ -678,6 +683,11 @@
       "from": "lib.seo_positions",
       "to": "sql.seo_users",
       "type": "writes"
+    },
+    {
+      "from": "lib.seo_positions",
+      "to": "sql.seo_audits",
+      "type": "writes"
     }
   ],
   "taskPaths": {
@@ -784,6 +794,7 @@
       "sql.seo_notes",
       "sql.seo_reports",
       "sql.seo_users",
+      "sql.seo_audits",
       "lib.seo_positions",
       "app.ui_seo_positions",
       "app.api_seo_positions_daily",

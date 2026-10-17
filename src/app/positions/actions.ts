@@ -19,7 +19,10 @@ import {
   setProjectActive,
 } from "@/lib/seo-positions/data";
 import { normalizeDomain } from "@/lib/seo-positions/domain";
-import { isMonth } from "@/lib/seo-positions/tz";
+import { saveAudit } from "@/lib/seo-positions/audit";
+import { runAutoAudit } from "@/lib/seo-positions/audit-check";
+import { AUDIT_ITEMS, isAuditValue } from "@/lib/seo-positions/audit-items";
+import { currentMonth, isMonth } from "@/lib/seo-positions/tz";
 import {
   canAccessProject,
   createUser,
@@ -144,6 +147,42 @@ export async function saveReportPlanAction(formData: FormData) {
   await saveReportPlan(project.id, month, str(formData, "plan").slice(0, 4000));
   revalidatePath(`/positions/s/${project.shareSlug}/report`);
   redirect(`/positions/s/${project.shareSlug}/report?month=${month}`);
+}
+
+const auditRunning = new Set<string>();
+
+function auditRedirect(slug: string, month: string, error?: string): never {
+  redirect(`/positions/s/${slug}/report?month=${month}${error ? `&auditError=${encodeURIComponent(error)}` : ""}#audit`);
+}
+
+export async function saveAuditAction(formData: FormData) {
+  const project = await requireProject(formData);
+  const month = str(formData, "month");
+  if (!isMonth(month)) redirect(`/positions/${project.id}`);
+  const inputs = AUDIT_ITEMS.map((item) => {
+    const v = str(formData, `v_${item.no}`);
+    return { itemNo: item.no, value: isAuditValue(v) ? v : null, comment: str(formData, `c_${item.no}`) };
+  });
+  await saveAudit(project.id, month, inputs, "manual");
+  auditRedirect(project.shareSlug, month);
+}
+
+export async function autoAuditAction(formData: FormData) {
+  const project = await requireProject(formData);
+  const month = currentMonth(project.gl);
+  if (auditRunning.has(project.id)) auditRedirect(project.shareSlug, month, "Автопроверка уже идёт, обновите страницу через минуту");
+  auditRunning.add(project.id);
+  let error: string | undefined;
+  try {
+    const { inputs } = await runAutoAudit(project.domain);
+    await saveAudit(project.id, month, inputs, "auto", { keepManual: true });
+  } catch (err) {
+    console.error("[seo-positions] auto audit failed", err);
+    error = err instanceof Error && err.message.startsWith("Сайт не открылся") ? err.message.slice(0, 200) : "Автопроверка не удалась";
+  } finally {
+    auditRunning.delete(project.id);
+  }
+  auditRedirect(project.shareSlug, month, error);
 }
 
 export async function toggleProjectAction(formData: FormData) {
