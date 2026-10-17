@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { saveReportPlanAction } from "@/app/positions/actions";
-import { getCurrentAdmin } from "@/lib/auth/session";
 import {
   getProjectBySlug,
   getReportPlan,
@@ -13,6 +12,7 @@ import {
 } from "@/lib/seo-positions/data";
 import { buildMonthReport, rankLabel, type ReportKeyword } from "@/lib/seo-positions/report";
 import { currentMonth, isMonth, monthPrep, monthRangeUtc, monthTitle, timeZoneFor } from "@/lib/seo-positions/tz";
+import { canAccessProject, getViewer } from "@/lib/seo-positions/users";
 
 export const dynamic = "force-dynamic";
 
@@ -80,14 +80,15 @@ export default async function SeoReportPage({
 
   const { from, to } = monthRangeUtc(month, project.gl);
   const depth = project.maxPages * 10;
-  const [admin, keywords, snapshots, notes, plan] = await Promise.all([
-    isPdf ? Promise.resolve(null) : getCurrentAdmin(),
+  const [viewer, keywords, snapshots, notes, plan] = await Promise.all([
+    isPdf ? Promise.resolve(null) : getViewer(),
     listKeywords(project.id),
     listSnapshotsBetween(project.id, new Date(from.getTime() - 7 * 86400_000), to),
     listNotesForMonth(project.id, month),
     getReportPlan(project.id, month),
   ]);
 
+  const admin = !!viewer && canAccessProject(viewer, project.id);
   const report = buildMonthReport({
     keywords,
     snapshots,

@@ -24,5 +24,5 @@ export default async function SeoSharePage({
   if (!project) notFound();
 
   const data = await loadProjectPage(project, await searchParams);
-  return <ProjectView project={project} {...data} basePath={`/positions/s/${slug}`} admin={false} />;
+  return <ProjectView project={project} {...data} basePath={`/positions/s/${slug}`} canEdit={false} isOwner={false} />;
 }

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ProjectView } from "@/components/seo-positions/project-view";
-import { requireCurrentAdmin } from "@/lib/auth/session";
 import { getProject } from "@/lib/seo-positions/data";
 import { loadProjectPage, publicBaseUrl } from "@/lib/seo-positions/page-data";
+import { canAccessProject, requireViewer } from "@/lib/seo-positions/users";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +20,10 @@ export default async function SeoProjectPage({
   params: Promise<{ projectId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireCurrentAdmin();
+  const viewer = await requireViewer();
   const { projectId } = await params;
   const project = await getProject(projectId);
-  if (!project) notFound();
+  if (!project || !canAccessProject(viewer, project.id)) notFound();
 
   const data = await loadProjectPage(project, await searchParams);
   return (
@@ -31,7 +31,8 @@ export default async function SeoProjectPage({
       project={project}
       {...data}
       basePath={`/positions/${project.id}`}
-      admin
+      canEdit
+      isOwner={viewer.role === "admin"}
       shareUrl={`${publicBaseUrl()}/positions/s/${project.shareSlug}`}
     />
   );

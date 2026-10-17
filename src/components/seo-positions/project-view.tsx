@@ -57,12 +57,15 @@ type Props = {
   selectedId: string | null;
   days: number;
   basePath: string;
-  admin: boolean;
+  /** Админ или маркетолог с доступом к проекту. */
+  canEdit: boolean;
+  /** Только админ: удаление, пауза расписания. */
+  isOwner: boolean;
   checkingRequested: boolean;
   shareUrl?: string;
 };
 
-export function ProjectView({ project, rows, notes, selectedId, days, basePath, admin, checkingRequested, shareUrl }: Props) {
+export function ProjectView({ project, rows, notes, selectedId, days, basePath, canEdit, isOwner, checkingRequested, shareUrl }: Props) {
   const fmt = formatter(project);
   const depth = depthLabel(project);
   const depthNum = project.maxPages * 10;
@@ -99,7 +102,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
 
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
         <div>
-          {admin && (
+          {canEdit && (
             <Link href="/positions" className="text-[var(--muted)] hover:text-[var(--foreground)]">
               ← Все проекты
             </Link>
@@ -118,7 +121,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
           >
             Отчёт за месяц
           </Link>
-          {admin && (
+          {canEdit && (
             <>
               <form action={checkNowAction}>
                 <input type="hidden" name="projectId" value={project.id} />
@@ -129,12 +132,14 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
                   {anyChecking ? "Проверка идёт…" : "Проверить все сейчас"}
                 </button>
               </form>
-              <form action={toggleProjectAction}>
-                <input type="hidden" name="projectId" value={project.id} />
-                <button className="rounded-md border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-strong)]">
-                  {project.isActive ? "Пауза расписания" : "Включить расписание"}
-                </button>
-              </form>
+              {isOwner && (
+                <form action={toggleProjectAction}>
+                  <input type="hidden" name="projectId" value={project.id} />
+                  <button className="rounded-md border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-strong)]">
+                    {project.isActive ? "Пауза расписания" : "Включить расписание"}
+                  </button>
+                </form>
+              )}
             </>
           )}
         </div>
@@ -199,7 +204,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
                         {note.text}
                         {!note.keywordId && <span className="text-[var(--muted)]"> · все запросы</span>}
                       </span>
-                      {admin && (
+                      {canEdit && (
                         <form action={deleteNoteAction}>
                           <input type="hidden" name="projectId" value={project.id} />
                           <input type="hidden" name="noteId" value={note.id} />
@@ -210,7 +215,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
                   ))}
                 </ol>
               )}
-              {admin && (
+              {canEdit && (
                 <form action={addNoteAction} className="mt-3 flex flex-wrap items-center gap-2">
                   <input type="hidden" name="projectId" value={project.id} />
                   <input
@@ -291,13 +296,13 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
               <th className="px-3 py-2 text-right font-medium">Лучшее за {days} дн</th>
               <th className="px-3 py-2 font-medium">Проверено</th>
               <th className="px-3 py-2 font-medium">Страница сайта</th>
-              {admin && <th className="px-3 py-2" />}
+              {canEdit && <th className="px-3 py-2" />}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={admin ? 8 : 7} className="px-3 py-6 text-center text-[var(--muted)]">
+                <td colSpan={canEdit ? 8 : 7} className="px-3 py-6 text-center text-[var(--muted)]">
                   Ключей пока нет
                 </td>
               </tr>
@@ -334,7 +339,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
                       "—"
                     )}
                   </td>
-                  {admin && (
+                  {canEdit && (
                     <td className="whitespace-nowrap px-3 text-right">
                       <form action={checkNowAction} className="inline">
                         <input type="hidden" name="projectId" value={project.id} />
@@ -343,11 +348,13 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
                           Проверить
                         </button>
                       </form>
-                      <form action={deleteKeywordAction} className="inline">
-                        <input type="hidden" name="projectId" value={project.id} />
-                        <input type="hidden" name="keywordId" value={row.keyword.id} />
-                        <button className="px-2 text-[var(--muted)] hover:text-[var(--accent-warm)]">Удалить</button>
-                      </form>
+                      {isOwner && (
+                        <form action={deleteKeywordAction} className="inline">
+                          <input type="hidden" name="projectId" value={project.id} />
+                          <input type="hidden" name="keywordId" value={row.keyword.id} />
+                          <button className="px-2 text-[var(--muted)] hover:text-[var(--accent-warm)]">Удалить</button>
+                        </form>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -357,7 +364,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
         </table>
       </section>
 
-      {admin && (
+      {canEdit && (
         <section className="mt-6 grid gap-4 lg:grid-cols-2">
           <form action={addKeywordsAction} className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
             <input type="hidden" name="projectId" value={project.id} />
@@ -390,16 +397,18 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
               Одна проверка ключа — от 1 до {project.maxPages} запросов к Serper: листаем по 10, пока не найдём сайт.
               Расписание — раз в сутки утром.
             </p>
-            <div className="mt-4">
-              <DeleteConfirmButton
-                action={deleteProjectAction}
-                idName="projectId"
-                idValue={project.id}
-                label="Удалить проект со всей историей"
-                confirmMessage={`Удалить ${project.domain} и всю историю проверок?`}
-                className="text-[var(--muted)] hover:text-[var(--accent-warm)]"
-              />
-            </div>
+            {isOwner && (
+              <div className="mt-4">
+                <DeleteConfirmButton
+                  action={deleteProjectAction}
+                  idName="projectId"
+                  idValue={project.id}
+                  label="Удалить проект со всей историей"
+                  confirmMessage={`Удалить ${project.domain} и всю историю проверок?`}
+                  className="text-[var(--muted)] hover:text-[var(--accent-warm)]"
+                />
+              </div>
+            )}
           </div>
         </section>
       )}

@@ -2,6 +2,7 @@
 
 import { after } from "next/server";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { requireCurrentAdmin } from "@/lib/auth/session";
@@ -19,16 +20,34 @@ import {
 } from "@/lib/seo-positions/data";
 import { normalizeDomain } from "@/lib/seo-positions/domain";
 import { isMonth } from "@/lib/seo-positions/tz";
+import {
+  canAccessProject,
+  createUser,
+  deleteUser,
+  generatePassword,
+  loginMarketer,
+  logoutMarketer,
+  normalizeLogin,
+  PASSWORD_FLASH_COOKIE,
+  requireViewer,
+  resetUserPassword,
+  setUserActive,
+  setUserProjects,
+} from "@/lib/seo-positions/users";
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);
   return typeof v === "string" ? v.trim() : "";
 }
 
-async function requireProject(formData: FormData) {
-  await requireCurrentAdmin();
-  const project = await getProject(str(formData, "projectId"));
-  if (!project) redirect("/positions?error=" + encodeURIComponent("Проект не найден"));
+/** Админ — любой проект; маркетолог — только выданный ему. Чужой проект выглядит как несуществующий. */
+async function requireProject(formData: FormData, opts: { adminOnly?: boolean } = {}) {
+  const viewer = opts.adminOnly ? (await requireCurrentAdmin(), null) : await requireViewer();
+  const projectId = str(formData, "projectId");
+  const project = await getProject(projectId);
+  if (!project || (viewer && !canAccessProject(viewer, project.id))) {
+    redirect("/positions?error=" + encodeURIComponent("Проект не найден"));
+  }
   return project;
 }
 
@@ -84,7 +103,7 @@ export async function addKeywordsAction(formData: FormData) {
 }
 
 export async function deleteKeywordAction(formData: FormData) {
-  const project = await requireProject(formData);
+  const project = await requireProject(formData, { adminOnly: true });
   await deleteKeyword(project.id, str(formData, "keywordId"));
   revalidatePath(`/positions/${project.id}`);
 }
@@ -128,13 +147,83 @@ export async function saveReportPlanAction(formData: FormData) {
 }
 
 export async function toggleProjectAction(formData: FormData) {
-  const project = await requireProject(formData);
+  const project = await requireProject(formData, { adminOnly: true });
   await setProjectActive(project.id, !project.isActive);
   revalidatePath(`/positions/${project.id}`);
 }
 
 export async function deleteProjectAction(formData: FormData) {
-  const project = await requireProject(formData);
+  const project = await requireProject(formData, { adminOnly: true });
   await deleteProject(project.id);
   redirect("/positions");
+}
+
+export async function loginAction(formData: FormData) {
+  const result = await loginMarketer(str(formData, "login"), String(formData.get("password") ?? ""));
+  if (result === "ok") redirect("/positions");
+  const message = result === "locked" ? "Слишком много попыток. Попробуйте через 15 минут" : "Неверный логин или пароль";
+  redirect("/positions/login?error=" + encodeURIComponent(message));
+}
+
+export async function logoutAction() {
+  await logoutMarketer();
+  redirect("/positions/login");
+}
+
+// ---------- маркетологи (только админ) ----------
+
+function selectedProjects(formData: FormData) {
+  return formData.getAll("projectIds").filter((v): v is string => typeof v === "string");
+}
+
+function usersRedirect(params: Record<string, string>) {
+  redirect(`/positions/users?${new URLSearchParams(params).toString()}`);
+}
+
+/** Новый пароль показывается один раз: в httpOnly-cookie на минуту, не в адресе страницы и не в логах. */
+async function flashPassword(login: string, password: string) {
+  (await cookies()).set(PASSWORD_FLASH_COOKIE, JSON.stringify({ login, password }), {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    path: "/positions/users",
+    maxAge: 60,
+  });
+  redirect("/positions/users");
+}
+
+export async function createUserAction(formData: FormData) {
+  await requireCurrentAdmin();
+  const login = normalizeLogin(str(formData, "login"));
+  if (!login) usersRedirect({ error: "Логин: латиница, цифры, точка, дефис, 3–64 символа" });
+  const password = generatePassword();
+  const id = await createUser(login!, str(formData, "name").slice(0, 200), password);
+  if (!id) usersRedirect({ error: `Логин ${login} уже занят` });
+  await setUserProjects(id!, selectedProjects(formData));
+  await flashPassword(login!, password);
+}
+
+export async function updateUserProjectsAction(formData: FormData) {
+  await requireCurrentAdmin();
+  await setUserProjects(str(formData, "userId"), selectedProjects(formData));
+  revalidatePath("/positions/users");
+}
+
+export async function resetUserPasswordAction(formData: FormData) {
+  await requireCurrentAdmin();
+  const password = generatePassword();
+  await resetUserPassword(str(formData, "userId"), password);
+  await flashPassword(str(formData, "login"), password);
+}
+
+export async function toggleUserAction(formData: FormData) {
+  await requireCurrentAdmin();
+  await setUserActive(str(formData, "userId"), str(formData, "active") !== "1");
+  revalidatePath("/positions/users");
+}
+
+export async function deleteUserAction(formData: FormData) {
+  await requireCurrentAdmin();
+  await deleteUser(str(formData, "userId"));
+  revalidatePath("/positions/users");
 }
