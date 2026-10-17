@@ -299,6 +299,43 @@ export async function deleteNote(projectId: string, noteId: string) {
   await getDbPool().execute("delete from seo_notes where id = ? and project_id = ?", [noteId, projectId]);
 }
 
+export async function listSnapshotsBetween(projectId: string, from: Date, to: Date): Promise<SeoSnapshot[]> {
+  const [rows] = await getDbPool().query<SnapshotRow[]>(
+    `select s.* from seo_snapshots s
+     join seo_keywords k on k.id = s.keyword_id
+     where k.project_id = ? and s.checked_at >= ? and s.checked_at < ?
+     order by s.checked_at`,
+    [projectId, from, to]
+  );
+  return rows.map(mapSnapshot);
+}
+
+export async function listNotesForMonth(projectId: string, month: string): Promise<SeoNote[]> {
+  const [rows] = await getDbPool().query<NoteRow[]>(
+    `select id, keyword_id, date_format(note_date, '%Y-%m-%d') as note_date, text from seo_notes
+     where project_id = ? and date_format(note_date, '%Y-%m') = ?
+     order by note_date, created_at`,
+    [projectId, month]
+  );
+  return rows.map((r) => ({ id: r.id, keywordId: r.keyword_id, date: r.note_date, text: r.text }));
+}
+
+export async function getReportPlan(projectId: string, month: string): Promise<string> {
+  const [rows] = await getDbPool().query<(RowDataPacket & { plan_text: string | null })[]>(
+    "select plan_text from seo_reports where project_id = ? and month = ?",
+    [projectId, month]
+  );
+  return rows[0]?.plan_text ?? "";
+}
+
+export async function saveReportPlan(projectId: string, month: string, planText: string) {
+  await getDbPool().execute(
+    `insert into seo_reports (project_id, month, plan_text, updated_at) values (?, ?, ?, now(3))
+     on duplicate key update plan_text = values(plan_text), updated_at = now(3)`,
+    [projectId, month, planText]
+  );
+}
+
 /** Активные ключи активных проектов без успешного снимка за последние 20 часов. */
 export async function listDueKeywords(limit: number): Promise<{ project: SeoProject; keyword: SeoKeyword }[]> {
   const [rows] = await getDbPool().query<KeywordRow[]>(

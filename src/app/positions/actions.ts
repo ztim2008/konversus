@@ -14,9 +14,11 @@ import {
   deleteNote,
   deleteProject,
   getProject,
+  saveReportPlan,
   setProjectActive,
 } from "@/lib/seo-positions/data";
 import { normalizeDomain } from "@/lib/seo-positions/domain";
+import { isMonth } from "@/lib/seo-positions/tz";
 
 function str(formData: FormData, key: string) {
   const v = formData.get(key);
@@ -114,6 +116,15 @@ export async function deleteNoteAction(formData: FormData) {
   const project = await requireProject(formData);
   await deleteNote(project.id, str(formData, "noteId"));
   revalidatePath(`/positions/${project.id}`);
+}
+
+export async function saveReportPlanAction(formData: FormData) {
+  const project = await requireProject(formData);
+  const month = str(formData, "month");
+  if (!isMonth(month)) redirect(`/positions/${project.id}`);
+  await saveReportPlan(project.id, month, str(formData, "plan").slice(0, 4000));
+  revalidatePath(`/positions/s/${project.shareSlug}/report`);
+  redirect(`/positions/s/${project.shareSlug}/report?month=${month}`);
 }
 
 export async function toggleProjectAction(formData: FormData) {

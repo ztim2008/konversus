@@ -13,13 +13,10 @@ import { DeleteConfirmButton } from "@/components/dashboard/delete-confirm-butto
 import { AutoRefresh } from "@/components/seo-positions/auto-refresh";
 import { PositionChart, type ChartMark } from "@/components/seo-positions/position-chart";
 import type { SeoNote, SeoProject } from "@/lib/seo-positions/data";
+import { timeZoneFor } from "@/lib/seo-positions/tz";
 import { depthLabel, type KeywordRow } from "@/lib/seo-positions/view";
 
 export const PERIODS = [7, 30, 90] as const;
-
-function timeZoneFor(gl: string) {
-  return gl === "uz" ? "Asia/Tashkent" : "Europe/Moscow";
-}
 
 function formatter(project: SeoProject) {
   return new Intl.DateTimeFormat("ru-RU", {
@@ -114,25 +111,33 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
             {!project.isActive && " · проверки по расписанию на паузе"}
           </p>
         </div>
-        {admin && (
-          <div className="flex flex-wrap items-center gap-2">
-            <form action={checkNowAction}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <button
-                className="rounded-md bg-[var(--accent)] px-4 py-2 font-medium text-[var(--background)] disabled:opacity-50"
-                disabled={anyChecking}
-              >
-                {anyChecking ? "Проверка идёт…" : "Проверить все сейчас"}
-              </button>
-            </form>
-            <form action={toggleProjectAction}>
-              <input type="hidden" name="projectId" value={project.id} />
-              <button className="rounded-md border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-strong)]">
-                {project.isActive ? "Пауза расписания" : "Включить расписание"}
-              </button>
-            </form>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/positions/s/${project.shareSlug}/report`}
+            className="rounded-md border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-strong)]"
+          >
+            Отчёт за месяц
+          </Link>
+          {admin && (
+            <>
+              <form action={checkNowAction}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <button
+                  className="rounded-md bg-[var(--accent)] px-4 py-2 font-medium text-[var(--background)] disabled:opacity-50"
+                  disabled={anyChecking}
+                >
+                  {anyChecking ? "Проверка идёт…" : "Проверить все сейчас"}
+                </button>
+              </form>
+              <form action={toggleProjectAction}>
+                <input type="hidden" name="projectId" value={project.id} />
+                <button className="rounded-md border border-[var(--line)] px-4 py-2 hover:bg-[var(--surface-strong)]">
+                  {project.isActive ? "Пауза расписания" : "Включить расписание"}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </header>
 
       <p className="mt-4 text-[var(--muted)]">
