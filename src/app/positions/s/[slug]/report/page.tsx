@@ -4,7 +4,12 @@ import { notFound } from "next/navigation";
 
 import { saveReportPlanAction } from "@/app/positions/actions";
 import { AuditSection } from "@/components/seo-positions/audit-section";
+import { AutoRefresh } from "@/components/seo-positions/auto-refresh";
 import { loadAudits } from "@/lib/seo-positions/audit";
+import { getRuns } from "@/lib/seo-positions/runs";
+import { PagesSection } from "@/components/seo-positions/pages-section";
+import { landingPages } from "@/lib/seo-positions/pages";
+import { listPageChecks } from "@/lib/seo-positions/pages-data";
 import {
   getProjectBySlug,
   getReportPlan,
@@ -82,14 +87,21 @@ export default async function SeoReportPage({
 
   const { from, to } = monthRangeUtc(month, project.gl);
   const depth = project.maxPages * 10;
-  const [viewer, keywords, snapshots, notes, plan, audits] = await Promise.all([
+  const [viewer, keywords, snapshots, notes, plan, audits, runs] = await Promise.all([
     isPdf ? Promise.resolve(null) : getViewer(),
     listKeywords(project.id),
     listSnapshotsBetween(project.id, new Date(from.getTime() - 7 * 86400_000), to),
     listNotesForMonth(project.id, month),
     getReportPlan(project.id, month),
     loadAudits(project.id, month),
+    getRuns(project.id),
   ]);
+  const pageChecks = await listPageChecks(project.id, month);
+  const landings = landingPages(
+    keywords,
+    snapshots.filter((s) => new Date(s.checkedAt) >= from),
+    timeZoneFor(project.gl)
+  );
 
   const admin = !!viewer && canAccessProject(viewer, project.id);
   const report = buildMonthReport({
@@ -256,6 +268,17 @@ export default async function SeoReportPage({
         </section>
       )}
 
+      <PagesSection
+        projectId={project.id}
+        landings={landings}
+        checks={pageChecks}
+        depth={depth}
+        canEdit={admin}
+        canRun={admin && month === nowMonth}
+        run={runs.pages}
+        timeZone={timeZoneFor(project.gl)}
+      />
+
       <section className="mt-8">
         <h2 className="mb-2 text-base font-semibold">План на следующий месяц</h2>
         {admin ? (
@@ -288,8 +311,10 @@ export default async function SeoReportPage({
         canAuto={admin && month === nowMonth}
         current={audits.current}
         previous={audits.previous}
-        error={typeof sp.auditError === "string" ? sp.auditError.slice(0, 200) : null}
+        run={runs.checklist}
+        timeZone={timeZoneFor(project.gl)}
       />
+      {admin && <AutoRefresh active={Object.values(runs).some((r) => r.status === "running")} />}
 
       <p className="mt-10 border-t border-[var(--line)] pt-3 text-xs text-[var(--muted)]">
         Как считали: обычная выдача Google без рекламы, {project.location}, компьютер, раз в сутки. «Начало» — медиана

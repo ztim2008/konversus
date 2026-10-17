@@ -41,6 +41,7 @@ export type SeoKeyword = {
   id: string;
   projectId: string;
   keyword: string;
+  targetUrl: string | null;
   isActive: boolean;
   checkingSince: string | null;
 };
@@ -64,6 +65,7 @@ type KeywordRow = RowDataPacket & {
   id: string;
   project_id: string;
   keyword: string;
+  target_url: string | null;
   is_active: number;
   checking_since: Date | null;
 };
@@ -102,6 +104,7 @@ function mapKeyword(r: KeywordRow): SeoKeyword {
     id: r.id,
     projectId: r.project_id,
     keyword: r.keyword,
+    targetUrl: r.target_url,
     isActive: !!r.is_active,
     checkingSince: r.checking_since ? new Date(r.checking_since).toISOString() : null,
   };
@@ -204,6 +207,14 @@ export async function addKeywords(projectId: string, keywords: string[]): Promis
 
 export async function deleteKeyword(projectId: string, keywordId: string) {
   await getDbPool().execute("delete from seo_keywords where id = ? and project_id = ?", [keywordId, projectId]);
+}
+
+export async function setKeywordTargetUrl(projectId: string, keywordId: string, targetUrl: string | null) {
+  await getDbPool().execute("update seo_keywords set target_url = ? where id = ? and project_id = ?", [
+    targetUrl,
+    keywordId,
+    projectId,
+  ]);
 }
 
 /** Захват ключа на проверку: второй параллельный запуск получит false. Зависший захват снимается через 10 минут. */

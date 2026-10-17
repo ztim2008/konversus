@@ -25,6 +25,7 @@ export async function loadProjectPage(project: SeoProject, sp: SearchParams) {
     days,
     notes,
     checkingRequested,
+    error: one(sp, "error")?.slice(0, 200) ?? null,
     selectedId: one(sp, "kw") ?? null,
     rows: buildKeywordRows(project, keywords, snapshots),
   };

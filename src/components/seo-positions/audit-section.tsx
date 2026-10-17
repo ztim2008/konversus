@@ -1,6 +1,7 @@
 import { autoAuditAction, saveAuditAction } from "@/app/positions/actions";
-import { PendingButton } from "@/components/seo-positions/pending-button";
+import { RunControl } from "@/components/seo-positions/run-control";
 import type { MonthAudit } from "@/lib/seo-positions/audit";
+import type { RunState } from "@/lib/seo-positions/runs";
 import { AUDIT_ITEMS, AUDIT_SECTIONS, auditScore, type AuditEntry } from "@/lib/seo-positions/audit-items";
 import { monthTitle } from "@/lib/seo-positions/tz";
 
@@ -28,10 +29,11 @@ type Props = {
   canAuto: boolean;
   current: MonthAudit | null;
   previous: MonthAudit | null;
-  error: string | null;
+  run?: RunState;
+  timeZone: string;
 };
 
-export function AuditSection({ projectId, month, canEdit, canAuto, current, previous, error }: Props) {
+export function AuditSection({ projectId, month, canEdit, canAuto, current, previous, run, timeZone }: Props) {
   const shown = current ?? previous;
   if (!shown && !canEdit) return null;
 
@@ -40,8 +42,6 @@ export function AuditSection({ projectId, month, canEdit, canAuto, current, prev
   const score = auditScore(entries);
   const prevScore = before ? auditScore(before) : null;
   const autoCount = AUDIT_ITEMS.filter((i) => i.auto).length;
-  const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
-
   const readOnly = (
     <table className="w-full border-collapse">
       <thead>
@@ -93,24 +93,16 @@ export function AuditSection({ projectId, month, canEdit, canAuto, current, prev
         <p className="mb-3 text-[var(--muted)]">Проверки пока нет</p>
       )}
 
-      {canEdit && (
-        <div className="seo-report-screen mb-4 space-y-2">
-          {error && <p className="rounded-md border border-[var(--accent-warm)] p-3 text-[var(--accent-warm)]">{error}</p>}
-          {canAuto && (
-            <form action={autoAuditAction} className="flex flex-wrap items-center gap-3">
-              <input type="hidden" name="projectId" value={projectId} />
-              <PendingButton
-                pendingText="Открываю сайт, до минуты…"
-                className="rounded-md bg-[var(--accent)] px-4 py-2 font-medium text-[var(--background)]"
-              >
-                Автопроверка
-              </PendingButton>
-              <span className="text-[var(--muted)]">
-                Откроет сайт с компьютера и телефона и заполнит {autoCount} пунктов из 32. Оценённое вручную не трогает.
-                {current?.autoCheckedAt && <> Последняя: {dateFmt.format(current.autoCheckedAt)}.</>}
-              </span>
-            </form>
-          )}
+      {canEdit && canAuto && (
+        <div className="seo-report-screen mb-4">
+          <RunControl
+            action={autoAuditAction}
+            projectId={projectId}
+            run={run}
+            label="Автопроверка"
+            hint={`Откроет сайт с компьютера и телефона и заполнит ${autoCount} пунктов из 32, до минуты. Оценённое вручную не трогает.`}
+            timeZone={timeZone}
+          />
         </div>
       )}
 

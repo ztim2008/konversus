@@ -16,12 +16,16 @@ import {
   deleteProject,
   getProject,
   saveReportPlan,
+  setKeywordTargetUrl,
   setProjectActive,
 } from "@/lib/seo-positions/data";
-import { normalizeDomain } from "@/lib/seo-positions/domain";
+import { normalizeDomain, urlMatchesDomain } from "@/lib/seo-positions/domain";
 import { saveAudit } from "@/lib/seo-positions/audit";
 import { runAutoAudit } from "@/lib/seo-positions/audit-check";
 import { AUDIT_ITEMS, isAuditValue } from "@/lib/seo-positions/audit-items";
+import { normalizeUrl } from "@/lib/seo-positions/pages";
+import { checkLandingPages } from "@/lib/seo-positions/pages-data";
+import { startBackgroundRun } from "@/lib/seo-positions/runs";
 import { currentMonth, isMonth } from "@/lib/seo-positions/tz";
 import {
   canAccessProject,
@@ -149,10 +153,8 @@ export async function saveReportPlanAction(formData: FormData) {
   redirect(`/positions/s/${project.shareSlug}/report?month=${month}`);
 }
 
-const auditRunning = new Set<string>();
-
-function auditRedirect(slug: string, month: string, error?: string): never {
-  redirect(`/positions/s/${slug}/report?month=${month}${error ? `&auditError=${encodeURIComponent(error)}` : ""}#audit`);
+function auditRedirect(slug: string, month: string, anchor = "audit"): never {
+  redirect(`/positions/s/${slug}/report?month=${month}#${anchor}`);
 }
 
 export async function saveAuditAction(formData: FormData) {
@@ -170,19 +172,33 @@ export async function saveAuditAction(formData: FormData) {
 export async function autoAuditAction(formData: FormData) {
   const project = await requireProject(formData);
   const month = currentMonth(project.gl);
-  if (auditRunning.has(project.id)) auditRedirect(project.shareSlug, month, "Автопроверка уже идёт, обновите страницу через минуту");
-  auditRunning.add(project.id);
-  let error: string | undefined;
-  try {
+  await startBackgroundRun(project.id, "checklist", month, async () => {
     const { inputs } = await runAutoAudit(project.domain);
     await saveAudit(project.id, month, inputs, "auto", { keepManual: true });
-  } catch (err) {
-    console.error("[seo-positions] auto audit failed", err);
-    error = err instanceof Error && err.message.startsWith("Сайт не открылся") ? err.message.slice(0, 200) : "Автопроверка не удалась";
-  } finally {
-    auditRunning.delete(project.id);
+  });
+  auditRedirect(project.shareSlug, month);
+}
+
+export async function checkPagesAction(formData: FormData) {
+  const project = await requireProject(formData);
+  const month = currentMonth(project.gl);
+  await startBackgroundRun(project.id, "pages", month, () => checkLandingPages(project, month));
+  auditRedirect(project.shareSlug, month, "pages");
+}
+
+export async function setTargetUrlAction(formData: FormData) {
+  const project = await requireProject(formData);
+  const raw = str(formData, "targetUrl");
+  let target: string | null = null;
+  if (raw) {
+    const url = raw.startsWith("/") ? `https://${project.domain}${raw}` : /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    if (!urlMatchesDomain(url, project.domain) || url.length > 1000) {
+      redirect(`/positions/${project.id}?error=${encodeURIComponent("Целевая страница должна быть на сайте " + project.domain)}`);
+    }
+    target = normalizeUrl(url);
   }
-  auditRedirect(project.shareSlug, month, error);
+  await setKeywordTargetUrl(project.id, str(formData, "keywordId"), target);
+  redirect(`/positions/${project.id}`);
 }
 
 export async function toggleProjectAction(formData: FormData) {

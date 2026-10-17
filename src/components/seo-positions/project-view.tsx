@@ -7,12 +7,14 @@ import {
   deleteKeywordAction,
   deleteNoteAction,
   deleteProjectAction,
+  setTargetUrlAction,
   toggleProjectAction,
 } from "@/app/positions/actions";
 import { DeleteConfirmButton } from "@/components/dashboard/delete-confirm-button";
 import { AutoRefresh } from "@/components/seo-positions/auto-refresh";
 import { PositionChart, type ChartMark } from "@/components/seo-positions/position-chart";
 import type { SeoNote, SeoProject } from "@/lib/seo-positions/data";
+import { normalizeUrl, shortPath } from "@/lib/seo-positions/pages";
 import { timeZoneFor } from "@/lib/seo-positions/tz";
 import { depthLabel, type KeywordRow } from "@/lib/seo-positions/view";
 
@@ -62,10 +64,11 @@ type Props = {
   /** Только админ: удаление, пауза расписания. */
   isOwner: boolean;
   checkingRequested: boolean;
+  error?: string | null;
   shareUrl?: string;
 };
 
-export function ProjectView({ project, rows, notes, selectedId, days, basePath, canEdit, isOwner, checkingRequested, shareUrl }: Props) {
+export function ProjectView({ project, rows, notes, selectedId, days, basePath, canEdit, isOwner, checkingRequested, error, shareUrl }: Props) {
   const fmt = formatter(project);
   const depth = depthLabel(project);
   const depthNum = project.maxPages * 10;
@@ -99,6 +102,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-24 text-sm text-[var(--foreground)] md:px-6">
       <AutoRefresh active={anyChecking || checkingRequested} />
+      {canEdit && error && <p className="mb-4 rounded-md border border-[var(--accent-warm)] p-3 text-[var(--accent-warm)]">{error}</p>}
 
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
         <div>
@@ -338,6 +342,10 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
                     ) : (
                       "—"
                     )}
+                    {row.keyword.targetUrl &&
+                      (!row.last?.matchedUrl || normalizeUrl(row.last.matchedUrl) !== row.keyword.targetUrl) && (
+                        <span className="block text-xs text-[var(--accent-warm)]">цель: {shortPath(row.keyword.targetUrl)}</span>
+                      )}
                   </td>
                   {canEdit && (
                     <td className="whitespace-nowrap px-3 text-right">
@@ -363,6 +371,33 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
           </tbody>
         </table>
       </section>
+
+      {canEdit && rows.length > 0 && (
+        <details className="mt-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
+          <summary className="cursor-pointer font-medium">Целевые страницы</summary>
+          <p className="mt-2 text-[var(--muted)]">
+            Какую страницу сайта вы продвигаете по запросу. Если Google показывает другую или несколько, это будет видно в
+            месячном отчёте. Можно путь, например /remont-kotlov.
+          </p>
+          <div className="mt-3 space-y-2">
+            {rows.map((row) => (
+              <form key={row.keyword.id} action={setTargetUrlAction} className="grid items-center gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+                <input type="hidden" name="projectId" value={project.id} />
+                <input type="hidden" name="keywordId" value={row.keyword.id} />
+                <span className="truncate">{row.keyword.keyword}</span>
+                <input
+                  name="targetUrl"
+                  defaultValue={row.keyword.targetUrl ? shortPath(row.keyword.targetUrl).replace(/^главная$/, "/") : ""}
+                  placeholder="не назначена"
+                  maxLength={1000}
+                  className="rounded-md border border-[var(--line)] bg-[var(--background)] p-1.5 font-mono text-xs"
+                />
+                <button className="rounded-md border border-[var(--line)] px-3 py-1.5 hover:bg-[var(--surface-strong)]">Сохранить</button>
+              </form>
+            ))}
+          </div>
+        </details>
+      )}
 
       {canEdit && (
         <section className="mt-6 grid gap-4 lg:grid-cols-2">

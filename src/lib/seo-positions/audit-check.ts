@@ -3,6 +3,7 @@ import "server-only";
 import type { Browser, BrowserContext, Page } from "playwright";
 
 import type { AuditInput } from "@/lib/seo-positions/audit";
+import { UserFacingError } from "@/lib/seo-positions/runs";
 
 const DESKTOP_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
@@ -206,7 +207,7 @@ export async function runAutoAudit(domain: string): Promise<AutoAuditResult> {
     try {
       page = await open(desktopCtx, `https://${domain}/`, mainMetrika);
     } catch (err) {
-      throw new Error(`Сайт не открылся: ${err instanceof Error ? err.message.split("\n")[0] : String(err)}`);
+      throw new UserFacingError(`Сайт не открылся: ${(err instanceof Error ? err.message.split("\n")[0] : String(err)).slice(0, 150)}`);
     }
     const url = page.url();
     const d = await page.evaluate(probeDesktop);
