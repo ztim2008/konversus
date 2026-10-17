@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "konversus-lead-radar-auto",
-  "updated": "2026-09-10",
+  "updated": "2026-10-17",
   "policy": {
     "selfRewrite": "owner-permission-required",
     "note": "Менять типы узлов/рёбер и schemaVersion — только с явного разрешения владельца."
@@ -286,6 +286,41 @@
       "id": "ops.cron_day_wave",
       "type": "ops",
       "path": "scripts/cron-lead-radar-day-wave.sh"
+    },
+    {
+      "id": "doc.seo_positions",
+      "type": "doc",
+      "path": "docs/RADAR-LIVE-PLAN.md"
+    },
+    {
+      "id": "sql.seo_positions",
+      "type": "sql",
+      "path": "sql/012_seo_positions.sql"
+    },
+    {
+      "id": "lib.seo_positions",
+      "type": "lib",
+      "path": "src/lib/seo-positions"
+    },
+    {
+      "id": "app.ui_seo_positions",
+      "type": "app",
+      "path": "src/app/positions"
+    },
+    {
+      "id": "app.api_seo_positions_daily",
+      "type": "app",
+      "path": "src/app/api/seo-positions/daily"
+    },
+    {
+      "id": "ops.cron_seo_positions",
+      "type": "ops",
+      "path": "scripts/cron-seo-positions-daily.sh"
+    },
+    {
+      "id": "sql.seo_notes",
+      "type": "sql",
+      "path": "sql/013_seo_notes.sql"
     }
   ],
   "edges": [
@@ -598,6 +633,31 @@
       "from": "lib.kp_html",
       "to": "app.api_call",
       "type": "reads"
+    },
+    {
+      "from": "lib.seo_positions",
+      "to": "sql.seo_positions",
+      "type": "writes"
+    },
+    {
+      "from": "app.ui_seo_positions",
+      "to": "lib.seo_positions",
+      "type": "calls"
+    },
+    {
+      "from": "app.api_seo_positions_daily",
+      "to": "lib.seo_positions",
+      "type": "calls"
+    },
+    {
+      "from": "ops.cron_seo_positions",
+      "to": "app.api_seo_positions_daily",
+      "type": "calls"
+    },
+    {
+      "from": "lib.seo_positions",
+      "to": "sql.seo_notes",
+      "type": "writes"
     }
   ],
   "taskPaths": {
@@ -696,6 +756,16 @@
       "lib.tg_digest",
       "app.api_auto_send",
       "ops.cron_auto_send",
+      "gate.harness"
+    ],
+    "seo_positions": [
+      "doc.seo_positions",
+      "sql.seo_positions",
+      "sql.seo_notes",
+      "lib.seo_positions",
+      "app.ui_seo_positions",
+      "app.api_seo_positions_daily",
+      "ops.cron_seo_positions",
       "gate.harness"
     ]
   }
