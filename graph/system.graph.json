@@ -341,6 +341,16 @@
       "id": "sql.seo_pages",
       "type": "sql",
       "path": "sql/017_seo_pages.sql"
+    },
+    {
+      "id": "sql.seo_crawl",
+      "type": "sql",
+      "path": "sql/018_seo_crawl.sql"
+    },
+    {
+      "id": "sql.seo_run_progress",
+      "type": "sql",
+      "path": "sql/019_seo_run_progress.sql"
     }
   ],
   "edges": [
@@ -698,6 +708,16 @@
       "from": "lib.seo_positions",
       "to": "sql.seo_pages",
       "type": "writes"
+    },
+    {
+      "from": "lib.seo_positions",
+      "to": "sql.seo_crawl",
+      "type": "writes"
+    },
+    {
+      "from": "lib.seo_positions",
+      "to": "sql.seo_run_progress",
+      "type": "writes"
     }
   ],
   "taskPaths": {
@@ -806,6 +826,8 @@
       "sql.seo_users",
       "sql.seo_audits",
       "sql.seo_pages",
+      "sql.seo_crawl",
+      "sql.seo_run_progress",
       "lib.seo_positions",
       "app.ui_seo_positions",
       "app.api_seo_positions_daily",

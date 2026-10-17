@@ -19,6 +19,20 @@ export type FetchedPage = {
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Текст служебного файла сайта (robots.txt, sitemap). null — нет файла, ошибка или чужой домен после редиректа. */
+export async function fetchText(url: string, domain: string, maxBytes = 5_000_000): Promise<string | null> {
+  try {
+    const res = await fetch(url, { headers: { "user-agent": UA }, signal: AbortSignal.timeout(15_000) });
+    if (!res.ok || !urlMatchesDomain(res.url || url, domain)) {
+      await res.body?.cancel();
+      return null;
+    }
+    return Buffer.from(await res.arrayBuffer()).subarray(0, maxBytes).toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
 /** Загружает страницу своего домена. Редиректы — вручную, чтобы не уйти на чужой сайт; HTML разбирается, остальное — только код ответа. */
 export async function fetchPage(url: string, domain: string): Promise<FetchedPage> {
   let current = url;

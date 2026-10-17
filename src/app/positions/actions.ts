@@ -1,6 +1,5 @@
 "use server";
 
-import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -23,6 +22,7 @@ import { normalizeDomain, urlMatchesDomain } from "@/lib/seo-positions/domain";
 import { saveAudit } from "@/lib/seo-positions/audit";
 import { runAutoAudit } from "@/lib/seo-positions/audit-check";
 import { AUDIT_ITEMS, isAuditValue } from "@/lib/seo-positions/audit-items";
+import { runCrawl } from "@/lib/seo-positions/crawl";
 import { normalizeUrl } from "@/lib/seo-positions/pages";
 import { checkLandingPages } from "@/lib/seo-positions/pages-data";
 import { startBackgroundRun } from "@/lib/seo-positions/runs";
@@ -118,13 +118,7 @@ export async function deleteKeywordAction(formData: FormData) {
 export async function checkNowAction(formData: FormData) {
   const project = await requireProject(formData);
   const keywordId = str(formData, "keywordId") || undefined;
-  after(async () => {
-    try {
-      await checkProjectNow(project, keywordId);
-    } catch (err) {
-      console.error("[seo-positions] check failed", err);
-    }
-  });
+  await startBackgroundRun(project.id, "positions", currentMonth(project.gl), (progress) => checkProjectNow(project, keywordId, progress));
   redirect(`/positions/${project.id}?checking=${Date.now()}${keywordId ? `&kw=${keywordId}` : ""}`);
 }
 
@@ -172,9 +166,11 @@ export async function saveAuditAction(formData: FormData) {
 export async function autoAuditAction(formData: FormData) {
   const project = await requireProject(formData);
   const month = currentMonth(project.gl);
-  await startBackgroundRun(project.id, "checklist", month, async () => {
-    const { inputs } = await runAutoAudit(project.domain);
+  await startBackgroundRun(project.id, "checklist", month, async (progress) => {
+    const { inputs } = await runAutoAudit(project.domain, progress);
     await saveAudit(project.id, month, inputs, "auto", { keepManual: true });
+    const rated = inputs.filter((i) => i.value !== null).length;
+    return `оценено ${rated} из ${inputs.length} автопунктов${rated < inputs.length ? `, проверить вручную: ${inputs.length - rated}` : ""}`;
   });
   auditRedirect(project.shareSlug, month);
 }
@@ -182,8 +178,15 @@ export async function autoAuditAction(formData: FormData) {
 export async function checkPagesAction(formData: FormData) {
   const project = await requireProject(formData);
   const month = currentMonth(project.gl);
-  await startBackgroundRun(project.id, "pages", month, () => checkLandingPages(project, month));
+  await startBackgroundRun(project.id, "pages", month, (progress) => checkLandingPages(project, month, progress));
   auditRedirect(project.shareSlug, month, "pages");
+}
+
+export async function crawlSiteAction(formData: FormData) {
+  const project = await requireProject(formData);
+  const month = currentMonth(project.gl);
+  await startBackgroundRun(project.id, "crawl", month, (progress) => runCrawl(project, month, progress));
+  auditRedirect(project.shareSlug, month, "tech");
 }
 
 export async function setTargetUrlAction(formData: FormData) {

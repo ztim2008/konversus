@@ -13,6 +13,8 @@ import {
   type SeoProject,
   type TopItem,
 } from "@/lib/seo-positions/data";
+import { plural } from "@/lib/seo-positions/pages";
+import { UserFacingError, type RunProgress } from "@/lib/seo-positions/runs";
 
 /** Потолок кредитов Serper за 24 часа на весь модуль. Проверка не стартует, если он исчерпан. */
 export function getDailyCreditCap(): number {
@@ -77,10 +79,11 @@ async function scan(project: SeoProject, keyword: SeoKeyword, acc: { credits: nu
   return { match: null, depth, credits: acc.credits, top };
 }
 
-export async function checkKeyword(project: SeoProject, keyword: SeoKeyword): Promise<"done" | "busy"> {
+export async function checkKeyword(project: SeoProject, keyword: SeoKeyword): Promise<"done" | "busy" | { error: string }> {
   if (!(await claimKeyword(keyword.id))) return "busy";
 
   const acc = { credits: 0 };
+  let lastError: string | null = null;
   let depth = 0;
   let top: TopItem[] = [];
   try {
@@ -131,20 +134,25 @@ export async function checkKeyword(project: SeoProject, keyword: SeoKeyword): Pr
       top,
       errorText: err instanceof Error ? err.message : String(err),
     });
+    lastError = err instanceof Error ? err.message : String(err);
   } finally {
     await releaseKeyword(keyword.id);
   }
-  return "done";
+  return lastError ? { error: lastError } : "done";
 }
 
-export type RunResult = { checked: number; skippedBusy: number; stoppedByCap: boolean; creditsBefore: number };
+export type RunResult = { checked: number; skippedBusy: number; stoppedByCap: boolean; creditsBefore: number; errors: number; lastError: string | null };
 
-async function runQueue(items: { project: SeoProject; keyword: SeoKeyword }[]): Promise<RunResult> {
+async function runQueue(
+  items: { project: SeoProject; keyword: SeoKeyword }[],
+  onItem?: (index: number, total: number, keyword: SeoKeyword) => Promise<void>
+): Promise<RunResult> {
   const cap = getDailyCreditCap();
   const creditsBefore = await creditsUsedSince(24);
-  const result: RunResult = { checked: 0, skippedBusy: 0, stoppedByCap: false, creditsBefore };
+  const result: RunResult = { checked: 0, skippedBusy: 0, stoppedByCap: false, creditsBefore, errors: 0, lastError: null };
 
-  for (const { project, keyword } of items) {
+  for (const [i, { project, keyword }] of items.entries()) {
+    await onItem?.(i, items.length, keyword);
     if ((await creditsUsedSince(24)) + project.maxPages * 2 > cap) {
       result.stoppedByCap = true;
       break;
@@ -152,15 +160,34 @@ async function runQueue(items: { project: SeoProject; keyword: SeoKeyword }[]): 
     const status = await checkKeyword(project, keyword);
     if (status === "busy") result.skippedBusy++;
     else result.checked++;
+    if (typeof status === "object") {
+      result.errors++;
+      result.lastError = status.error;
+    }
   }
   return result;
 }
 
-export async function checkProjectNow(project: SeoProject, keywordId?: string): Promise<RunResult> {
+export async function checkProjectNow(project: SeoProject, keywordId: string | undefined, progress: RunProgress): Promise<string> {
   const keywords = (await listKeywords(project.id)).filter(
     (k) => k.isActive && (!keywordId || k.id === keywordId)
   );
-  return runQueue(keywords.map((keyword) => ({ project, keyword })));
+  const result = await runQueue(
+    keywords.map((keyword) => ({ project, keyword })),
+    (i, total, keyword) => progress(i, total, `Запрос «${keyword.keyword}»`)
+  );
+  await progress(keywords.length, keywords.length, "Готово");
+  const credits = (await creditsUsedSince(24)) - result.creditsBefore;
+  const parts = [`${result.checked} ${plural(result.checked, "запрос проверен", "запроса проверено", "запросов проверено")}`];
+  if (result.skippedBusy) parts.push(`уже проверялись: ${result.skippedBusy}`);
+  parts.push(`кредитов Serper: ${credits}`);
+  if (result.errors) {
+    const msg = `С ошибкой: ${result.errors} из ${keywords.length} (${(result.lastError ?? "").slice(0, 120)}). ${parts.join(", ")}`;
+    if (result.errors === result.checked) throw new UserFacingError(msg);
+    parts.push(`с ошибкой: ${result.errors} (${(result.lastError ?? "").slice(0, 120)})`);
+  }
+  if (result.stoppedByCap) throw new UserFacingError(`Остановлено: дневной потолок ${getDailyCreditCap()} кредитов. ${parts.join(", ")}`);
+  return parts.join(", ");
 }
 
 export async function runDailyChecks(limit = 200): Promise<RunResult & { due: number }> {

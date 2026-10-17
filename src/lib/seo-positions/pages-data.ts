@@ -7,7 +7,8 @@ import type { RowDataPacket } from "mysql2";
 import { getDbPool } from "@/lib/db";
 import { listKeywords, listSnapshotsBetween, type SeoProject } from "@/lib/seo-positions/data";
 import { fetchPage, sleep, type FetchedPage } from "@/lib/seo-positions/page-check";
-import { landingPages, normalizeUrl, type KeywordLanding } from "@/lib/seo-positions/pages";
+import { landingPages, normalizeUrl, plural, shortPath, type KeywordLanding } from "@/lib/seo-positions/pages";
+import type { RunProgress } from "@/lib/seo-positions/runs";
 import { monthRangeUtc, timeZoneFor } from "@/lib/seo-positions/tz";
 
 export const MAX_CHECKED_PAGES = 10;
@@ -121,15 +122,23 @@ export function pagesToCheck(project: SeoProject, landings: KeywordLanding[]): s
   return urls.slice(0, MAX_CHECKED_PAGES);
 }
 
-export async function checkLandingPages(project: SeoProject, month: string) {
+export async function checkLandingPages(project: SeoProject, month: string, progress: RunProgress): Promise<string> {
+  await progress(0, 0, "Собираю страницы из выдачи за месяц");
   const urls = pagesToCheck(project, await loadLandings(project, month));
+  let failed = 0;
   for (const [i, url] of urls.entries()) {
+    await progress(i, urls.length, `Страница ${shortPath(url)}`);
     if (i > 0) await sleep(1000);
-    await savePageCheck(project.id, month, url, await fetchPage(url, project.domain));
+    const fetched = await fetchPage(url, project.domain);
+    if (fetched.error || fetched.statusCode !== 200) failed++;
+    await savePageCheck(project.id, month, url, fetched);
   }
+  await progress(urls.length, urls.length, "Готово");
   await getDbPool().query("delete from seo_page_checks where project_id = ? and month = ? and url_hash not in (?)", [
     project.id,
     month,
     urls.map(hash),
   ]);
+  const checked = `${urls.length} ${plural(urls.length, "страница проверена", "страницы проверены", "страниц проверено")}`;
+  return failed ? `${checked}, не открылись: ${failed}` : checked;
 }

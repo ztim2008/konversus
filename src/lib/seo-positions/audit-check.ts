@@ -3,7 +3,8 @@ import "server-only";
 import type { Browser, BrowserContext, Page } from "playwright";
 
 import type { AuditInput } from "@/lib/seo-positions/audit";
-import { UserFacingError } from "@/lib/seo-positions/runs";
+import { shortPath } from "@/lib/seo-positions/pages";
+import { UserFacingError, type RunProgress } from "@/lib/seo-positions/runs";
 
 const DESKTOP_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
@@ -195,15 +196,18 @@ function counterId(urls: Set<string>): string | null {
 
 export type AutoAuditResult = { url: string; inputs: AuditInput[] };
 
-export async function runAutoAudit(domain: string): Promise<AutoAuditResult> {
+export async function runAutoAudit(domain: string, progress: RunProgress): Promise<AutoAuditResult> {
   const { chromium } = await import("playwright");
   let browser: Browser | null = null;
+  let total = 3 + EXTRA_PAGES;
   try {
+    await progress(0, total, "Запускаю браузер");
     browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
 
     const desktopCtx = await browser.newContext({ viewport: { width: 1366, height: 800 }, userAgent: DESKTOP_UA, locale: "ru-RU" });
     const mainMetrika = new Set<string>();
     let page: Page;
+    await progress(1, total, "Главная с компьютера");
     try {
       page = await open(desktopCtx, `https://${domain}/`, mainMetrika);
     } catch (err) {
@@ -215,9 +219,12 @@ export async function runAutoAudit(domain: string): Promise<AutoAuditResult> {
     const desktopUp = await page.evaluate(probeUpButton);
 
     const pages: { url: string; ok: boolean }[] = [];
-    if (mainMetrika.size) {
-      for (const link of d.links.slice(0, EXTRA_PAGES)) {
+    const extra = mainMetrika.size ? d.links.slice(0, EXTRA_PAGES) : [];
+    total = 3 + extra.length;
+    if (extra.length) {
+      for (const [i, link] of extra.entries()) {
         const seen = new Set<string>();
+        await progress(2 + i, total, `Метрика на ${shortPath(link)}`);
         try {
           const p = await open(desktopCtx, link, seen);
           await p.close();
@@ -237,6 +244,7 @@ export async function runAutoAudit(domain: string): Promise<AutoAuditResult> {
       userAgent: MOBILE_UA,
       locale: "ru-RU",
     });
+    await progress(2 + extra.length, total, "Главная с телефона");
     const mPage = await open(mobileCtx, url, new Set());
     const m = await mPage.evaluate(probeMobile);
     const mobileSticky = await scrollAndCheck(mPage, probeSticky);

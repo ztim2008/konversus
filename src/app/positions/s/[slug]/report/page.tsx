@@ -10,6 +10,8 @@ import { getRuns } from "@/lib/seo-positions/runs";
 import { PagesSection } from "@/components/seo-positions/pages-section";
 import { landingPages } from "@/lib/seo-positions/pages";
 import { listPageChecks } from "@/lib/seo-positions/pages-data";
+import { TechSection } from "@/components/seo-positions/tech-section";
+import { loadCrawls } from "@/lib/seo-positions/crawl";
 import {
   getProjectBySlug,
   getReportPlan,
@@ -96,7 +98,7 @@ export default async function SeoReportPage({
     loadAudits(project.id, month),
     getRuns(project.id),
   ]);
-  const pageChecks = await listPageChecks(project.id, month);
+  const [pageChecks, crawls] = await Promise.all([listPageChecks(project.id, month), loadCrawls(project.id, month)]);
   const landings = landingPages(
     keywords,
     snapshots.filter((s) => new Date(s.checkedAt) >= from),
@@ -276,6 +278,16 @@ export default async function SeoReportPage({
         canEdit={admin}
         canRun={admin && month === nowMonth}
         run={runs.pages}
+        timeZone={timeZoneFor(project.gl)}
+      />
+
+      <TechSection
+        projectId={project.id}
+        current={crawls.current}
+        previous={crawls.previous}
+        canEdit={admin}
+        canRun={admin && month === nowMonth}
+        run={runs.crawl}
         timeZone={timeZoneFor(project.gl)}
       />
 

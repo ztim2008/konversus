@@ -13,7 +13,9 @@ import {
 import { DeleteConfirmButton } from "@/components/dashboard/delete-confirm-button";
 import { AutoRefresh } from "@/components/seo-positions/auto-refresh";
 import { PositionChart, type ChartMark } from "@/components/seo-positions/position-chart";
+import { RunStatus } from "@/components/seo-positions/run-status";
 import type { SeoNote, SeoProject } from "@/lib/seo-positions/data";
+import type { RunState } from "@/lib/seo-positions/runs";
 import { normalizeUrl, shortPath } from "@/lib/seo-positions/pages";
 import { timeZoneFor } from "@/lib/seo-positions/tz";
 import { depthLabel, type KeywordRow } from "@/lib/seo-positions/view";
@@ -63,17 +65,18 @@ type Props = {
   canEdit: boolean;
   /** Только админ: удаление, пауза расписания. */
   isOwner: boolean;
-  checkingRequested: boolean;
+  positionsRun?: RunState;
   error?: string | null;
   shareUrl?: string;
 };
 
-export function ProjectView({ project, rows, notes, selectedId, days, basePath, canEdit, isOwner, checkingRequested, error, shareUrl }: Props) {
+export function ProjectView({ project, rows, notes, selectedId, days, basePath, canEdit, isOwner, positionsRun, error, shareUrl }: Props) {
   const fmt = formatter(project);
   const depth = depthLabel(project);
   const depthNum = project.maxPages * 10;
   const selected = rows.find((r) => r.keyword.id === selectedId) ?? rows[0] ?? null;
-  const anyChecking = rows.some((r) => r.keyword.checkingSince);
+  const runActive = positionsRun?.status === "running";
+  const anyChecking = runActive || rows.some((r) => r.keyword.checkingSince);
 
   const tz = timeZoneFor(project.gl);
   const localDate = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" });
@@ -101,7 +104,7 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-24 text-sm text-[var(--foreground)] md:px-6">
-      <AutoRefresh active={anyChecking || checkingRequested} />
+      <AutoRefresh active={anyChecking} />
       {canEdit && error && <p className="mb-4 rounded-md border border-[var(--accent-warm)] p-3 text-[var(--accent-warm)]">{error}</p>}
 
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--line)] pb-4">
@@ -148,6 +151,12 @@ export function ProjectView({ project, rows, notes, selectedId, days, basePath, 
           )}
         </div>
       </header>
+
+      {canEdit && positionsRun && (
+        <div className="mt-4">
+          <RunStatus run={positionsRun} timeZone={tz} />
+        </div>
+      )}
 
       <p className="mt-4 text-[var(--muted)]">
         Ключей <b className="font-mono text-[var(--foreground)]">{rows.length}</b> · найден в {depth}:{" "}
