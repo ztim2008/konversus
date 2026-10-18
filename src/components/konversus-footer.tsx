@@ -15,7 +15,7 @@ const ABOUT = [
   { name: "Портфолио", href: "/portfolio" },
   { name: "Хроника работ", href: "/portfolio/timeline" },
   { name: "Дизайн / Behance", href: "/about#portfolio" },
-  { name: "Документация", href: "/docs" },
+  { name: "Кабинеты", href: "/cabinets" },
 ];
 
 export default function KonversusFooter() {

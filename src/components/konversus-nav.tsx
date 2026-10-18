@@ -174,7 +174,7 @@ export default function KonversusNav() {
               Хроника работ
             </NavLink>
             <NavLink href="/about">Обо мне</NavLink>
-            <NavLink href="/docs">Документация</NavLink>
+            <NavLink href="/cabinets">Кабинеты</NavLink>
             <NavLink href="https://t.me/bilarius" external>Контакты</NavLink>
           </div>
 
@@ -226,7 +226,7 @@ export default function KonversusNav() {
               Хроника работ
             </MobileLink>
             <MobileLink href="/about" onClick={() => setMobileOpen(false)}>Обо мне</MobileLink>
-            <MobileLink href="/docs" onClick={() => setMobileOpen(false)}>Документация</MobileLink>
+            <MobileLink href="/cabinets" onClick={() => setMobileOpen(false)}>Кабинеты</MobileLink>
             <MobileLink href="https://t.me/bilarius" onClick={() => setMobileOpen(false)} external>Telegram @bilarius</MobileLink>
           </div>
         )}
