@@ -278,6 +278,20 @@ export async function creditsUsedSince(hours: number): Promise<number> {
   return Number(rows[0]?.c ?? 0);
 }
 
+/** Когда из окна 24 часов выйдет столько старых проверок, что под потолок поместится ещё need кредитов. */
+export async function creditsFreeAt(need: number, cap: number): Promise<Date | null> {
+  const [rows] = await getDbPool().query<(RowDataPacket & { checked_at: Date; credits: number })[]>(
+    "select checked_at, credits from seo_snapshots where checked_at >= now(3) - interval 24 hour order by checked_at"
+  );
+  let used = rows.reduce((s, r) => s + Number(r.credits), 0);
+  if (used + need <= cap) return null;
+  for (const r of rows) {
+    used -= Number(r.credits);
+    if (used + need <= cap) return new Date(new Date(r.checked_at).getTime() + 24 * 3600_000);
+  }
+  return null;
+}
+
 export type SeoNote = { id: string; keywordId: string | null; date: string; text: string };
 
 type NoteRow = RowDataPacket & { id: string; keyword_id: string | null; note_date: string; text: string };

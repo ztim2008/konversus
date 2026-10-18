@@ -3,6 +3,7 @@ import "server-only";
 import { hostOf, urlMatchesDomain } from "@/lib/seo-positions/domain";
 import {
   claimKeyword,
+  creditsFreeAt,
   creditsUsedSince,
   insertSnapshot,
   lastOkStatus,
@@ -15,6 +16,7 @@ import {
 } from "@/lib/seo-positions/data";
 import { plural } from "@/lib/seo-positions/pages";
 import { UserFacingError, type RunProgress } from "@/lib/seo-positions/runs";
+import { timeZoneFor } from "@/lib/seo-positions/tz";
 
 /** Потолок кредитов Serper за 24 часа на весь модуль. Проверка не стартует, если он исчерпан. */
 export function getDailyCreditCap(): number {
@@ -141,7 +143,16 @@ export async function checkKeyword(project: SeoProject, keyword: SeoKeyword): Pr
   return lastError ? { error: lastError } : "done";
 }
 
-export type RunResult = { checked: number; skippedBusy: number; stoppedByCap: boolean; creditsBefore: number; errors: number; lastError: string | null };
+export type RunResult = {
+  checked: number;
+  skippedBusy: number;
+  stoppedByCap: boolean;
+  /** Сколько запросов осталось непроверенными из-за потолка. */
+  notChecked: number;
+  creditsBefore: number;
+  errors: number;
+  lastError: string | null;
+};
 
 async function runQueue(
   items: { project: SeoProject; keyword: SeoKeyword }[],
@@ -149,12 +160,13 @@ async function runQueue(
 ): Promise<RunResult> {
   const cap = getDailyCreditCap();
   const creditsBefore = await creditsUsedSince(24);
-  const result: RunResult = { checked: 0, skippedBusy: 0, stoppedByCap: false, creditsBefore, errors: 0, lastError: null };
+  const result: RunResult = { checked: 0, skippedBusy: 0, stoppedByCap: false, notChecked: 0, creditsBefore, errors: 0, lastError: null };
 
   for (const [i, { project, keyword }] of items.entries()) {
     await onItem?.(i, items.length, keyword);
     if ((await creditsUsedSince(24)) + project.maxPages * 2 > cap) {
       result.stoppedByCap = true;
+      result.notChecked = items.length - i;
       break;
     }
     const status = await checkKeyword(project, keyword);
@@ -176,7 +188,8 @@ export async function checkProjectNow(project: SeoProject, keywordId: string | u
     keywords.map((keyword) => ({ project, keyword })),
     (i, total, keyword) => progress(i, total, `Запрос «${keyword.keyword}»`)
   );
-  await progress(keywords.length, keywords.length, "Готово");
+  const done = keywords.length - result.notChecked;
+  await progress(done, keywords.length, result.stoppedByCap ? "Остановлено потолком кредитов" : "Готово");
   const credits = (await creditsUsedSince(24)) - result.creditsBefore;
   const parts = [`${result.checked} ${plural(result.checked, "запрос проверен", "запроса проверено", "запросов проверено")}`];
   if (result.skippedBusy) parts.push(`уже проверялись: ${result.skippedBusy}`);
@@ -186,7 +199,17 @@ export async function checkProjectNow(project: SeoProject, keywordId: string | u
     if (result.errors === result.checked) throw new UserFacingError(msg);
     parts.push(`с ошибкой: ${result.errors} (${(result.lastError ?? "").slice(0, 120)})`);
   }
-  if (result.stoppedByCap) throw new UserFacingError(`Остановлено: дневной потолок ${getDailyCreditCap()} кредитов. ${parts.join(", ")}`);
+  if (result.stoppedByCap) {
+    const cap = getDailyCreditCap();
+    const freeAt = await creditsFreeAt(project.maxPages * 2, cap);
+    const when = freeAt
+      ? ` Повторить можно после ${new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: timeZoneFor(project.gl) }).format(freeAt)}.`
+      : "";
+    throw new UserFacingError(
+      `Остановлено: за последние 24 часа потрачено ${await creditsUsedSince(24)} из ${cap} кредитов — это предохранитель модуля, не лимит Serper. ` +
+        `${parts.join(", ")}, не проверено: ${result.notChecked}.${when}`
+    );
+  }
   return parts.join(", ");
 }
 
