@@ -363,6 +363,11 @@
       "path": "sql/021_seo_ads.sql"
     },
     {
+      "id": "sql.seo_settings",
+      "type": "sql",
+      "path": "sql/022_seo_settings.sql"
+    },
+    {
       "id": "app.api_seo_positions_ads",
       "type": "app",
       "path": "src/app/api/seo-positions/ads"
@@ -748,6 +753,11 @@
       "from": "app.api_seo_positions_ads",
       "to": "lib.seo_positions",
       "type": "calls"
+    },
+    {
+      "from": "lib.seo_positions",
+      "to": "sql.seo_settings",
+      "type": "writes"
     }
   ],
   "taskPaths": {
@@ -860,6 +870,7 @@
       "sql.seo_run_progress",
       "sql.seo_audit_pages",
       "sql.seo_ads",
+      "sql.seo_settings",
       "lib.seo_positions",
       "app.ui_seo_positions",
       "app.api_seo_positions_daily",

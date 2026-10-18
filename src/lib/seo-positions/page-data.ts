@@ -1,6 +1,6 @@
 import "server-only";
 
-import { listKeywords, listNotes, listSnapshots, type SeoProject } from "@/lib/seo-positions/data";
+import { isSerperPaused, listKeywords, listNotes, listSnapshots, type SeoProject } from "@/lib/seo-positions/data";
 import { loadAdsData } from "@/lib/seo-positions/ads";
 import { adsStates, dayList } from "@/lib/seo-positions/ads-summary";
 import { getRuns } from "@/lib/seo-positions/runs";
@@ -19,12 +19,13 @@ export async function loadProjectPage(project: SeoProject, sp: SearchParams) {
   const days = [7, 30, 90].includes(daysParam) ? daysParam : 30;
 
   const adsDays = dayList(localDayAgo(project.gl, days), localDayAgo(project.gl, 0));
-  const [keywords, snapshots, notes, runs, ads] = await Promise.all([
+  const [keywords, snapshots, notes, runs, ads, serperPaused] = await Promise.all([
     listKeywords(project.id),
     listSnapshots(project.id, days),
     listNotes(project.id, days),
     getRuns(project.id),
     loadAdsData(project.id, adsDays[0], adsDays.at(-1)!),
+    isSerperPaused(),
   ]);
   /** День → «шла / стояла» только для дней, по которым есть данные; null — реклама не подключена. */
   const adsByDay = ads.links.some((l) => l.syncedAt)
@@ -33,6 +34,7 @@ export async function loadProjectPage(project: SeoProject, sp: SearchParams) {
   return {
     days,
     notes,
+    serperPaused,
     adsByDay: adsByDay as Record<string, "on" | "off"> | null,
     positionsRun: runs.positions,
     error: one(sp, "error")?.slice(0, 200) ?? null,

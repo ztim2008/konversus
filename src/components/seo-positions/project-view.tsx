@@ -70,6 +70,8 @@ type Props = {
   shareUrl?: string;
   /** День (YYYY-MM-DD по городу проекта) → реклама шла / стояла; null — реклама не подключена. */
   adsByDay?: Record<string, "on" | "off"> | null;
+  /** Выключатель Serper на весь модуль. */
+  serperPaused?: boolean;
 };
 
 export function ProjectView({
@@ -85,6 +87,7 @@ export function ProjectView({
   error,
   shareUrl,
   adsByDay = null,
+  serperPaused = false,
 }: Props) {
   const fmt = formatter(project);
   const depth = depthLabel(project);
@@ -155,9 +158,10 @@ export function ProjectView({
                 <input type="hidden" name="projectId" value={project.id} />
                 <button
                   className="rounded-md bg-[var(--accent)] px-4 py-2 font-medium text-[var(--background)] disabled:opacity-50"
-                  disabled={anyChecking}
+                  disabled={anyChecking || serperPaused}
+                  title={serperPaused ? "Проверки Serper на паузе" : undefined}
                 >
-                  {anyChecking ? "Проверка идёт…" : "Проверить все сейчас"}
+                  {anyChecking ? "Проверка идёт…" : serperPaused ? "Serper на паузе" : "Проверить все сейчас"}
                 </button>
               </form>
               {isOwner && (
@@ -384,7 +388,10 @@ export function ProjectView({
                       <form action={checkNowAction} className="inline">
                         <input type="hidden" name="projectId" value={project.id} />
                         <input type="hidden" name="keywordId" value={row.keyword.id} />
-                        <button className="px-2 text-[var(--muted)] hover:text-[var(--foreground)]" disabled={!!row.keyword.checkingSince}>
+                        <button
+                          className="px-2 text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-40"
+                          disabled={!!row.keyword.checkingSince || serperPaused}
+                        >
                           Проверить
                         </button>
                       </form>

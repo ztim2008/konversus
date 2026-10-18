@@ -6,6 +6,7 @@ import {
   creditsFreeAt,
   creditsUsedSince,
   insertSnapshot,
+  isSerperPaused,
   lastOkStatus,
   listDueKeywords,
   listKeywords,
@@ -147,7 +148,9 @@ export type RunResult = {
   checked: number;
   skippedBusy: number;
   stoppedByCap: boolean;
-  /** Сколько запросов осталось непроверенными из-за потолка. */
+  /** Остановлено выключателем Serper. */
+  paused: boolean;
+  /** Сколько запросов осталось непроверенными из-за потолка или выключателя. */
   notChecked: number;
   creditsBefore: number;
   errors: number;
@@ -160,10 +163,15 @@ async function runQueue(
 ): Promise<RunResult> {
   const cap = getDailyCreditCap();
   const creditsBefore = await creditsUsedSince(24);
-  const result: RunResult = { checked: 0, skippedBusy: 0, stoppedByCap: false, notChecked: 0, creditsBefore, errors: 0, lastError: null };
+  const result: RunResult = { checked: 0, skippedBusy: 0, stoppedByCap: false, paused: false, notChecked: 0, creditsBefore, errors: 0, lastError: null };
 
   for (const [i, { project, keyword }] of items.entries()) {
     await onItem?.(i, items.length, keyword);
+    if (await isSerperPaused()) {
+      result.paused = true;
+      result.notChecked = items.length - i;
+      break;
+    }
     if ((await creditsUsedSince(24)) + project.maxPages * 2 > cap) {
       result.stoppedByCap = true;
       result.notChecked = items.length - i;
@@ -189,7 +197,14 @@ export async function checkProjectNow(project: SeoProject, keywordId: string | u
     (i, total, keyword) => progress(i, total, `Запрос «${keyword.keyword}»`)
   );
   const done = keywords.length - result.notChecked;
-  await progress(done, keywords.length, result.stoppedByCap ? "Остановлено потолком кредитов" : "Готово");
+  await progress(
+    done,
+    keywords.length,
+    result.paused ? "Serper на паузе" : result.stoppedByCap ? "Остановлено потолком кредитов" : "Готово"
+  );
+  if (result.paused && result.checked === 0) {
+    throw new UserFacingError("Проверки Serper на паузе — кредиты не тратятся. Включить можно на странице «SEO-позиции» (только админ).");
+  }
   const credits = (await creditsUsedSince(24)) - result.creditsBefore;
   const parts = [`${result.checked} ${plural(result.checked, "запрос проверен", "запроса проверено", "запросов проверено")}`];
   if (result.skippedBusy) parts.push(`уже проверялись: ${result.skippedBusy}`);
@@ -198,6 +213,9 @@ export async function checkProjectNow(project: SeoProject, keywordId: string | u
     const msg = `С ошибкой: ${result.errors} из ${keywords.length} (${(result.lastError ?? "").slice(0, 120)}). ${parts.join(", ")}`;
     if (result.errors === result.checked) throw new UserFacingError(msg);
     parts.push(`с ошибкой: ${result.errors} (${(result.lastError ?? "").slice(0, 120)})`);
+  }
+  if (result.paused) {
+    throw new UserFacingError(`Serper поставили на паузу во время проверки. ${parts.join(", ")}, не проверено: ${result.notChecked}.`);
   }
   if (result.stoppedByCap) {
     const cap = getDailyCreditCap();

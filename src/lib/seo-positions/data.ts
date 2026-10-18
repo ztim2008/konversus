@@ -278,6 +278,22 @@ export async function creditsUsedSince(hours: number): Promise<number> {
   return Number(rows[0]?.c ?? 0);
 }
 
+/** Выключатель Serper на весь модуль: true — никакие проверки позиций не тратят кредиты. */
+export async function isSerperPaused(): Promise<boolean> {
+  const [rows] = await getDbPool().query<(RowDataPacket & { value: string })[]>(
+    "select value from seo_settings where name = 'serper_paused'"
+  );
+  return rows[0]?.value === "1";
+}
+
+export async function setSerperPaused(paused: boolean) {
+  await getDbPool().execute(
+    `insert into seo_settings (name, value, updated_at) values ('serper_paused', ?, now(3))
+     on duplicate key update value = values(value), updated_at = now(3)`,
+    [paused ? "1" : "0"]
+  );
+}
+
 /** Когда из окна 24 часов выйдет столько старых проверок, что под потолок поместится ещё need кредитов. */
 export async function creditsFreeAt(need: number, cap: number): Promise<Date | null> {
   const [rows] = await getDbPool().query<(RowDataPacket & { checked_at: Date; credits: number })[]>(

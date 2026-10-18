@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { createProjectAction, logoutAction } from "@/app/positions/actions";
+import { createProjectAction, logoutAction, toggleSerperAction } from "@/app/positions/actions";
+import { PendingButton } from "@/components/seo-positions/pending-button";
 import { getDailyCreditCap } from "@/lib/seo-positions/check";
-import { creditsUsedSince, listProjects } from "@/lib/seo-positions/data";
+import { creditsUsedSince, isSerperPaused, listProjects } from "@/lib/seo-positions/data";
 import { canAccessProject, requireViewer } from "@/lib/seo-positions/users";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function SeoProjectsPage({
   const isOwner = viewer.role === "admin";
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : null;
-  const [allProjects, credits] = await Promise.all([listProjects(), creditsUsedSince(24)]);
+  const [allProjects, credits, serperPaused] = await Promise.all([listProjects(), creditsUsedSince(24), isSerperPaused()]);
   const projects = allProjects.filter((p) => canAccessProject(viewer, p.id));
 
   return (
@@ -58,6 +59,33 @@ export default async function SeoProjectsPage({
           </>
         )}
       </p>
+
+      {(isOwner || serperPaused) && (
+        <section
+          className={`mt-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border-2 p-5 ${serperPaused ? "border-[var(--accent-warm)] bg-[var(--surface-strong)]" : "border-[var(--accent)] bg-[var(--surface)]"}`}
+        >
+          <div className="max-w-[640px]">
+            <p className={`text-lg font-semibold ${serperPaused ? "text-[var(--accent-warm)]" : "text-[var(--accent)]"}`}>
+              {serperPaused ? "Serper на паузе — кредиты не тратятся" : "Serper включён — проверки тратят кредиты"}
+            </p>
+            <p className="mt-1 text-[var(--muted)]">
+              {serperPaused
+                ? "Ночные и ручные проверки позиций остановлены во всех проектах. Отчёты, история, чек-лист, обход сайта и реклама работают."
+                : "Ночью по расписанию и по кнопке «Проверить». Каждая страница выдачи — 1 кредит."}
+            </p>
+          </div>
+          {isOwner && (
+            <form action={toggleSerperAction}>
+              <PendingButton
+                pendingText="Переключаю…"
+                className={`rounded-lg px-6 py-3 text-base font-semibold text-[var(--background)] ${serperPaused ? "bg-[var(--accent)]" : "bg-[var(--accent-warm)]"}`}
+              >
+                {serperPaused ? "▶ Включить Serper" : "❚❚ Поставить Serper на паузу"}
+              </PendingButton>
+            </form>
+          )}
+        </section>
+      )}
 
       {error && <p className="mt-4 rounded-md border border-[var(--accent-warm)] p-3 text-[var(--accent-warm)]">{error}</p>}
 

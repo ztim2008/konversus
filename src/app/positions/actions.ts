@@ -16,7 +16,9 @@ import {
   getProject,
   saveReportPlan,
   setKeywordTargetUrl,
+  isSerperPaused,
   setProjectActive,
+  setSerperPaused,
 } from "@/lib/seo-positions/data";
 import { normalizeDomain, urlMatchesDomain } from "@/lib/seo-positions/domain";
 import { ADS_FLASH_COOKIE, createAdsToken } from "@/lib/seo-positions/ads";
@@ -225,6 +227,12 @@ export async function setTargetUrlAction(formData: FormData) {
   }
   await setKeywordTargetUrl(project.id, str(formData, "keywordId"), target);
   redirect(`/positions/${project.id}`);
+}
+
+export async function toggleSerperAction() {
+  await requireCurrentAdmin();
+  await setSerperPaused(!(await isSerperPaused()));
+  revalidatePath("/positions", "layout");
 }
 
 export async function toggleProjectAction(formData: FormData) {
