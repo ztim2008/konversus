@@ -23,12 +23,15 @@ export const SETTING_MANUAL_RESPECTS_LIMIT = "lead_radar_manual_respects_limit";
 export const SETTING_AUTO_SEND_INTERVAL_MIN = "lead_radar_auto_send_interval_min";
 /** Сколько новых КП (DeepSeek) за один тик сбора. */
 export const SETTING_COLLECT_PER_TICK = "lead_radar_collect_per_tick";
-/** mix | ads | no_ads — кого брать по коду Директа на сайте. */
+/** mix | ads | no_ads — кого брать по коду платной рекламы на сайте (коллтрекинг, пиксель VK). */
 export const SETTING_DIRECT_MODE = "lead_radar_direct_mode";
+/** first | only — сайты с Telegram/Макс/WhatsApp вперёд или только они. */
+export const SETTING_MESSENGER_MODE = "lead_radar_messenger_mode";
 /** catalog — карточки каталога вручную. site — старое КП про сайт. */
 export const SETTING_OFFER_MODE = "lead_radar_offer_mode";
 
 export type DirectMode = "mix" | "ads" | "no_ads";
+export type MessengerMode = "first" | "only";
 /** Активный профиль отправителя: igor | alexey */
 export { SETTING_SENDER_PROFILE } from "@/lib/lead-radar/sender-profiles";
 
@@ -126,6 +129,11 @@ export async function getDirectMode(): Promise<DirectMode> {
   return "mix";
 }
 
+export async function getMessengerMode(): Promise<MessengerMode> {
+  const raw = (await getSetting(SETTING_MESSENGER_MODE)).trim().toLowerCase();
+  return raw === "only" ? "only" : "first";
+}
+
 export async function getManualRespectsLimit(): Promise<boolean> {
   const raw = (await getSetting(SETTING_MANUAL_RESPECTS_LIMIT)).trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
@@ -209,6 +217,7 @@ export async function saveRadarRuntimeSettings(params: {
   autoSendIntervalMin?: number;
   collectPerTick?: number;
   directMode?: DirectMode;
+  messengerMode?: MessengerMode;
   weights?: Partial<VerticalWeights>;
 }): Promise<{
   dailyQueueLimit: number;
@@ -218,6 +227,7 @@ export async function saveRadarRuntimeSettings(params: {
   autoSendIntervalMin: 15 | 30;
   collectPerTick: number;
   directMode: DirectMode;
+  messengerMode: MessengerMode;
   weights: VerticalWeights;
 }> {
   const patch: Record<string, string> = {};
@@ -264,6 +274,12 @@ export async function saveRadarRuntimeSettings(params: {
     patch[SETTING_DIRECT_MODE] = directMode;
   }
 
+  let messengerMode = await getMessengerMode();
+  if (params.messengerMode === "first" || params.messengerMode === "only") {
+    messengerMode = params.messengerMode;
+    patch[SETTING_MESSENGER_MODE] = messengerMode;
+  }
+
   let weights = await getVerticalWeights();
   if (params.weights) {
     weights = { ...weights };
@@ -290,6 +306,7 @@ export async function saveRadarRuntimeSettings(params: {
     autoSendIntervalMin,
     collectPerTick,
     directMode,
+    messengerMode,
     weights,
   };
 }

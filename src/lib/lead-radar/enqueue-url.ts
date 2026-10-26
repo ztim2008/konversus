@@ -9,6 +9,7 @@ import { extractDomain } from "@/lib/serper-client";
 import { guessCompanyName } from "@/lib/company-site-filter";
 import { checkWebsite } from "@/lib/website-checker";
 import { findDeepEmail } from "@/lib/deep-email";
+import { joinAdSignals } from "@/lib/lead-radar/page-facts";
 import { captureSiteScreenshot } from "@/lib/site-screenshot";
 import { generatePersonalizedKP } from "@/lib/lead-agent/ai-composer";
 import {
@@ -226,11 +227,12 @@ export async function enqueueUrlToQueue(params: {
     await db.query(
       `INSERT INTO lead_radar_sites (
         id, radar_id, domain, name, url, platform, source, serp_query, serp_position,
-        email, email_source_url, phone, telegram, inn, legal_form, problems, privacy_issues,
+        email, email_source_url, phone, telegram, max_url, whatsapp, ad_signals,
+        inn, legal_form, problems, privacy_issues,
         screenshot_path, screenshot_url, screenshot_at,
         kp_html, kp_subject, kp_tokens_in, kp_tokens_out,
         hot_score, score, h1_text, status, queued_at, batch_date
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
       [
         siteId,
         radarId,
@@ -245,6 +247,9 @@ export async function enqueueUrlToQueue(params: {
         emailInfo.sourceUrl,
         emailInfo.phone,
         emailInfo.telegram,
+        emailInfo.maxUrl,
+        emailInfo.whatsapp,
+        joinAdSignals(audit.adSignals, emailInfo.adSignals),
         emailInfo.inn,
         emailInfo.legalForm,
         JSON.stringify(audit.issues),

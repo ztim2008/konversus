@@ -1,5 +1,5 @@
 /**
- * Факты со страницы: честный H1, живой ящик, телефон, Telegram.
+ * Факты со страницы: честный H1, живой ящик, телефон, мессенджеры, код платной рекламы.
  * Чистые функции — без сети и без базы.
  */
 
@@ -213,6 +213,71 @@ export function extractTelegram(html: string): string | null {
   return null;
 }
 
+const MAX_RESERVED = /^(u|join|app|download|downloads|privacy|legal|terms|help|faq|about|business|partners|news|blog|static|assets|api|login|auth|web|id|en|ru)$/i;
+
+/** Ссылка на Макс: профиль max.ru/u/…, чат max.ru/join/…, канал max.ru/имя. */
+export function extractMax(html: string): string | null {
+  const direct = html.match(
+    /(?:https?:)?\/\/(?:web\.)?max\.ru\/(u|join)\/([A-Za-z0-9_-]{6,120})/i
+  );
+  if (direct) return `https://max.ru/${direct[1].toLowerCase()}/${direct[2]}`;
+  for (const match of html.matchAll(
+    /(?:https?:)?\/\/(?:web\.)?max\.ru\/([A-Za-z0-9_]{4,64})(?=["'\s?#/<]|$)/gi
+  )) {
+    const name = match[1];
+    if (MAX_RESERVED.test(name)) continue;
+    return `https://max.ru/${name}`;
+  }
+  return null;
+}
+
+export function extractWhatsapp(html: string): string | null {
+  const patterns = [
+    /(?:https?:)?\/\/wa\.me\/\+?(\d{10,15})/i,
+    /(?:https?:)?\/\/(?:api|web)\.whatsapp\.com\/send\/?\?(?:[^"'\s<>]*?&(?:amp;)?)?phone=\+?(\d{10,15})/i,
+    /whatsapp:\/\/send\?(?:[^"'\s<>]*?&(?:amp;)?)?phone=\+?(\d{10,15})/i,
+  ];
+  for (const pattern of patterns) {
+    const digits = html.match(pattern)?.[1];
+    if (digits) return `https://wa.me/${digits}`;
+  }
+  return null;
+}
+
+/**
+ * Код, который ставят под платный трафик: коллтрекинг и пиксель VK Рекламы.
+ * Код РСЯ (an.yandex.ru, yandex_rtb) сюда не входит: так сайт сам показывает чужую рекламу.
+ * Метрика тоже не входит: она стоит почти везде.
+ */
+const AD_SIGNALS: ReadonlyArray<{ label: string; re: RegExp }> = [
+  { label: "Calltouch", re: /calltouch\.ru|ct_callback|ctw\.calltouch/i },
+  { label: "CoMagic/UIS", re: /comagic\.ru|uiscom\.ru/i },
+  { label: "Roistat", re: /roistat\.com|roistat_visit|roistatProjectId/i },
+  { label: "Callibri", re: /callibri\.ru/i },
+  { label: "Mango коллтрекинг", re: /widgets\.mango-office\.ru\/site|mango-office\.ru\/calltracking/i },
+  { label: "Alloka", re: /alloka\.ru/i },
+  { label: "Calltracking.ru", re: /calltracking\.ru/i },
+  { label: "Ringostat", re: /ringostat\.(?:com|net)/i },
+  { label: "VK Реклама", re: /vk\.(?:com|ru)\/rtrg|top-fwz1\.mail\.ru|_tmr\.push\(\s*\{[^}]*type\s*:\s*['"]reachGoal/i },
+];
+
+export function detectAdSignals(html: string): string[] {
+  return AD_SIGNALS.filter((signal) => signal.re.test(html)).map((signal) => signal.label);
+}
+
+/** Хранится строкой через запятую. */
+export function joinAdSignals(...lists: string[][]): string | null {
+  const unique = Array.from(new Set(lists.flat()));
+  return unique.length ? unique.join(", ").slice(0, 255) : null;
+}
+
+export function parseAdSignals(value: string | null | undefined): string[] {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export type LegalForm = "ip" | "company" | "unknown";
 
 export type LegalReading = {
@@ -279,13 +344,6 @@ export function preferLegalForm(current: LegalReading, next: LegalReading): Lega
     return 0;
   };
   return rank(next) > rank(current) ? next : current;
-}
-
-/** Код Директа или рекламной сети Яндекса. Метрика сама по себе не считается рекламой. */
-export function hasYandexDirectPixel(html: string): boolean {
-  return /an\.yandex\.ru|yandex\.ru\/ads|direct\.yandex|yandexContextAsyncCallbacks|Ya\.Context|yandex_rtb/i.test(
-    html
-  );
 }
 
 export function legalFormLabel(form: string | null | undefined): string {

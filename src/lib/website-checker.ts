@@ -4,7 +4,7 @@
 import { GEO_CITIES_V1 } from "@/lib/lead-radar-geo";
 import {
   extractH1Texts,
-  hasYandexDirectPixel,
+  detectAdSignals,
   pickHonestH1,
   readResponseHtml,
 } from "@/lib/lead-radar/page-facts";
@@ -23,8 +23,8 @@ export interface WebsiteResult {
   cms: string | null;
   cmsTier: string | null;
   hasPhone: boolean;
-  /** На странице есть код Директа или рекламной сети Яндекса. */
-  hasYandexDirect: boolean;
+  /** Код платного трафика на главной: коллтрекинг, пиксель VK Рекламы. */
+  adSignals: string[];
   contactName: string | null;
   hotScore: number;
   /** Эвристики cookie / политика (не юрзаключение) */
@@ -76,7 +76,7 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     responseTime: 0, statusCode: 0,
     issues: [], score: 0,
     h1: { count: 0, texts: [], ok: false },
-    cms: null, cmsTier: null as string|null, hasPhone: false, hasYandexDirect: false,
+    cms: null, cmsTier: null as string|null, hasPhone: false, adSignals: [],
     contactName: null,
     hotScore: 50, // начинаем с 50 (нейтрально)
     privacyIssues: [],
@@ -114,7 +114,7 @@ export async function checkWebsite(url: string): Promise<WebsiteResult> {
     }
 
     const html = await readResponseHtml(resp);
-    result.hasYandexDirect = hasYandexDirectPixel(html);
+    result.adSignals = detectAdSignals(html);
 
     // ─── H1 ────────────────────────────────────────────────────
     // В texts кладём только честный заголовок услуги.

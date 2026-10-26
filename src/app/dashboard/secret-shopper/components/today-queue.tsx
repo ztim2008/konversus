@@ -25,6 +25,10 @@ type QueueSite = {
   hot_score?: number;
   legal_form?: string | null;
   inn?: string | null;
+  telegram?: string | null;
+  max_url?: string | null;
+  whatsapp?: string | null;
+  ad_signals?: string | null;
   problems?: string | string[];
   privacy_issues?: string | string[] | null;
   screenshot_url?: string | null;
@@ -663,6 +667,32 @@ export function TodayQueue() {
                     <span className="text-gray-500">Email: </span>
                     <span className="text-white">{site.email || "—"}</span>
                   </div>
+
+                  {(site.telegram || site.max_url || site.whatsapp || site.ad_signals) && (
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                      {[
+                        { label: "Telegram", url: site.telegram },
+                        { label: "Макс", url: site.max_url },
+                        { label: "WhatsApp", url: site.whatsapp },
+                      ]
+                        .filter((m) => m.url)
+                        .map((m) => (
+                          <a
+                            key={m.label}
+                            href={m.url!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-indigo-400 hover:text-indigo-300"
+                          >
+                            {m.label}
+                          </a>
+                        ))}
+                      {site.ad_signals && (
+                        <span className="text-gray-400">Реклама: {site.ad_signals}</span>
+                      )}
+                    </div>
+                  )}
 
                   {!compact && problems.length > 0 && (
                     <ul className="text-xs text-amber-400/90 space-y-1">

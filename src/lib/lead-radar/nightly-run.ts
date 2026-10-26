@@ -12,7 +12,7 @@ import {
 import { classifyCompanySite, guessCompanyName } from "@/lib/company-site-filter";
 import { checkWebsite } from "@/lib/website-checker";
 import { findDeepEmail } from "@/lib/deep-email";
-import { isLiveEmail, strongSiteReason } from "@/lib/lead-radar/page-facts";
+import { isLiveEmail, joinAdSignals, strongSiteReason } from "@/lib/lead-radar/page-facts";
 import { captureSiteScreenshot } from "@/lib/site-screenshot";
 import { generatePersonalizedKP } from "@/lib/lead-agent/ai-composer";
 import {
@@ -29,7 +29,7 @@ import {
 import { getDbPool } from "@/lib/db";
 import { getAllSettings } from "@/lib/data/settings";
 import { pickCityAndNiche, rememberCityNiche } from "@/lib/lead-radar/day-picker";
-import { sendMorningDigest } from "@/lib/lead-radar/telegram-digest";
+import { digestSampleFromRow, sendMorningDigest } from "@/lib/lead-radar/telegram-digest";
 
 import {
   COLLECT_MAX_ROUNDS_DEFAULT,
@@ -40,6 +40,7 @@ import {
   getDailySendLimit,
   getAutoSendEnabled,
   getDirectMode,
+  getMessengerMode,
   getOfferMode,
   HOT_SCORE_QUEUE_MIN,
   mskDateISO,
@@ -127,6 +128,18 @@ async function domainRecentlyUsed(domain: string): Promise<boolean> {
   return (rows as any[]).length > 0;
 }
 
+function hasMessenger(info: {
+  telegram: string | null;
+  maxUrl: string | null;
+  whatsapp: string | null;
+}): boolean {
+  return Boolean(info.telegram || info.maxUrl || info.whatsapp);
+}
+
+function mergeAdSignals(...lists: string[][]): string[] {
+  return Array.from(new Set(lists.flat()));
+}
+
 function clipH1(value: string | null | undefined): string | null {
   if (!value) return null;
   const text = value.replace(/\s+/g, " ").trim();
@@ -151,6 +164,9 @@ async function insertQueuedSite(row: {
   h1: string | null;
   phone: string | null;
   telegram: string | null;
+  maxUrl: string | null;
+  whatsapp: string | null;
+  adSignals: string[];
   inn: string | null;
   legalForm: "ip" | "company" | "unknown";
   serpQuery: string;
@@ -166,11 +182,12 @@ async function insertQueuedSite(row: {
   await db.query(
     `INSERT INTO lead_radar_sites (
       id, radar_id, domain, name, url, platform, source, serp_query, serp_position,
-      email, email_source_url, phone, telegram, inn, legal_form, problems, privacy_issues,
+      email, email_source_url, phone, telegram, max_url, whatsapp, ad_signals,
+      inn, legal_form, problems, privacy_issues,
       screenshot_path, screenshot_url, screenshot_at,
       kp_html, kp_subject, kp_tokens_in, kp_tokens_out,
       hot_score, score, h1_text, status, queued_at, batch_date
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,?,?,?,?,?,?,'queued',NOW(),?)`,
     [
       id,
       row.radarId,
@@ -185,6 +202,9 @@ async function insertQueuedSite(row: {
       row.emailSourceUrl,
       row.phone,
       row.telegram,
+      row.maxUrl,
+      row.whatsapp,
+      joinAdSignals(row.adSignals),
       row.inn,
       row.legalForm,
       JSON.stringify(row.problems),
@@ -314,6 +334,7 @@ export async function runNightlyLeadRadar(options?: {
   const publicOrigin = process.env.NEXT_PUBLIC_BASE_URL || "https://konversus.ru";
   const profile = await getActiveSenderProfile();
   const directMode = await getDirectMode();
+  const messengerMode = await getMessengerMode();
 
   // Страница 1, затем 2 и 3 — только если тик ещё не добрал need.
   for (let page = 1; page <= 3; page++) {
@@ -363,6 +384,7 @@ export async function runNightlyLeadRadar(options?: {
       audit: Awaited<ReturnType<typeof checkWebsite>>;
       emailInfo: Awaited<ReturnType<typeof findDeepEmail>>;
       fit: Awaited<ReturnType<typeof inspectCatalog>> | null;
+      adSignals: string[];
     }> = [];
 
   for (const cand of pageCandidates) {
@@ -405,17 +427,22 @@ export async function runNightlyLeadRadar(options?: {
           continue;
         }
 
-        if (directMode === "ads" && !audit.hasYandexDirect) {
-          skipped.push({ domain: cand.domain, reason: "no_direct" });
-          continue;
-        }
-        if (directMode === "no_ads" && audit.hasYandexDirect) {
-          skipped.push({ domain: cand.domain, reason: "has_direct" });
-          continue;
-        }
       }
 
       const emailInfo = await findDeepEmail(cand.url);
+      const adSignals = mergeAdSignals(audit.adSignals, emailInfo.adSignals);
+      if (!catalogMode && directMode === "ads" && adSignals.length === 0) {
+        skipped.push({ domain: cand.domain, reason: "no_ads" });
+        continue;
+      }
+      if (!catalogMode && directMode === "no_ads" && adSignals.length > 0) {
+        skipped.push({ domain: cand.domain, reason: "has_ads" });
+        continue;
+      }
+      if (messengerMode === "only" && !hasMessenger(emailInfo)) {
+        skipped.push({ domain: cand.domain, reason: "no_messenger" });
+        continue;
+      }
       if (!emailInfo.email) {
         skipped.push({ domain: cand.domain, reason: "no_email" });
         continue;
@@ -431,7 +458,7 @@ export async function runNightlyLeadRadar(options?: {
         continue;
       }
 
-      qualified.push({ cand, audit, emailInfo, fit });
+      qualified.push({ cand, audit, emailInfo, fit, adSignals });
     } catch (err: any) {
       skipped.push({
         domain: cand.domain,
@@ -441,6 +468,12 @@ export async function runNightlyLeadRadar(options?: {
   }
 
   qualified.sort((a, b) => {
+    const aMsg = hasMessenger(a.emailInfo) ? 1 : 0;
+    const bMsg = hasMessenger(b.emailInfo) ? 1 : 0;
+    if (bMsg !== aMsg) return bMsg - aMsg;
+    const aAds = a.adSignals.length > 0 ? 1 : 0;
+    const bAds = b.adSignals.length > 0 ? 1 : 0;
+    if (bAds !== aAds) return bAds - aAds;
     const aIp = a.emailInfo.legalForm === "ip" ? 1 : 0;
     const bIp = b.emailInfo.legalForm === "ip" ? 1 : 0;
     if (bIp !== aIp) return bIp - aIp;
@@ -454,7 +487,7 @@ export async function runNightlyLeadRadar(options?: {
   );
 
   for (const item of qualified.slice(0, Math.max(0, room))) {
-    const { cand, audit, emailInfo, fit } = item;
+    const { cand, audit, emailInfo, fit, adSignals } = item;
     const card = fit && fit.ok ? fit : null;
     try {
       const shotUrl = card?.productUrl || cand.url;
@@ -516,6 +549,9 @@ export async function runNightlyLeadRadar(options?: {
         emailSourceUrl: emailInfo.sourceUrl,
         phone: emailInfo.phone,
         telegram: emailInfo.telegram,
+        maxUrl: emailInfo.maxUrl,
+        whatsapp: emailInfo.whatsapp,
+        adSignals,
         inn: emailInfo.inn,
         legalForm: emailInfo.legalForm,
         problems,
@@ -591,20 +627,7 @@ export async function runNightlyLeadRadar(options?: {
     const settings = await getAllSettings();
     const queuedRows = await listQueuedSites(batchDate);
     const digestSamples =
-      queuedRows.length > 0
-        ? queuedRows.map((s: any) => ({
-            name: s.name,
-            domain: s.domain,
-            platform: s.platform,
-            email: s.email,
-            hotScore: s.hot_score ?? 0,
-            legalForm: s.legal_form || null,
-            screenshotUrl: s.screenshot_url || null,
-            screenshotPath: s.screenshot_path || null,
-            kpSubject: s.kp_subject || null,
-            kpHtml: s.kp_html || null,
-          }))
-        : samples;
+      queuedRows.length > 0 ? queuedRows.map(digestSampleFromRow) : samples;
     telegram = await sendMorningDigest({
       botToken: settings.telegram_bot_token,
       chatId: settings.telegram_chat_id,
@@ -718,18 +741,7 @@ export async function runLeadRadarCollect(options?: {
   if (!options?.skipTelegram) {
     const settings = await getAllSettings();
     const queuedRows = await listQueuedSites(batchDate);
-    const digestSamples = queuedRows.map((s: any) => ({
-      name: s.name,
-      domain: s.domain,
-      platform: s.platform,
-      email: s.email,
-      hotScore: s.hot_score ?? 0,
-      legalForm: s.legal_form || null,
-      screenshotUrl: s.screenshot_url || null,
-      screenshotPath: s.screenshot_path || null,
-      kpSubject: s.kp_subject || null,
-      kpHtml: s.kp_html || null,
-    }));
+    const digestSamples = queuedRows.map(digestSampleFromRow);
     const niches = [...new Set(roundResults.map((r) => r.niche).filter(Boolean))];
     telegram = await sendMorningDigest({
       botToken: settings.telegram_bot_token,

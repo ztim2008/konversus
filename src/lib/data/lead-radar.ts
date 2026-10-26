@@ -131,6 +131,11 @@ export async function getSiteById(id: string): Promise<any | null> {
   return (rows as any[])[0] || null;
 }
 
+/** Мессенджер на сайте, затем код платной рекламы, затем ИП. */
+const PRIORITY_ORDER = `(s.telegram IS NOT NULL OR s.max_url IS NOT NULL OR s.whatsapp IS NOT NULL) DESC,
+       (s.ad_signals IS NOT NULL) DESC,
+       (s.legal_form = 'ip') DESC`;
+
 function clipRejectReason(reason: string): string {
   return reason.replace(/\s+/g, " ").trim().slice(0, 250);
 }
@@ -146,7 +151,7 @@ export async function listSendableQueued(): Promise<any[]> {
        AND s.email IS NOT NULL AND TRIM(s.email) <> ''
        AND s.kp_html IS NOT NULL AND TRIM(s.kp_html) <> ''
        AND s.kp_subject IS NOT NULL AND TRIM(s.kp_subject) <> ''
-     ORDER BY s.batch_date DESC, (s.legal_form = 'ip') DESC, s.hot_score DESC, s.queued_at ASC`
+     ORDER BY s.batch_date DESC, ${PRIORITY_ORDER}, s.hot_score DESC, s.queued_at ASC`
   );
   return rows as any[];
 }
@@ -213,7 +218,7 @@ export async function listQueuedSites(batchDate?: string): Promise<any[]> {
      LEFT JOIN lead_radars r ON r.id = s.radar_id
      WHERE s.status = 'queued'
        AND s.batch_date = COALESCE(?, CURDATE())
-     ORDER BY (s.legal_form = 'ip') DESC, s.hot_score DESC, s.queued_at ASC`,
+     ORDER BY ${PRIORITY_ORDER}, s.hot_score DESC, s.queued_at ASC`,
     [date]
   );
   return rows as any[];

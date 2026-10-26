@@ -32,6 +32,7 @@ export function RouletteSettings() {
   const [autoSendIntervalMin, setAutoSendIntervalMin] = useState<15 | 30>(30);
   const [collectPerTick, setCollectPerTick] = useState(2);
   const [directMode, setDirectMode] = useState<"mix" | "ads" | "no_ads">("mix");
+  const [messengerMode, setMessengerMode] = useState<"first" | "only">("first");
   const [verticals, setVerticals] = useState<VerticalRow[]>([]);
   const [preview, setPreview] = useState<PreviewRow[]>([]);
   const [ribbon, setRibbon] = useState<Array<{ id: string; labelRu: string }>>(
@@ -71,6 +72,7 @@ export function RouletteSettings() {
       setAutoSendIntervalMin(data.autoSendIntervalMin === 15 ? 15 : 30);
       setCollectPerTick(Number(data.collectPerTick) || 2);
       setDirectMode(data.directMode === "ads" || data.directMode === "no_ads" ? data.directMode : "mix");
+      setMessengerMode(data.messengerMode === "only" ? "only" : "first");
       setVerticals(data.verticals || []);
       setPreview(data.preview || []);
       setRibbon(data.ribbon || []);
@@ -120,6 +122,7 @@ export function RouletteSettings() {
           autoSendIntervalMin,
           collectPerTick,
           directMode,
+          messengerMode,
           weights,
         }),
       });
@@ -132,6 +135,7 @@ export function RouletteSettings() {
       setAutoSendIntervalMin(data.autoSendIntervalMin === 15 ? 15 : 30);
       setCollectPerTick(Number(data.collectPerTick) || collectPerTick);
       setDirectMode(data.directMode === "ads" || data.directMode === "no_ads" ? data.directMode : "mix");
+      setMessengerMode(data.messengerMode === "only" ? "only" : "first");
       setVerticals(data.verticals || verticals);
       setPreview(data.preview || []);
       setRibbon(data.ribbon || []);
@@ -247,7 +251,7 @@ export function RouletteSettings() {
             />
           </label>
           <label className="block text-xs text-gray-500">
-            Яндекс Директ
+            Платная реклама
             <select
               value={directMode}
               onChange={(e) =>
@@ -262,7 +266,22 @@ export function RouletteSettings() {
               <option value="no_ads">Только без рекламы</option>
             </select>
             <span className="mt-1 block text-gray-500">
-              Смотрим код на самом сайте. Кабинет Яндекса отсюда не виден.
+              Ищем на сайте коллтрекинг (Calltouch, CoMagic, Roistat, Callibri…) и пиксель VK Рекламы:
+              их ставят, когда платят за трафик. Кабинет Директа отсюда не виден. Только для режима «сайт».
+            </span>
+          </label>
+          <label className="block text-xs text-gray-500">
+            Мессенджер на сайте
+            <select
+              value={messengerMode}
+              onChange={(e) => setMessengerMode(e.target.value === "only" ? "only" : "first")}
+              className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
+            >
+              <option value="first">Сначала с Telegram / Макс / WhatsApp</option>
+              <option value="only">Только с Telegram / Макс / WhatsApp</option>
+            </select>
+            <span className="mt-1 block text-gray-500">
+              После письма бот пришлёт кнопку «Написать» и короткий текст: отправляете сами.
             </span>
           </label>
           <label className="flex items-start gap-2 text-xs text-gray-400">

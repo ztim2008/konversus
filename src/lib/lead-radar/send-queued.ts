@@ -164,6 +164,11 @@ export async function sendQueuedLead(params: {
           screenshotPath: site.screenshot_path,
           kpSubject: site.kp_subject,
           kpHtml: site.kp_html,
+          telegram: site.telegram,
+          maxUrl: site.max_url,
+          whatsapp: site.whatsapp,
+          adSignals: site.ad_signals,
+          senderName: profile.displayName,
           pulseLine: `Сегодня ${sentToday}/${sendLimit} · в очереди ${queuedCount}`,
           publicOrigin:
             process.env.NEXT_PUBLIC_BASE_URL ||

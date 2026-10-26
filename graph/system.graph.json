@@ -198,6 +198,11 @@
       "path": "src/lib/lead-radar/telegram-digest.ts"
     },
     {
+      "id": "lib.messenger_draft",
+      "type": "lib",
+      "path": "src/lib/lead-radar/messenger-draft.ts"
+    },
+    {
       "id": "lib.send_queued",
       "type": "lib",
       "path": "src/lib/lead-radar/send-queued.ts"
@@ -553,6 +558,11 @@
       "from": "lib.nightly_run",
       "to": "lib.tg_digest",
       "type": "writes"
+    },
+    {
+      "from": "lib.tg_digest",
+      "to": "lib.messenger_draft",
+      "type": "reads"
     },
     {
       "from": "ops.cron_nightly",

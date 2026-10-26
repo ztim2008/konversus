@@ -6,6 +6,11 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { basename, join } from "node:path";
 import { legalFormLabel } from "@/lib/lead-radar/page-facts";
+import {
+  buildMessengerDraft,
+  messengerButtons,
+  messengerLines,
+} from "@/lib/lead-radar/messenger-draft";
 
 const PHOTO_LIMIT = 5;
 /** Лимит Telegram sendMessage — оставляем запас. */
@@ -33,7 +38,32 @@ export type DigestSample = {
   kpSubject?: string | null;
   kpHtml?: string | null;
   kpText?: string | null;
+  telegram?: string | null;
+  maxUrl?: string | null;
+  whatsapp?: string | null;
+  /** Через запятую: «Calltouch, VK Реклама». */
+  adSignals?: string | null;
 };
+
+/** Строка карточки из lead_radar_sites. */
+export function digestSampleFromRow(s: any): DigestSample {
+  return {
+    name: s.name,
+    domain: s.domain,
+    platform: s.platform,
+    email: s.email,
+    hotScore: s.hot_score ?? 0,
+    legalForm: s.legal_form || null,
+    screenshotUrl: s.screenshot_url || null,
+    screenshotPath: s.screenshot_path || null,
+    kpSubject: s.kp_subject || null,
+    kpHtml: s.kp_html || null,
+    telegram: s.telegram || null,
+    maxUrl: s.max_url || null,
+    whatsapp: s.whatsapp || null,
+    adSignals: s.ad_signals || null,
+  };
+}
 
 export async function sendMorningDigest(params: {
   botToken: string;
@@ -74,7 +104,9 @@ export async function sendMorningDigest(params: {
   const lines = samples.slice(0, 8).map((s, i) => {
     const plat = s.platform ? ` · ${s.platform}` : "";
     const hot = s.hotScore != null ? ` · 🔥${s.hotScore}` : "";
-    return `${i + 1}. ${s.name || s.domain}${plat}${hot} · ${legalFormLabel(s.legalForm)}`;
+    const msg = s.telegram || s.maxUrl || s.whatsapp ? " · 💬" : "";
+    const ads = s.adSignals ? " · 📣" : "";
+    return `${i + 1}. ${s.name || s.domain}${plat}${hot} · ${legalFormLabel(s.legalForm)}${msg}${ads}`;
   });
 
   const text =
@@ -87,6 +119,9 @@ export async function sendMorningDigest(params: {
     `Готово к отправке: *${queuedCount}/${limit}*\n` +
     `Токены AI: ~${tokensTotal}\n\n` +
     (lines.length ? lines.join("\n") + "\n\n" : "") +
+    (lines.some((l) => l.includes("💬") || l.includes("📣"))
+      ? `💬 мессенджер на сайте · 📣 код платной рекламы\n\n`
+      : "") +
     `Ниже — скрин и текст письма по горячим лидам (для согласования в чате).\n` +
     `Утро = план:\n${adminUrl}`;
 
@@ -107,8 +142,10 @@ export async function sendMorningDigest(params: {
   }
 
   const photoLimit = params.photoLimit ?? PHOTO_LIMIT;
+  const rank = (s: DigestSample) =>
+    (s.telegram || s.maxUrl || s.whatsapp ? 2 : 0) + (s.adSignals ? 1 : 0);
   const top = [...samples]
-    .sort((a, b) => (b.hotScore || 0) - (a.hotScore || 0))
+    .sort((a, b) => rank(b) - rank(a) || (b.hotScore || 0) - (a.hotScore || 0))
     .slice(0, photoLimit);
 
   let photosSent = 0;
@@ -223,11 +260,17 @@ export async function sendSentNotification(params: {
   kpSubject?: string | null;
   kpHtml?: string | null;
   kpText?: string | null;
+  telegram?: string | null;
+  maxUrl?: string | null;
+  whatsapp?: string | null;
+  adSignals?: string | null;
+  /** Имя отправителя для черновика в мессенджер клиента. */
+  senderName?: string;
   publicOrigin?: string;
   /** Пульс дня: «Сегодня 12/40 · в очереди 8» */
   pulseLine?: string;
 }): Promise<{ ok: boolean; error?: string }> {
-  const { botToken, chatId, publicOrigin, pulseLine, ...rest } = params;
+  const { botToken, chatId, publicOrigin, pulseLine, senderName, ...rest } = params;
 
   if (!botToken || !chatId) {
     return { ok: false, error: "telegram not configured" };
@@ -240,18 +283,8 @@ export async function sendSentNotification(params: {
     prefix: "✅",
     mode: "sent",
     pulseLine,
-    sample: {
-      name: rest.name,
-      domain: rest.domain,
-      platform: rest.platform,
-      email: rest.email,
-      legalForm: rest.legalForm,
-      screenshotUrl: rest.screenshotUrl,
-      screenshotPath: rest.screenshotPath,
-      kpSubject: rest.kpSubject,
-      kpHtml: rest.kpHtml,
-      kpText: rest.kpText,
-    },
+    senderName,
+    sample: rest,
   });
 
   return card.ok ? { ok: true } : { ok: false, error: "telegram send failed" };
@@ -523,12 +556,19 @@ async function sendLeadCardToTelegram(params: {
   mode: "plan" | "sent";
   sample: DigestSample;
   pulseLine?: string;
+  senderName?: string;
 }): Promise<{ ok: boolean; photo: boolean; kp: boolean }> {
-  const { botToken, chatId, publicOrigin, prefix, mode, sample, pulseLine } =
+  const { botToken, chatId, publicOrigin, prefix, mode, sample, pulseLine, senderName } =
     params;
   const plat = sample.platform ? ` · ${sample.platform}` : "";
   const who = ` · ${legalFormLabel(sample.legalForm)}`;
-  const mail = sample.email ? `\n📧 ${sample.email}` : "";
+  const contacts = [
+    ...messengerLines(sample),
+    ...(sample.adSignals ? [`📣 Реклама: ${sample.adSignals}`] : []),
+  ];
+  const mail =
+    (sample.email ? `\n📧 ${sample.email}` : "") +
+    (contacts.length ? `\n${contacts.join("\n")}` : "");
   const pulse = pulseLine ? `\n${pulseLine}` : "";
   const title =
     mode === "sent"
@@ -570,7 +610,55 @@ async function sendLeadCardToTelegram(params: {
     kp = r.ok;
   }
 
+  const buttons = messengerButtons(sample);
+  if (mode === "sent" && senderName && buttons.length) {
+    const draft = buildMessengerDraft({
+      senderName,
+      domain: sample.domain,
+      email: sample.email,
+      subject: sample.kpSubject,
+    });
+    await sendHtmlWithButtons({
+      botToken,
+      chatId,
+      html:
+        `💬 На сайте есть мессенджер. Текст для клиента, нажмите, чтобы скопировать:\n\n` +
+        `<pre>${escapeHtml(draft)}</pre>`,
+      buttons,
+    });
+  }
+
   return { ok: true, photo, kp };
+}
+
+async function sendHtmlWithButtons(params: {
+  botToken: string;
+  chatId: string;
+  html: string;
+  buttons: Array<{ text: string; url: string }>;
+}): Promise<{ ok: boolean; error?: string }> {
+  const res = await fetch(`https://api.telegram.org/bot${params.botToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: params.chatId,
+      text: params.html.slice(0, 4096),
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+      reply_markup: {
+        inline_keyboard: params.buttons.map((b) => [{ text: b.text, url: b.url }]),
+      },
+    }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) {
+    return { ok: false, error: await res.text() };
+  }
+  return { ok: true };
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function truncate(text: string, max: number): string {

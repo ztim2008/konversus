@@ -4,8 +4,11 @@
 import "server-only";
 
 import {
+  detectAdSignals,
+  extractMax,
   extractPhone,
   extractTelegram,
+  extractWhatsapp,
   isLiveEmail,
   preferLegalForm,
   readLegalForm,
@@ -55,6 +58,10 @@ export type DeepEmailResult = {
   pagesScanned: number;
   phone: string | null;
   telegram: string | null;
+  maxUrl: string | null;
+  whatsapp: string | null;
+  /** Коллтрекинг и пиксели со всех открытых страниц. */
+  adSignals: string[];
   legalForm: LegalForm;
   inn: string | null;
 };
@@ -163,6 +170,9 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
   const allCandidates: { email: string; page: string; score: number }[] = [];
   let phone: string | null = null;
   let telegram: string | null = null;
+  let maxUrl: string | null = null;
+  let whatsapp: string | null = null;
+  const adSignals = new Set<string>();
   let legal = { form: "unknown" as LegalForm, inn: null as string | null };
   let pagesScanned = 0;
 
@@ -178,6 +188,9 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
 
     if (!phone) phone = extractPhone(html);
     if (!telegram) telegram = extractTelegram(html);
+    if (!maxUrl) maxUrl = extractMax(html);
+    if (!whatsapp) whatsapp = extractWhatsapp(html);
+    for (const signal of detectAdSignals(html)) adSignals.add(signal);
     legal = preferLegalForm(legal, readLegalForm(html));
 
     for (const email of extractEmails(html)) {
@@ -195,7 +208,8 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
       bestNow &&
       isLiveEmail(bestNow.email) &&
       pagesScanned >= 2 &&
-      (legal.inn || pagesScanned >= 4)
+      (legal.inn || pagesScanned >= 4) &&
+      (telegram || maxUrl || whatsapp || pagesScanned >= 4)
     ) {
       break;
     }
@@ -228,6 +242,9 @@ export async function findDeepEmail(startUrl: string, maxInternal = 6): Promise<
     pagesScanned,
     phone,
     telegram,
+    maxUrl,
+    whatsapp,
+    adSignals: Array.from(adSignals),
     legalForm: legal.form,
     inn: legal.inn,
   };
