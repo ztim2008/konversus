@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Menu, X, ChevronDown, Globe, Search, Zap,
-  ShoppingBag, ExternalLink, Layers, MessageCircle, Images
+  ShoppingBag, ExternalLink, Layers, MessageCircle, Images, Boxes
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -49,6 +49,13 @@ const PRODUCTS = [
     icon: MessageCircle,
     color: "#22c55e",
     badge: "Новое",
+  },
+  {
+    name: "Решения для 1С-Битрикс",
+    description: "Модули с установщиком для интернет-магазинов: комплекты спецодежды и расчёт СИЗ.",
+    href: "/bitrix",
+    icon: Boxes,
+    color: "#057aff",
   },
   {
     name: "Портфолио Nordic",
@@ -96,9 +103,8 @@ export default function KonversusNav() {
           
           {/* Логотип */}
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", fontWeight: 700, fontSize: "1.15rem", color: "#fafafa", letterSpacing: "-0.02em" }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #22c55e, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#fff" }}>
-              K
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="" width={30} height={27} style={{ display: "block" }} />
             <span className="nav-brand">Konversus</span>
           </Link>
 

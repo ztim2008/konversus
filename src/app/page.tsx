@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { getAllSettings } from "@/lib/data/settings";
 import { PortfolioBlock } from "@/components/portfolio-block";
+import { BitrixSolutionsBlock } from "@/components/bitrix-solutions-block";
 
 export const dynamic = "force-dynamic";
 
@@ -355,6 +356,8 @@ export default async function Home() {
 
       {/* ── Портфолио ── */}
       <PortfolioBlock initialImages={portfolioImages} />
+
+      <BitrixSolutionsBlock />
 
       
       {/* ── Konversus Leads AI ── */}

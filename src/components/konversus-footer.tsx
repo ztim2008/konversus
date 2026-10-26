@@ -8,6 +8,7 @@ const PRODUCTS = [
   { name: "Лид-радар", href: "/dashboard/secret-shopper" },
   { name: "AI-консультант на сайт", href: "https://chat.konversus.ru", ext: true },
   { name: "Конструктор сайтов", href: "https://nordic-builder.ru", ext: true },
+  { name: "Решения для 1С-Битрикс", href: "/bitrix" },
 ];
 
 const ABOUT = [
@@ -28,7 +29,8 @@ export default function KonversusFooter() {
           {/* Бренд */}
           <div>
             <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", fontWeight: 700, fontSize: "1.1rem", color: "#fafafa", marginBottom: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#fff" }}>K</div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="" width={28} height={25} style={{ display: "block" }} />
               Konversus
             </Link>
             <p style={{ color: "#71717a", fontSize: "0.8rem", lineHeight: 1.7, maxWidth: 280 }}>
